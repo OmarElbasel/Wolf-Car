@@ -24,7 +24,7 @@ import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { CredentialsDialog } from "@/components/app/credentials-dialog";
 import { PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
-import { EmptyState, ErrorState, LoadingRows } from "@/components/app/states";
+import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,7 +43,7 @@ import { useErrorMessage } from "@/lib/api/use-error-message";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { BRANCH_ROLES, ROLES } from "@/shared/permissions";
-import { FilterSelect, isolate, NoAccess, useBranchName, useWideLayout } from "../shared/ui";
+import { FilterSelect, isolate, useBranchName, useWideLayout } from "../shared/ui";
 import { useDebouncedCallback, useUrlState } from "../shared/url-state";
 import { CreateUserDialog, EditUserSheet } from "./user-forms";
 

@@ -14,6 +14,16 @@ const finance = () => makeUser({ username: "finance", displayName: "Finance", ro
 const person = { id: "00000000-0000-4000-8000-0000000000c1", username: "gh.cashier", displayName: "GH Cashier" };
 const branch = { id: "b-gh", code: "GH", name: "Al Gharrafa Branch", nameAr: "فرع الغرافة" };
 
+describe("orders page permissions", () => {
+  it("shows a no-access state (and asks the API nothing) without an order.read permission", async () => {
+    const requested = vi.fn();
+    server.use(http.get("/api/orders", () => (requested(), HttpResponse.json({ items: [], total: 0, page: 1, pageSize: 20 }))));
+    renderWithApp(<OrdersPage />, { user: makeUser({ role: "FINANCE", branch: null, permissions: ["product.read"] }) });
+    expect(await screen.findByRole("alert")).toHaveTextContent("You can't open this page");
+    expect(requested).not.toHaveBeenCalled();
+  });
+});
+
 function makeOrder(overrides: Partial<OrderDetail> = {}): OrderDetail {
   return {
     id: "00000000-0000-4000-8000-000000000042",

@@ -9,7 +9,7 @@ import { Pill, RoleBadge } from "@/components/app/badges";
 import { CopyButton } from "@/components/app/copy-button";
 import { PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
-import { EmptyState, ErrorState, LoadingRows } from "@/components/app/states";
+import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ import { formatDateTime, formatRelative } from "@/lib/format";
 import { msgKey } from "@/lib/i18n/keys";
 import { base } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { FilterSelect, NoAccess, useBranchName, useWideLayout } from "../shared/ui";
+import { FilterSelect, useBranchName, useWideLayout } from "../shared/ui";
 import { useDebouncedCallback, useUrlState } from "../shared/url-state";
 import { changedKeys, jsonLines } from "./diff";
 

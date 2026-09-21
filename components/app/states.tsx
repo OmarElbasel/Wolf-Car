@@ -1,11 +1,13 @@
 "use client";
 
-import { AlertTriangle, Inbox } from "lucide-react";
+import { AlertTriangle, Inbox, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { PermissionKey } from "@/lib/api/types";
 import { useErrorMessage } from "@/lib/api/use-error-message";
+import { msgKey } from "@/lib/i18n/keys";
 
 export function LoadingRows({ rows = 6, className = "h-14" }: { rows?: number; className?: string }) {
   const t = useTranslations("Common");
@@ -47,6 +49,22 @@ export function EmptyState({ title, body, action }: { title: string; body?: stri
         {body && <p className="text-[15px] text-ink-2">{body}</p>}
       </div>
       {action}
+    </div>
+  );
+}
+
+/** Friendly state for a page the signed-in user has no permission for (the API would refuse anyway). */
+export function NoAccess({ permission }: { permission: PermissionKey }) {
+  const t = useTranslations("Permissions");
+  return (
+    <div role="alert" className="grid place-items-center gap-3 rounded-[var(--radius-brand-lg)] border border-dashed border-line px-6 py-14 text-center">
+      <span className="grid size-12 place-items-center rounded-full bg-sand">
+        <Lock className="size-5 text-ink-2" strokeWidth={1.8} aria-hidden="true" />
+      </span>
+      <div className="max-w-md">
+        <p className="text-lg font-extrabold">{t("noAccessTitle")}</p>
+        <p className="mt-1 text-[15px] text-ink-2">{t("noAccessBody", { permission: t(`labels.${msgKey(permission)}`) })}</p>
+      </div>
     </div>
   );
 }

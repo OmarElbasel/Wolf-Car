@@ -8,12 +8,12 @@ import { toast } from "sonner";
 import { Pill } from "@/components/app/badges";
 import { CredentialsDialog } from "@/components/app/credentials-dialog";
 import { PageHeader } from "@/components/app/page-header";
-import { EmptyState, ErrorState, LoadingRows } from "@/components/app/states";
+import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { api } from "@/lib/api/client";
 import type { BranchView, IssuedCredentials, StaffRef } from "@/lib/api/types";
-import { NoAccess } from "../shared/ui";
+
 import { CreateBranchSheet, EditBranchSheet, ReplaceStaffDialog, type ReplaceTarget, SLOT_ROLE, type StaffSlot } from "./branch-forms";
 
 /** Super Admin: branches with their one manager and one cashier. */

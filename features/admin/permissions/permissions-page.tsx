@@ -3,12 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/app/page-header";
-import { ErrorState, LoadingRows } from "@/components/app/states";
+import { ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { api } from "@/lib/api/client";
 import type { PermissionInfo } from "@/lib/api/types";
-import { NoAccess } from "../shared/ui";
+
 import { useUrlState } from "../shared/url-state";
 import { RoleMatrix } from "./role-matrix";
 import { UserOverrides } from "./user-overrides";

@@ -1,12 +1,10 @@
 "use client";
 
-import { Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useSyncExternalStore, type ReactNode } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { BranchSummary, PermissionKey } from "@/lib/api/types";
-import { msgKey } from "@/lib/i18n/keys";
+import type { BranchSummary } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { DISPLAY_NAME_MAX } from "@/shared/validation";
 
@@ -47,22 +45,6 @@ export function useFieldError(): (error: string | undefined, limits?: { min?: nu
     if (error === "tooLong") return t("tooLong", { max: limits.max ?? DISPLAY_NAME_MAX });
     return error;
   };
-}
-
-/** Friendly state for a page the signed-in user has no permission for (the API would refuse anyway). */
-export function NoAccess({ permission }: { permission: PermissionKey }) {
-  const t = useTranslations("Permissions");
-  return (
-    <div role="alert" className="grid place-items-center gap-3 rounded-[var(--radius-brand-lg)] border border-dashed border-line px-6 py-14 text-center">
-      <span className="grid size-12 place-items-center rounded-full bg-sand">
-        <Lock className="size-5 text-ink-2" strokeWidth={1.8} aria-hidden="true" />
-      </span>
-      <div className="max-w-md">
-        <p className="text-lg font-extrabold">{t("noAccessTitle")}</p>
-        <p className="mt-1 text-[15px] text-ink-2">{t("noAccessBody", { permission: t(`labels.${msgKey(permission)}`) })}</p>
-      </div>
-    </div>
-  );
 }
 
 export interface FilterOption {

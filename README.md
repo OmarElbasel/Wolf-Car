@@ -123,14 +123,16 @@ npm test
 # Browser — full flows (Playwright; production builds on :3100/:4100, database E2E_DATABASE_URL)
 docker compose up -d db-test          # also creates the wolfcar_e2e database
 npx playwright install chromium                                                               # once
-npm run e2e:build
-npm run test:e2e
+npm run e2e:build                     # builds with API_INTERNAL_URL=http://localhost:4100 (rewrites are fixed at build time)
+npm run test:e2e                      # migrates + reseeds wolfcar_e2e, starts both servers, runs the browser tests
 ```
+
+Landing snapshots live in `e2e/landing.spec.ts-snapshots/`. They were checked pixel-identical to the reviewed page; only regenerate them (`npx playwright test e2e/landing.spec.ts --update-snapshots`) after an intentional, reviewed landing change.
 
 What they cover:
 
 - **API unit** — every service, guard, interceptor and filter (auth, tokens, lockout, 2FA, RBAC, users, branches, products, pricing, orders, showroom, receipts, activity log).
-- **API e2e** — every endpoint for every role: a table-driven **RBAC matrix** checks all routes × {anonymous, Super Admin, Finance, Manager, Cashier, showroom session}. Plus the forbidden paths: Finance editing name/image/barcode/description (403 on the route, 400 for smuggled fields), managers setting prices, cashiers editing confirmed orders (409), cross-branch reads/writes/receipts (404), public catalogue field leakage, 2FA (setup, login, replay, recovery codes, admin reset), rate limiting (429) and lockout (423), refresh-token reuse, upload spoofing/oversize, database constraints (second manager, branch without cashier, append-only log), and an **audit-coverage** test that fails if any state-changing route is not audited.
+- **API e2e** — the test database's default time zone is set to Asia/Qatar, so the suite also proves timestamps are stored as true UTC instants. Every endpoint for every role: a table-driven **RBAC matrix** checks all routes × {anonymous, Super Admin, Finance, Manager, Cashier, showroom session}. Plus the forbidden paths: Finance editing name/image/barcode/description (403 on the route, 400 for smuggled fields), managers setting prices, cashiers editing confirmed orders (409), cross-branch reads/writes/receipts (404), public catalogue field leakage, 2FA (setup, login, replay, recovery codes, admin reset), rate limiting (429) and lockout (423), refresh-token reuse, upload spoofing/oversize, database constraints (second manager, branch without cashier, append-only log), and an **audit-coverage** test that fails if any state-changing route is not audited.
 - **Web** — forms (login/2FA, products, prices, passwords with strength meter, users, branches), permission-gated UI, the showroom cart and checkout, drag-and-drop reordering.
 - **Playwright** — the complete story (admin creates a branch and its staff → manager adds a product → finance prices it → showroom places an order → cashier confirms and downloads the receipt → admin sees it all in the activity log), role landing pages, the public catalogue (no prices in DOM or network), and **visual snapshots of the landing page**.
 

@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
-import { EmptyState, ErrorState, LoadingRows } from "@/components/app/states";
+import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -56,6 +56,20 @@ function writePriceParam(price: PriceFilter) {
  * reorder any branch. Every control is gated by permission, not by role.
  */
 export function ProductsPage() {
+  const t = useTranslations("Products");
+  const { can } = useAuth();
+  if (!can("product.read")) {
+    return (
+      <>
+        <PageHeader title={t("title")} />
+        <NoAccess permission="product.read" />
+      </>
+    );
+  }
+  return <ProductsManager />;
+}
+
+function ProductsManager() {
   const t = useTranslations("Products");
   const tc = useTranslations("Common");
   const locale = useLocale();

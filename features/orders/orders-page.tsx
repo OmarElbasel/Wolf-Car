@@ -9,7 +9,7 @@ import { OrderStatusBadge } from "@/components/app/badges";
 import { Field } from "@/components/app/field";
 import { PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
-import { EmptyState, ErrorState, LoadingRows } from "@/components/app/states";
+import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,6 +175,20 @@ function OrdersTable({
  * Filters and the open order live in the URL; the list polls every 10 s.
  */
 export function OrdersPage() {
+  const t = useTranslations("Orders");
+  const { canAny } = useAuth();
+  if (!canAny("order.read.branch", "order.read.all")) {
+    return (
+      <>
+        <PageHeader title={t("title")} />
+        <NoAccess permission="order.read.branch" />
+      </>
+    );
+  }
+  return <OrdersManager />;
+}
+
+function OrdersManager() {
   const t = useTranslations("Orders");
   const tc = useTranslations("Common");
   const { can } = useAuth();

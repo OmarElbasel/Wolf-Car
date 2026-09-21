@@ -3,7 +3,7 @@ import { http, HttpResponse } from "msw";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/msw";
-import { renderWithApp } from "@/tests/render";
+import { makeUser, renderWithApp } from "@/tests/render";
 import { finance, makeProduct, manager } from "./fixtures";
 import { ProductsPage } from "./products-page";
 
@@ -33,6 +33,14 @@ const tick = () => act(() => new Promise((resolve) => setTimeout(resolve, 20)));
 afterEach(() => window.history.replaceState(null, "", "/en/dashboard"));
 
 describe("products page permissions", () => {
+  it("shows a no-access state (and asks the API nothing) without product.read", async () => {
+    const requested = vi.fn();
+    server.use(http.get("/api/products", () => (requested(), HttpResponse.json([]))));
+    renderWithApp(<ProductsPage />, { user: makeUser({ role: "CASHIER", permissions: ["order.read.branch"] }) });
+    expect(await screen.findByRole("alert")).toHaveTextContent("You can't open this page");
+    expect(requested).not.toHaveBeenCalled();
+  });
+
   it("Finance can price but not add, edit or reorder", async () => {
     server.use(http.get("/api/products", () => HttpResponse.json([brake, oil])));
     renderWithApp(<ProductsPage />, { user: finance() });
