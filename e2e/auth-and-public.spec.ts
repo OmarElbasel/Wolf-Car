@@ -25,7 +25,7 @@ test.describe("sign-in and role landing pages", () => {
     await page.getByLabel("Username").fill("admin");
     await page.getByLabel("Password", { exact: true }).fill("not-the-password");
     await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("alert")).toHaveText("Wrong username or password.");
+    await expect(page.getByRole("main").getByRole("alert")).toHaveText("Wrong username or password.");
   });
 
   test("the navigation only offers what the role may use", async ({ page }) => {
