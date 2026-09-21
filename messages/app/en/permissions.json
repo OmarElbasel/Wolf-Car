@@ -1,0 +1,43 @@
+{
+  "title": "Permissions",
+  "subtitle": "What each role can do, and exceptions for individual users. The server enforces every permission.",
+  "rolesTab": "By role",
+  "usersTab": "By user",
+  "locked": "Always has every permission",
+  "saved": "Permissions saved",
+  "unsaved": "Unsaved changes",
+  "discard": "Discard",
+  "pickUser": "Choose a user",
+  "inherit": "Role default",
+  "grant": "Grant",
+  "revoke": "Revoke",
+  "fromRole": "From role: {state}",
+  "effective": "Effective",
+  "on": "on",
+  "off": "off",
+  "groups": {
+    "product": "Products",
+    "order": "Orders",
+    "admin": "Administration",
+    "account": "Account"
+  },
+  "labels": {
+    "product_create": "Create products",
+    "product_update_details": "Edit product details",
+    "product_update_price": "Set prices",
+    "product_read": "View products and prices",
+    "product_reorder": "Reorder the showroom",
+    "order_create": "Place orders (showroom)",
+    "order_read_branch": "View own branch's orders",
+    "order_read_all": "View all branches' orders",
+    "order_update": "Edit pending orders",
+    "order_cancel": "Cancel pending orders",
+    "order_confirm": "Confirm orders",
+    "order_receipt_download": "Download receipts",
+    "user_manage": "Manage users",
+    "branch_manage": "Manage branches",
+    "permission_manage": "Manage permissions",
+    "activity_read": "View the activity log",
+    "showroom_password_view_or_change": "Change own showroom password"
+  }
+}

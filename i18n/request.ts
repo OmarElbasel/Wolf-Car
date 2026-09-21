@@ -8,6 +8,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
+    // all dates in the app are shown in Qatar time
+    timeZone: "Asia/Qatar",
     messages: (await import(`../messages/${locale}.json`)).default,
   };
 });

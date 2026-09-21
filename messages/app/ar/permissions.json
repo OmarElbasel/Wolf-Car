@@ -1,0 +1,43 @@
+{
+  "title": "الصلاحيات",
+  "subtitle": "ما يستطيع كل دور فعله، مع استثناءات لمستخدمين محددين. يطبّق الخادم كل صلاحية.",
+  "rolesTab": "حسب الدور",
+  "usersTab": "حسب المستخدم",
+  "locked": "يملك جميع الصلاحيات دائمًا",
+  "saved": "تم حفظ الصلاحيات",
+  "unsaved": "تغييرات غير محفوظة",
+  "discard": "تجاهل",
+  "pickUser": "اختر مستخدمًا",
+  "inherit": "افتراضي الدور",
+  "grant": "منح",
+  "revoke": "سحب",
+  "fromRole": "من الدور: {state}",
+  "effective": "الفعلية",
+  "on": "مفعّلة",
+  "off": "غير مفعّلة",
+  "groups": {
+    "product": "المنتجات",
+    "order": "الطلبات",
+    "admin": "الإدارة",
+    "account": "الحساب"
+  },
+  "labels": {
+    "product_create": "إنشاء المنتجات",
+    "product_update_details": "تعديل بيانات المنتج",
+    "product_update_price": "تحديد الأسعار",
+    "product_read": "عرض المنتجات والأسعار",
+    "product_reorder": "ترتيب المعرض",
+    "order_create": "تسجيل الطلبات (المعرض)",
+    "order_read_branch": "عرض طلبات الفرع",
+    "order_read_all": "عرض طلبات كل الفروع",
+    "order_update": "تعديل الطلبات قيد الانتظار",
+    "order_cancel": "إلغاء الطلبات قيد الانتظار",
+    "order_confirm": "تأكيد الطلبات",
+    "order_receipt_download": "تنزيل الإيصالات",
+    "user_manage": "إدارة المستخدمين",
+    "branch_manage": "إدارة الفروع",
+    "permission_manage": "إدارة الصلاحيات",
+    "activity_read": "عرض سجل النشاط",
+    "showroom_password_view_or_change": "تغيير كلمة مرور المعرض الخاصة به"
+  }
+}

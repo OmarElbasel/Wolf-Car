@@ -1,0 +1,59 @@
+{
+  "title": "My account",
+  "subtitle": "Your sign-in details and security.",
+  "profile": "Profile",
+  "password": {
+    "title": "Password",
+    "body": "After changing it you'll be signed out everywhere and asked to sign in again.",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "submit": "Change password",
+    "strength": "Strength",
+    "strengthLevels": {
+      "0": "Very weak",
+      "1": "Weak",
+      "2": "Fair",
+      "3": "Strong",
+      "4": "Very strong"
+    },
+    "rules": {
+      "length": "12 characters or more",
+      "upper": "An uppercase letter",
+      "lower": "A lowercase letter",
+      "number": "A number",
+      "symbol": "A symbol",
+      "notUsername": "Doesn't contain your username"
+    }
+  },
+  "showroom": {
+    "title": "Showroom password",
+    "body": "Used only on the showroom tablet. It must differ from your dashboard password.",
+    "confirmWith": "Your dashboard password",
+    "new": "New showroom password",
+    "confirm": "Confirm showroom password",
+    "submit": "Change showroom password",
+    "saved": "Showroom password changed. Showroom tablets must sign in again."
+  },
+  "twoFactor": {
+    "title": "Two-step verification (2FA)",
+    "on": "On",
+    "off": "Off",
+    "bodyOff": "Protect your account with a 6-digit code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…).",
+    "bodyOn": "Signing in asks for a code from your authenticator app.",
+    "remaining": "{count, plural, =0 {No recovery codes left} one {# recovery code left} other {# recovery codes left}}",
+    "enable": "Turn on 2FA",
+    "disable": "Turn off 2FA",
+    "regenerate": "New recovery codes",
+    "stepPassword": "Confirm your password to continue.",
+    "stepScan": "Scan this QR code with your authenticator app, then enter the 6-digit code it shows.",
+    "manualKey": "Can't scan? Enter this key",
+    "stepVerify": "Code from the app",
+    "enabled": "Two-step verification is on",
+    "disabled": "Two-step verification is off",
+    "recoveryTitle": "Your recovery codes",
+    "recoveryBody": "Each code works once if you lose your phone. Store them somewhere safe — they won't be shown again.",
+    "confirmTitle": "Confirm it's you",
+    "useRecovery": "Use a recovery code"
+  }
+}

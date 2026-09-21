@@ -1,0 +1,18 @@
+{
+  "required": "This field is required.",
+  "tooShort": "Too short (at least {min} characters).",
+  "tooLong": "Too long (at most {max} characters).",
+  "invalid": "This value isn't valid.",
+  "email": "Enter a valid email address.",
+  "barcode": "Letters, digits and dashes only (max 64).",
+  "price": "Enter an amount with up to 2 decimals, e.g. 125 or 125.50.",
+  "code6": "Enter the 6-digit code.",
+  "recoveryCode": "Recovery codes look like abcde-fghij.",
+  "customerName": "Letters and spaces only.",
+  "branchCode": "2–4 letters, e.g. WK.",
+  "passwordsMatch": "The passwords don't match.",
+  "passwordPolicy": "The password doesn't meet the requirements below.",
+  "imageType": "Use a JPEG, PNG or WebP image.",
+  "imageSize": "The image must be 5 MB or smaller.",
+  "imageRequired": "Add a product image."
+}
