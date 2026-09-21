@@ -1,7 +1,8 @@
-import { CallHandler, ExecutionContext, HttpException, Injectable, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { catchError, concatMap, from, Observable, throwError } from 'rxjs';
 import { AUDIT_KEY, AuditOptions, SKIP_AUDIT_KEY } from '../common/decorators/audit.decorator';
+import { describeError } from '../common/filters/all-exceptions.filter';
 import { AppRequest, requestMeta } from '../common/types';
 import { ActivityService } from './activity.service';
 import { AuditTrail } from './audit-trail.service';
@@ -63,11 +64,11 @@ export class AuditInterceptor implements NestInterceptor {
       metadata.path = req.route?.path ?? req.path;
     }
     if (outcome === 'FAILURE') {
-      metadata.status = err instanceof HttpException ? err.getStatus() : 500;
-      const response = err instanceof HttpException ? err.getResponse() : undefined;
-      const code = response && typeof response === 'object' ? (response as { code?: unknown }).code : undefined;
-      if (typeof code === 'string') metadata.reason = code;
-      else if (err instanceof HttpException) metadata.reason = err.message.slice(0, 200);
+      // the same mapping as the exception filter: log what the client received
+      const error = describeError(err);
+      metadata.status = error.statusCode;
+      if (error.code) metadata.reason = error.code;
+      else if (error.statusCode < 500) metadata.reason = error.message.slice(0, 200);
     }
 
     const { ip, userAgent } = requestMeta(req);

@@ -30,6 +30,18 @@ describe('Activity log (e2e)', () => {
 
   const list = (qs = '') => t.http().get(`/api/activity${qs}`).set(bearer(admin));
 
+  it('stores true UTC instants even when the database server runs in another time zone', async () => {
+    // global setup gives the test database an Asia/Qatar default; the app must still write UTC
+    const before = Date.now();
+    await login(t, 'finance', PW.finance);
+    const [row] = await t.prisma.$queryRaw<{ drift: number }[]>`
+      SELECT extract(epoch FROM (clock_timestamp() - occurred_at))::float8 AS drift
+      FROM activity_logs ORDER BY id DESC LIMIT 1`;
+    expect(Math.abs(row.drift)).toBeLessThan(60);
+    const latest = await t.prisma.activityLog.findFirstOrThrow({ orderBy: { id: 'desc' } });
+    expect(Math.abs(latest.occurredAt.getTime() - before)).toBeLessThan(60_000);
+  });
+
   it('lists newest first with actor, role, branch, entity, before/after, IP and user agent', async () => {
     const res = await list('?pageSize=100');
     expect(res.status).toBe(200);

@@ -76,6 +76,11 @@ describe('Products & pricing (e2e)', () => {
       const dup = await createProduct(tokens.gh, { name: 'Duplicate', barcode: '1000000000001' });
       expect(dup.status).toBe(409);
       expect(dup.body.message).toBe('Another product already uses this barcode.');
+      // the activity log records what the client received, not a generic 500
+      const logged = await t.prisma.activityLog.findFirstOrThrow({
+        where: { action: 'product.create', outcome: 'FAILURE', requestId: dup.body.requestId },
+      });
+      expect(logged.metadata).toMatchObject({ status: 409, reason: 'DUPLICATE' });
     });
 
     it('rejects spoofed, unsupported and oversize uploads', async () => {

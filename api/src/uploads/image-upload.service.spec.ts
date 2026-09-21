@@ -57,6 +57,12 @@ describe('ImageUploadService', () => {
     expect(readdirSync(dir)).toEqual([]);
   });
 
+  it('rejects images above 40 megapixels with a clear code', async () => {
+    const huge = await png(7000, 7000);
+    expect(await code(service.store({ buffer: huge, size: huge.length }))).toBe('IMAGE_TOO_LARGE');
+    expect(readdirSync(dir)).toEqual([]);
+  });
+
   it('rejects oversize files', async () => {
     const buffer = await png();
     expect(await code(service.store({ buffer, size: 6 * 1024 * 1024 }))).toBe('FILE_TOO_LARGE');

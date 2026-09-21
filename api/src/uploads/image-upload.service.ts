@@ -42,6 +42,9 @@ export class ImageUploadService {
       }
     } catch (err) {
       if (err instanceof BadRequestException) throw err;
+      if (err instanceof Error && /pixel limit/i.test(err.message)) {
+        throw reject('IMAGE_TOO_LARGE', 'The image must be at most 40 megapixels.');
+      }
       throw reject('UNREADABLE_IMAGE', 'The image file is damaged or not a real image.');
     }
     return processAndStoreImage(file.buffer, this.uploadDir);
