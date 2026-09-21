@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# wolfcar-next
 
-## Getting Started
-
-First, run the development server:
+موقع **وولف كار لخدمات السيارات** — نقل مسودة `../draft-v2/index.html` إلى
+Next.js 16 (App Router) + TypeScript + Tailwind CSS v4.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev     # http://localhost:3000
+npm run build
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## الهيكل
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+app/layout.tsx      html lang=ar dir=rtl · خط Cairo · metadata · LocalBusiness schema
+app/globals.css     توكنز Tailwind (@theme) + الـ CSS اللي مالوش مقابل في Tailwind
+app/page.tsx        تركيب الأقسام
+lib/branches.ts     أرقام الفرعين · waLink() · نص رسالة الحجز
+lib/content.ts      كل نصوص الصفحة وبياناتها (خدمات، فئات، ماركات، أسئلة)
+components/         قسم لكل مكوّن
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## قواعد لازم تتحافظ عليها
 
-## Learn More
+**1. الـ hero مثبّت فيزيائيًا، مش منطقيًا.**
+الكلام على **اليمين** والفان على **الشمال** بغضّ النظر عن اتجاه النص. يعني
+`ml-auto` و `border-r` و `left-*` — مش `ms-auto` ولا `border-e` ولا `start-*`.
+الخصائص المنطقية بتنقلب تحت `dir="rtl"` وبتودّي الكلام ناحية الشمال.
+(الأقسام التانية منطقية عادي — بس الـ hero لأ.)
 
-To learn more about Next.js, take a look at the following resources:
+**2. شريط الماركات: 4 نسخ والحركة `-25%`.**
+الحركة لازم تساوي عرض نسخة واحدة بالظبط. نسختين بس بتسيب **فراغ** لما المسار
+يعدّي عرض الشاشة، وده بيبان كأن الشريط واقف بيستنى.
+الشرط: `عرض المسار − مسافة الحركة ≥ عرض الشاشة` (دلوقتي: لحد 3539px).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**3. لوجوهات الشريط `loading="eager"`.**
+`next/image` بيعمل lazy تلقائيًا. الشريط بيتحرك بـ `transform` مش scroll، فالنسخ
+اللي بره الشاشة ممكن تفضل فاضية وهي بتلف.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**4. رسايل واتساب لازم تعدّي على `encodeURIComponent`.**
+ده في `waLink()`. الموقع القديم كان مش بيعمل كده، وأي `&` في اسم الخدمة كان
+**بيقطع الرسالة** فتوصل ناقصة.
 
-## Deploy on Vercel
+**5. الأنيميشن CSS خالص.** مفيش مكتبات أنيميشن. `@keyframes` + `transform` بس.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**6. التباين.** لوجوهات الشريط عليها `opacity-60`، فألوان النصوص جواه مرفوعة
+(`#C8C8C8`) عشان تفضل فوق 4.5:1 بعد الشفافية.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ناقص — مش مشاكل كود
+
+- **لوجو نيسان** — متعرض كنص لحد ما يوصل ملف PNG أبيض بخلفية شفافة (`lib/content.ts`)
+- **صور حقيقية** — كل الصور دلوقتي مربعات رمادية (`<Photo/>`)
+- **3 تقييمات Google** — ⛔ ممنوع تتخترع، لازم تتنسخ من جوجل
+- **لوجو PayLater** — الموجود رسمة مؤقتة في `Catalog.tsx`
+- **النسخة الإنجليزي** — زرار EN شكل بس

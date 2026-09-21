@@ -1,0 +1,112 @@
+{
+  "Meta": {
+    "title": "Wolf Car Auto Services | Accessories, Maintenance & Programming in Qatar",
+    "description": "Wolf Car: specialists in Chinese cars, serving all makes. Accessories, PPF paint protection, insulation & tinting, ECU programming, spare parts and maintenance in Al Gharrafa and Bin Omran, with home service available."
+  },
+  "SkipLink": "Skip to content",
+  "Brand": {
+    "name": "Wolf Car"
+  },
+  "Common": {
+    "call": "Call",
+    "whatsapp": "WhatsApp",
+    "mapLabel": "Location"
+  },
+  "Header": {
+    "logoAria": "Wolf Car — Home",
+    "navAria": "Page sections",
+    "navServices": "Services",
+    "navCatalog": "Parts & Accessories",
+    "navWork": "Our Work",
+    "navBranches": "Branches",
+    "languageSwitch": "Switch to Arabic",
+    "themeToggle": "Toggle light and dark mode"
+  },
+  "ContactSheet": {
+    "heading": "Choose a branch",
+    "cancel": "Cancel"
+  },
+  "ContactButtons": {
+    "whatsappDefault": "Contact via WhatsApp",
+    "callDefault": "Call us",
+    "askTemplate": "I'd like to ask about {topic}"
+  },
+  "Hero": {
+    "eyebrow": "Wolf Car Auto Services · Qatar",
+    "title": "Specialists in Chinese cars — we service all makes",
+    "body": "Accessories, PPF paint protection, insulation & tinting, programming, spare parts and maintenance. At our Al Gharrafa and Bin Omran branches, or at your home.",
+    "servicesCta": "Browse services",
+    "vanAlt": "Wolf Car Auto Services van"
+  },
+  "Services": {
+    "label": "Our Services",
+    "title": "Everything your car needs, in one place",
+    "body": "Services are available at both branches.",
+    "atHome": "Available at home"
+  },
+  "Catalog": {
+    "label": "Parts & Accessories",
+    "title": "Browse by category",
+    "body": "Availability varies by car model. Send us your car type and we'll confirm what's in stock.",
+    "askAvailability": "Ask about availability",
+    "paylaterTitle": "Pay for your purchases in installments with PayLater",
+    "paylaterBody": "4 installments for orders over 300 QAR, and up to 12 months for orders over 4,000 QAR.",
+    "paylaterCta": "Ask about installments",
+    "paylaterMessage": "I'd like to ask about installments with PayLater"
+  },
+  "Steps": {
+    "label": "How we work",
+    "title": "Just three steps"
+  },
+  "Work": {
+    "label": "Our Work",
+    "title": "Real work from our workshop",
+    "body": "Before and after, plus clips from TikTok and Instagram.",
+    "tileTiktok": "TikTok video",
+    "tileBeforeAfter": "Before & after",
+    "tileInstagram": "Instagram video",
+    "tiktokLabel": "TikTok",
+    "instagramLabel": "Instagram"
+  },
+  "Reviews": {
+    "label": "Customer Reviews",
+    "title": "What our customers say on Google",
+    "ratingMeta": "Al Gharrafa branch · 27 reviews",
+    "placeholder": "[Real review from Google]"
+  },
+  "Branches": {
+    "label": "Our Branches",
+    "title": "Choose the branch nearest you",
+    "body": "Both branches offer all services."
+  },
+  "Booking": {
+    "label": "Booking",
+    "title": "Book your appointment via WhatsApp",
+    "body": "Choose the branch and service, and we'll prepare the message for you.",
+    "branchLabel": "Branch",
+    "serviceLabel": "Service",
+    "placeLabel": "Service location",
+    "placeBranch": "At the branch",
+    "placeHome": "At home",
+    "homeFeeNote": "Home service fees depend on the area.",
+    "submit": "Send via WhatsApp"
+  },
+  "Faq": {
+    "label": "FAQ",
+    "title": "Questions our customers ask"
+  },
+  "FinalCta": {
+    "title": "Ready to take care of your car",
+    "hashtag": "#لا_تتعدى_الذيب"
+  },
+  "Footer": {
+    "tagline": "Specialists in Chinese cars, serving all makes.",
+    "followUs": "Follow us",
+    "instagramAria": "Instagram",
+    "tiktokAria": "TikTok",
+    "copyright": "© 2026 Wolf Car Auto Services"
+  },
+  "StickyBar": {
+    "aria": "Quick contact"
+  }
+}
