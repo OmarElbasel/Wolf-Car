@@ -9,6 +9,7 @@ import { AccountModule } from './account/account.module';
 import { ActivityModule } from './activity/activity.module';
 import { AuditInterceptor } from './activity/audit.interceptor';
 import { AuthModule } from './auth/auth.module';
+import { BranchesModule } from './branches/branches.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AUTH_THROTTLE_KEY } from './common/decorators/auth-throttle.decorator';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -16,6 +17,8 @@ import { type Env, validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { PermissionsGuard } from './rbac/permissions.guard';
+import { RbacModule } from './rbac/rbac.module';
+import { UsersModule } from './users/users.module';
 
 type IdRequest = IncomingMessage & { id?: string };
 
@@ -72,6 +75,9 @@ type IdRequest = IncomingMessage & { id?: string };
     ActivityModule,
     AuthModule,
     AccountModule,
+    RbacModule,
+    UsersModule,
+    BranchesModule,
   ],
   controllers: [HealthController],
   providers: [
