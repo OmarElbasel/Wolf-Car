@@ -271,7 +271,7 @@ describe('Showroom & orders (e2e)', () => {
         t.http().post(`/api/orders/${ghOrder.id}/confirm`).set(bearer(tok.ghCashier)),
         t.http().post(`/api/orders/${ghOrder.id}/confirm`).set(bearer(tok.ghManager)),
       ]);
-      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      expect([a.status, b.status].sort((x, y) => x - y)).toEqual([200, 409]);
     });
   });
 });

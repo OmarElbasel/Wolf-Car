@@ -4,7 +4,6 @@
 
 FROM node:22-bookworm-slim AS deps
 WORKDIR /app/api
-ENV PUPPETEER_SKIP_DOWNLOAD=true
 COPY api/package.json api/package-lock.json ./
 RUN npm ci
 
@@ -23,7 +22,6 @@ RUN apt-get update \
 ENV NODE_ENV=production \
     PORT=4000 \
     CHROME_PATH=/usr/bin/chromium \
-    PUPPETEER_SKIP_DOWNLOAD=true \
     UPLOAD_DIR=/app/api/storage/uploads
 WORKDIR /app/api
 COPY --from=build --chown=node:node /app/api/package.json /app/api/prisma.config.ts ./
