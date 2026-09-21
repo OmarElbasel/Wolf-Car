@@ -51,6 +51,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof ThrottlerException) {
       return { statusCode: 429, error: 'Too Many Requests', code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.' };
     }
+    if (exception instanceof HttpException && exception.getStatus() === 413) {
+      // multer's size limit, surfaced by Nest's FileInterceptor
+      return { statusCode: 413, error: 'Payload Too Large', code: 'FILE_TOO_LARGE', message: 'The image is larger than 5 MB.' };
+    }
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const response = exception.getResponse();
