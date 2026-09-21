@@ -59,6 +59,8 @@ export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
 export const CUSTOMER_NAME_MIN = 2;
+/** Letters of any script, combining marks, spaces and . ' - (must start with a letter). */
+export const CUSTOMER_NAME_PATTERN = new RegExp("^[\\p{L}\\p{M}][\\p{L}\\p{M} .'-]*$", 'u');
 export const CUSTOMER_NAME_MAX = 80;
 export const ORDER_MAX_LINES = 50;
 export const ORDER_MAX_QUANTITY = 99;

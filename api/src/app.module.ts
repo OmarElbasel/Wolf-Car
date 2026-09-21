@@ -15,10 +15,12 @@ import { AUTH_THROTTLE_KEY } from './common/decorators/auth-throttle.decorator';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { type Env, validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
+import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
 import { PermissionsGuard } from './rbac/permissions.guard';
 import { RbacModule } from './rbac/rbac.module';
+import { ShowroomModule } from './showroom/showroom.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
 
@@ -82,6 +84,8 @@ type IdRequest = IncomingMessage & { id?: string };
     BranchesModule,
     UploadsModule,
     ProductsModule,
+    ShowroomModule,
+    OrdersModule,
   ],
   controllers: [HealthController],
   providers: [
