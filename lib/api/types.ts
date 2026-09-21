@@ -203,3 +203,11 @@ export interface PublicProduct {
   imageUrl: string;
   thumbUrl: string;
 }
+
+export interface BranchOption {
+  id: string;
+  code: string;
+  name: string;
+  nameAr: string;
+  isActive: boolean;
+}

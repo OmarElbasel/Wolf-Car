@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post } fr
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Audit } from '../common/decorators/audit.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
+import { RequireAnyPermission, RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import type { AuthUser } from '../common/types';
 import { BranchesService } from './branches.service';
 import { CreateBranchDto, StaffDto, UpdateBranchDto } from './dto/branches.dto';
@@ -18,6 +18,13 @@ export class BranchesController {
   @Get()
   list() {
     return this.branches.list();
+  }
+
+  /** Minimal branch list (no staff details) for filters and pickers. */
+  @RequireAnyPermission('branch.manage', 'order.read.all', 'product.reorder', 'user.manage', 'activity.read')
+  @Get('options')
+  options() {
+    return this.branches.options();
   }
 
   @Get(':id')

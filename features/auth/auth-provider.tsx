@@ -110,6 +110,39 @@ export function AuthProvider({ audience, children }: { audience: Audience; child
   return <AuthContext.Provider value={api}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * Fixed session for component tests and previews: `user` is signed in, actions
+ * are no-ops unless overridden. Never used by the running app.
+ */
+export function StaticAuthProvider({
+  user,
+  overrides = {},
+  children,
+}: {
+  user: Profile | null;
+  overrides?: Partial<AuthApi>;
+  children: ReactNode;
+}) {
+  const permissions = new Set(user?.permissions ?? []);
+  const value: AuthApi = {
+    status: user ? "authenticated" : "anonymous",
+    user,
+    can: (p) => permissions.has(p),
+    canAny: (...ps) => ps.some((p) => permissions.has(p)),
+    login: async () => {
+      throw new Error("login not available in StaticAuthProvider");
+    },
+    verifyTwoFactor: async () => {
+      throw new Error("verifyTwoFactor not available in StaticAuthProvider");
+    },
+    logout: async () => undefined,
+    reload: async () => undefined,
+    expire: () => undefined,
+    ...overrides,
+  };
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
 export function useAuth(): AuthApi {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");

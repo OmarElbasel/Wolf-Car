@@ -203,6 +203,15 @@ describe('Administration: users, branches, permissions (e2e)', () => {
       expect(await t.prisma.user.count({ where: { branchId: world.gh.id, role: 'CASHIER', deletedAt: null } })).toBe(1);
     });
 
+    it('offers a minimal branch list (no staff details) to users who filter by branch', async () => {
+      const finance = (await login(t, 'finance', PW.finance)).token;
+      const res = await as(finance).get('/api/branches/options');
+      expect(res.status).toBe(200);
+      expect(res.body.map((b: { code: string }) => b.code)).toEqual(['BO', 'GH']);
+      expect(Object.keys(res.body[0]).sort()).toEqual(['code', 'id', 'isActive', 'name', 'nameAr']);
+      expect((await as((await login(t, 'gh.cashier', PW.cashier)).token).get('/api/branches/options')).status).toBe(403);
+    });
+
     it('updates names and the active flag, and an inactive branch cannot use the showroom', async () => {
       const res = await as(admin).patch(`/api/branches/${world.bo.id}`, { name: 'Bin Omran HQ', isActive: false });
       expect(res.status).toBe(200);

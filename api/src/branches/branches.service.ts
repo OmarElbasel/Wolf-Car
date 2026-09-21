@@ -73,6 +73,13 @@ export class BranchesService {
     return rows.map(branchView);
   }
 
+  options() {
+    return this.prisma.branch.findMany({
+      select: { id: true, code: true, name: true, nameAr: true, isActive: true },
+      orderBy: { code: 'asc' },
+    });
+  }
+
   async get(id: string): Promise<BranchView> {
     const row = await this.prisma.branch.findUnique({ where: { id }, select: BRANCH_SELECT });
     if (!row) throw new NotFoundException('Branch not found.');
