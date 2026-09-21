@@ -1,7 +1,64 @@
 @import "tailwindcss";
+/* enter/exit keyframes used by the app UI popovers (dashboards/showroom only) */
+@import "tw-animate-css";
 
 /* class-based dark mode: .dark is set on <html> by THEME_SCRIPT / toggleTheme */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* state variants used by components/ui (copied from shadcn/tailwind.css, v4.21).
+   Radix sets data-state / data-orientation; without these, data-checked:,
+   data-open: etc. would match attributes Radix never renders. */
+@custom-variant data-open {
+  &:where([data-state="open"]),
+  &:where([data-open]:not([data-open="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-closed {
+  &:where([data-state="closed"]),
+  &:where([data-closed]:not([data-closed="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-checked {
+  &:where([data-state="checked"]),
+  &:where([data-checked]:not([data-checked="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-unchecked {
+  &:where([data-state="unchecked"]),
+  &:where([data-unchecked]:not([data-unchecked="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-selected {
+  &:where([data-selected="true"]) {
+    @slot;
+  }
+}
+@custom-variant data-disabled {
+  &:where([data-disabled="true"]),
+  &:where([data-disabled]:not([data-disabled="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-active {
+  &:where([data-state="active"]),
+  &:where([data-active]:not([data-active="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-horizontal {
+  &:where([data-orientation="horizontal"]) {
+    @slot;
+  }
+}
+@custom-variant data-vertical {
+  &:where([data-orientation="vertical"]) {
+    @slot;
+  }
+}
 
 /* ---- design tokens (from draft-v2) ------------------------------------- */
 /* reactive tokens: light values here, dark overrides under .dark below */
@@ -123,5 +180,75 @@
   }
   .marquee-track {
     animation: none;
+  }
+}
+
+/* ======================================================================== */
+/* App UI (login, dashboards, showroom). Everything below is additive: new   */
+/* token names only, so the landing page renders exactly as before.          */
+/* ======================================================================== */
+
+:root {
+  --t-danger: #b3261e;
+  --t-danger-soft: #fdecea;
+  --t-success: #1e7a45;
+  --t-success-soft: #e7f4ec;
+  --t-warning: #8a5a00;
+  --t-warning-soft: #fdf3dc;
+}
+
+.dark {
+  --t-danger: #ff8a80;
+  --t-danger-soft: #3a1f1c;
+  --t-success: #74d09b;
+  --t-success-soft: #15291d;
+  --t-warning: #f2c14e;
+  --t-warning-soft: #2e2616;
+}
+
+/* shadcn/ui semantic names mapped onto the site tokens. "muted" and "accent"
+   already mean text-grey and brand-orange here, so the generated components
+   use bg-sand for those roles instead (see components/ui). */
+@theme {
+  --color-danger: var(--t-danger);
+  --color-danger-soft: var(--t-danger-soft);
+  --color-success: var(--t-success);
+  --color-success-soft: var(--t-success-soft);
+  --color-warning: var(--t-warning);
+  --color-warning-soft: var(--t-warning-soft);
+
+  --color-background: var(--t-surface);
+  --color-foreground: var(--t-ink);
+  --color-card: var(--t-surface);
+  --color-card-foreground: var(--t-ink);
+  --color-popover: var(--t-surface);
+  --color-popover-foreground: var(--t-ink);
+  --color-primary: #d9541a;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--t-sand);
+  --color-secondary-foreground: var(--t-ink);
+  --color-muted-foreground: var(--t-muted);
+  --color-accent-foreground: var(--t-ink);
+  --color-destructive: var(--t-danger);
+  --color-border: var(--t-line);
+  --color-input: var(--t-line);
+  --color-ring: var(--t-accent-ink);
+
+  --radius-md: 8px;
+  --radius-lg: 10px; /* = --radius-brand */
+  --radius-xl: 16px; /* = --radius-brand-lg */
+}
+
+@layer base {
+  /* shadcn components draw plain `border`s; give them the site line colour */
+  :where([data-slot], [data-slot] *) {
+    border-color: var(--t-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot],
+  [data-slot] * {
+    animation: none !important;
   }
 }

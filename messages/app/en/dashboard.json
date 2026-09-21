@@ -1,0 +1,22 @@
+{
+  "greeting": "Welcome, {name}",
+  "subtitle": {
+    "SUPER_ADMIN": "Everything across both branches at a glance.",
+    "FINANCE": "Prices and orders across all branches.",
+    "BRANCH_MANAGER": "Your branch's products and showroom.",
+    "CASHIER": "Your branch's orders."
+  },
+  "pendingOrders": "Pending orders",
+  "confirmedToday": "Confirmed today",
+  "ordersToday": "Orders today",
+  "unpricedProducts": "Products awaiting a price",
+  "totalProducts": "Products in the catalogue",
+  "activeUsers": "Users",
+  "branches": "Branches",
+  "recentOrders": "Latest orders",
+  "recentActivity": "Latest activity",
+  "viewAll": "View all",
+  "setPrices": "Set prices",
+  "reorderShowroom": "Arrange showroom",
+  "reviewOrders": "Review orders"
+}

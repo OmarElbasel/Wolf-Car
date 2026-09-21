@@ -1,0 +1,22 @@
+{
+  "greeting": "مرحبًا، {name}",
+  "subtitle": {
+    "SUPER_ADMIN": "كل ما يحدث في الفرعين بنظرة واحدة.",
+    "FINANCE": "الأسعار والطلبات في جميع الفروع.",
+    "BRANCH_MANAGER": "منتجات فرعك ومعرضه.",
+    "CASHIER": "طلبات فرعك."
+  },
+  "pendingOrders": "طلبات قيد الانتظار",
+  "confirmedToday": "مؤكّدة اليوم",
+  "ordersToday": "طلبات اليوم",
+  "unpricedProducts": "منتجات بانتظار السعر",
+  "totalProducts": "منتجات الكتالوج",
+  "activeUsers": "المستخدمون",
+  "branches": "الفروع",
+  "recentOrders": "أحدث الطلبات",
+  "recentActivity": "أحدث النشاط",
+  "viewAll": "عرض الكل",
+  "setPrices": "تحديد الأسعار",
+  "reorderShowroom": "ترتيب المعرض",
+  "reviewOrders": "مراجعة الطلبات"
+}

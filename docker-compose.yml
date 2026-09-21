@@ -1,0 +1,69 @@
+# Postgres (dev + throwaway test database) and the API.
+#   docker compose up -d db db-test     # databases only; run the API with npm
+#   docker compose up -d --build        # databases + API on :4000
+name: wolfcar
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: wolfcar
+      POSTGRES_PASSWORD: wolfcar
+      POSTGRES_DB: wolfcar
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wolfcar -d wolfcar"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Used only by the test suites (api: wolfcar_test, Playwright: wolfcar_e2e) — data lives in memory.
+  db-test:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: wolfcar
+      POSTGRES_PASSWORD: wolfcar
+      POSTGRES_DB: wolfcar_test
+    # throwaway data: skip durability for speed
+    command: ["postgres", "-c", "fsync=off", "-c", "synchronous_commit=off", "-c", "full_page_writes=off"]
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      # also creates wolfcar_e2e for the Playwright tests
+      - ./docker/db-test-init.sql:/docker-entrypoint-initdb.d/10-e2e.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wolfcar -d wolfcar_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    env_file:
+      - path: ./api/.env
+        required: true
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://wolfcar:wolfcar@db:5432/wolfcar
+      # requests arrive from the Next.js rewrite proxy through Docker's network
+      TRUST_PROXY: loopback, uniquelocal
+      SWAGGER_ENABLED: "true"
+    ports:
+      - "4000:4000"
+    volumes:
+      - uploads:/app/api/storage/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:

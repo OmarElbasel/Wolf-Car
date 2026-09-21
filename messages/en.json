@@ -104,9 +104,25 @@
     "followUs": "Follow us",
     "instagramAria": "Instagram",
     "tiktokAria": "TikTok",
-    "copyright": "© 2026 Wolf Car Auto Services"
+    "copyright": "© 2026 Wolf Car Auto Services",
+    "catalogLink": "Product catalog",
+    "staffLogin": "Staff login",
+    "linksAria": "More links"
   },
   "StickyBar": {
     "aria": "Quick contact"
+  },
+  "ProductsPage": {
+    "metaTitle": "Products | Wolf Car Auto Services",
+    "metaDescription": "Browse the parts, accessories and protection products available at Wolf Car in Qatar.",
+    "label": "Our products",
+    "title": "Product catalog",
+    "body": "Availability varies by branch. Contact us on WhatsApp or visit a branch for prices and stock.",
+    "search": "Search products",
+    "count": "{count, plural, =0 {No products} one {# product} other {# products}}",
+    "empty": "No products to show yet.",
+    "noMatch": "No products match your search.",
+    "unavailable": "The catalog can't be loaded right now. Please try again shortly.",
+    "backHome": "Back to home"
   }
 }

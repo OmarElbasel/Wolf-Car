@@ -1,0 +1,24 @@
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaClient } from '../generated/prisma/client';
+import type { Env } from '../config/env';
+import { createPgAdapter } from './pg-adapter';
+
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  constructor(config: ConfigService<Env, true>) {
+    super({
+      adapter: createPgAdapter(config.get('DATABASE_URL', { infer: true })),
+      // generous limits so a busy database server does not abort short interactive transactions
+      transactionOptions: { maxWait: 10_000, timeout: 20_000 },
+    });
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.$connect();
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.$disconnect();
+  }
+}
