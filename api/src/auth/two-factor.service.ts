@@ -56,19 +56,20 @@ export class TwoFactorService {
     if (!result.valid || !('timeStep' in result)) throw new BadRequestException({ statusCode: 400, error: 'Bad Request', code: 'INVALID_2FA', message: 'The code is not valid. Check the time on your phone and try again.' });
 
     const codes = this.newRecoveryCodes();
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    const pending = user.twoFactorPendingSecretEnc;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: {
           twoFactorEnabled: true,
-          twoFactorSecretEnc: user.twoFactorPendingSecretEnc,
+          twoFactorSecretEnc: pending,
           twoFactorPendingSecretEnc: null,
           twoFactorLastStep: result.timeStep,
         },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({ data: codes.map((c) => ({ userId, codeHash: sha256Hex(c) })) }),
-    ]);
+      });
+      await tx.recoveryCode.deleteMany({ where: { userId } });
+      await tx.recoveryCode.createMany({ data: codes.map((c) => ({ userId, codeHash: sha256Hex(c) })) });
+    });
     return codes;
   }
 
@@ -109,10 +110,10 @@ export class TwoFactorService {
 
   async regenerateRecoveryCodes(userId: string): Promise<string[]> {
     const codes = this.newRecoveryCodes();
-    await this.prisma.$transaction([
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({ data: codes.map((c) => ({ userId, codeHash: sha256Hex(c) })) }),
-    ]);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.recoveryCode.deleteMany({ where: { userId } });
+      await tx.recoveryCode.createMany({ data: codes.map((c) => ({ userId, codeHash: sha256Hex(c) })) });
+    });
     return codes;
   }
 
@@ -122,8 +123,8 @@ export class TwoFactorService {
 
   /** Turns 2FA off and deletes the secret and recovery codes (user disable or admin reset). */
   async disable(userId: string): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: {
           twoFactorEnabled: false,
@@ -131,9 +132,9 @@ export class TwoFactorService {
           twoFactorPendingSecretEnc: null,
           twoFactorLastStep: null,
         },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-    ]);
+      });
+      await tx.recoveryCode.deleteMany({ where: { userId } });
+    });
   }
 
   private newRecoveryCodes(): string[] {

@@ -16,7 +16,7 @@ describe('TwoFactorService', () => {
   const service = new TwoFactorService(prisma, config as never);
   beforeEach(() => {
     jest.resetAllMocks();
-    prisma.$transaction.mockResolvedValue([] as never);
+    prisma.$transaction.mockImplementation((fn: unknown) => (fn as (tx: unknown) => unknown)(prisma) as never);
   });
 
   it('stores an encrypted pending secret and returns a QR code', async () => {

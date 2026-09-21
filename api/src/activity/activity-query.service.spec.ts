@@ -26,7 +26,8 @@ describe('ActivityQueryService', () => {
     await service.list({ page: 2, pageSize: 10, action: 'order.', actor: 'GH.Cash', from: '2026-09-01', to: '2026-09-02', outcome: 'SUCCESS' });
     const args = prisma.activityLog.findMany.mock.calls[0][0];
     expect(args).toMatchObject({ orderBy: { id: 'desc' }, skip: 10, take: 10 });
-    expect((args?.where as { AND: unknown[] }).AND).toEqual([
+    const where = args?.where as { AND: unknown[] } | undefined;
+    expect(where?.AND).toEqual([
       { actorUsername: { contains: 'gh.cash' } },
       { action: { startsWith: 'order.' } },
       { outcome: 'SUCCESS' },

@@ -7,7 +7,11 @@ import type { Env } from '../config/env';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(config: ConfigService<Env, true>) {
-    super({ adapter: new PrismaPg({ connectionString: config.get('DATABASE_URL', { infer: true }) }) });
+    super({
+      adapter: new PrismaPg({ connectionString: config.get('DATABASE_URL', { infer: true }) }),
+      // generous limits so a busy database server does not abort short interactive transactions
+      transactionOptions: { maxWait: 10_000, timeout: 20_000 },
+    });
   }
 
   async onModuleInit(): Promise<void> {

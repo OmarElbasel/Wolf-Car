@@ -53,7 +53,7 @@ export class ActivityQueryService implements OnApplicationBootstrap {
       );
     }
     const where: Prisma.ActivityLogWhereInput = and.length ? { AND: and } : {};
-    const [rows, total, branches] = await this.prisma.$transaction([
+    const [rows, total, branches] = await Promise.all([
       this.prisma.activityLog.findMany({ where, orderBy: { id: 'desc' }, ...skipTake(q) }),
       this.prisma.activityLog.count({ where }),
       this.prisma.branch.findMany({ select: { id: true, code: true, name: true, nameAr: true } }),

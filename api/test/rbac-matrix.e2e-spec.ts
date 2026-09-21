@@ -78,6 +78,8 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'POST /api/orders/:id/cancel': ['admin', 'cashier'],
   'GET /api/orders/:id/receipt': ['admin', 'cashier'],
 
+  'GET /api/public/products': { public: 200 },
+
   'GET /api/activity': ['admin'],
   'GET /api/activity/actions': ['admin'],
 };

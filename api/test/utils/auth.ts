@@ -15,7 +15,9 @@ function refreshCookie(setCookie: string[] | string | undefined, name: string): 
 export async function login(t: TestApp, username: string, password: string): Promise<Login> {
   const res = await t.http().post('/api/auth/login').send({ username, password });
   if (res.status !== 200 || !res.body.accessToken) {
-    throw new Error(`login ${username} failed: ${res.status} ${JSON.stringify(res.body)}`);
+    throw new Error(
+      `login ${username} failed: ${res.status} ${JSON.stringify(res.body)} text=${JSON.stringify(res.text)} headers=${JSON.stringify(res.headers)}`,
+    );
   }
   return { token: res.body.accessToken, cookie: refreshCookie(res.headers['set-cookie'], 'wc_rt'), body: res.body };
 }

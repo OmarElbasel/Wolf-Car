@@ -39,12 +39,33 @@ async function passwordHashes(): Promise<Record<keyof typeof PW, string>> {
   return hashes;
 }
 
+/**
+ * Empties every table. DELETE in one transaction is much cheaper than TRUNCATE
+ * for these tiny tables (TRUNCATE creates new files on disk every time); users
+ * and branches go together so the deferred staffing check sees no branches.
+ * The append-only activity log can only be emptied with TRUNCATE.
+ */
 export async function resetDatabase(prisma: PrismaService): Promise<void> {
-  await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE activity_logs, order_items, orders, price_history, branch_products, products, ' +
-      'refresh_tokens, sessions, recovery_codes, user_permission_overrides, role_permissions, permissions, users, branches ' +
-      'RESTART IDENTITY CASCADE',
-  );
+  await prisma.$executeRawUnsafe('TRUNCATE TABLE activity_logs');
+  await prisma.$transaction(async (tx) => {
+    for (const table of [
+      'order_items',
+      'orders',
+      'price_history',
+      'branch_products',
+      'products',
+      'refresh_tokens',
+      'sessions',
+      'recovery_codes',
+      'user_permission_overrides',
+      'role_permissions',
+      'permissions',
+      'users',
+      'branches',
+    ]) {
+      await tx.$executeRawUnsafe(`DELETE FROM ${table}`);
+    }
+  });
 }
 
 /**

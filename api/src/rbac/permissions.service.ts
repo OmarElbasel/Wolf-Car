@@ -49,10 +49,10 @@ export class PermissionsService implements OnModuleInit {
   async setRolePermissions(role: Role, permissions: PermissionKey[]): Promise<PermissionKey[]> {
     if (role === LOCKED_ROLE) throw lockedError();
     const before = (await this.roleMatrix()).roles[role];
-    await this.prisma.$transaction([
-      this.prisma.rolePermission.deleteMany({ where: { role } }),
-      this.prisma.rolePermission.createMany({ data: permissions.map((permissionKey) => ({ role, permissionKey })) }),
-    ]);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.rolePermission.deleteMany({ where: { role } });
+      await tx.rolePermission.createMany({ data: permissions.map((permissionKey) => ({ role, permissionKey })) });
+    });
     const after = [...permissions].sort();
     this.trail.setEntity('Role', role).setChange({ permissions: before }, { permissions: after });
     return after;
@@ -87,12 +87,12 @@ export class PermissionsService implements OnModuleInit {
   async setUserOverrides(userId: string, dto: SetUserOverridesDto, grantedById: string) {
     const current = await this.userPermissions(userId);
     if (current.locked) throw lockedError();
-    await this.prisma.$transaction([
-      this.prisma.userPermissionOverride.deleteMany({ where: { userId } }),
-      this.prisma.userPermissionOverride.createMany({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userPermissionOverride.deleteMany({ where: { userId } });
+      await tx.userPermissionOverride.createMany({
         data: dto.overrides.map((o) => ({ userId, permissionKey: o.permission, effect: o.effect, grantedById })),
-      }),
-    ]);
+      });
+    });
     const updated = await this.userPermissions(userId);
     this.trail
       .setEntity('User', userId)

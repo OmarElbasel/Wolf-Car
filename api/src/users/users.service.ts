@@ -43,7 +43,7 @@ export class UsersService {
           }
         : {}),
     };
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.user.findMany({ where, select: USER_VIEW_SELECT, orderBy: [{ role: 'asc' }, { username: 'asc' }], ...skipTake(q) }),
       this.prisma.user.count({ where }),
     ]);

@@ -54,7 +54,7 @@ export class OrdersService {
       );
     }
     const where: Prisma.OrderWhereInput = { AND: and };
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.order.findMany({ where, select: ORDER_LIST_SELECT, orderBy: [{ createdAt: 'desc' }, { number: 'desc' }], ...skipTake(q) }),
       this.prisma.order.count({ where }),
     ]);

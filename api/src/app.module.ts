@@ -18,6 +18,7 @@ import { HealthController } from './health/health.controller';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
+import { PublicModule } from './public/public.module';
 import { PermissionsGuard } from './rbac/permissions.guard';
 import { RbacModule } from './rbac/rbac.module';
 import { ReceiptsModule } from './receipts/receipts.module';
@@ -88,6 +89,7 @@ type IdRequest = IncomingMessage & { id?: string };
     ShowroomModule,
     OrdersModule,
     ReceiptsModule,
+    PublicModule,
   ],
   controllers: [HealthController],
   providers: [
