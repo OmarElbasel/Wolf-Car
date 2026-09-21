@@ -20,7 +20,7 @@ services:
       timeout: 3s
       retries: 20
 
-  # Used only by `npm run test:e2e` in api/ — data lives in memory and is wiped.
+  # Used only by the test suites (api: wolfcar_test, Playwright: wolfcar_e2e) — data lives in memory.
   db-test:
     image: postgres:17-alpine
     environment:
@@ -33,6 +33,9 @@ services:
       - "5433:5432"
     tmpfs:
       - /var/lib/postgresql/data
+    volumes:
+      # also creates wolfcar_e2e for the Playwright tests
+      - ./docker/db-test-init.sql:/docker-entrypoint-initdb.d/10-e2e.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U wolfcar -d wolfcar_test"]
       interval: 5s

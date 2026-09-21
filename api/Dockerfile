@@ -28,6 +28,8 @@ COPY --from=build --chown=node:node /app/api/package.json /app/api/prisma.config
 COPY --from=build --chown=node:node /app/api/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/api/dist ./dist
 COPY --from=build --chown=node:node /app/api/prisma ./prisma
+# receipt logo (fonts come from @fontsource/cairo in node_modules)
+COPY --from=build --chown=node:node /app/api/assets ./assets
 RUN mkdir -p /app/api/storage/uploads && chown -R node:node /app/api/storage
 USER node
 EXPOSE 4000
