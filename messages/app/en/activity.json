@@ -65,5 +65,20 @@
     "order_confirm": "Order confirmed",
     "order_cancel": "Order cancelled",
     "order_receipt_download": "Receipt downloaded"
-  }
+  },
+  "actionGroups": {
+    "auth": "Sign-ins and sessions (all)",
+    "account": "Own account changes (all)",
+    "user": "User management (all)",
+    "branch": "Branches (all)",
+    "permission": "Permissions (all)",
+    "product": "Products (all)",
+    "order": "Orders (all)"
+  },
+  "groupsLabel": "Groups",
+  "actionsLabel": "Single actions",
+  "anyEntity": "All types",
+  "changed": "changed",
+  "changedHint": "Changed fields are highlighted.",
+  "noValue": "Nothing recorded"
 }

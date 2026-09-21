@@ -32,7 +32,13 @@
     "replaceImage": "استبدال الصورة",
     "noPriceNote": "تحدّد المالية السعر بعد إنشاء المنتج.",
     "created": "تم إنشاء المنتج",
-    "updated": "تم تحديث المنتج"
+    "updated": "تم تحديث المنتج",
+    "dropZone": "اسحب صورة إلى هنا أو انقر لاختيار صورة",
+    "currentImage": "الصورة الحالية",
+    "newImage": "تم اختيار صورة جديدة",
+    "duplicateBarcode": "هذا الباركود مستخدم لمنتج آخر.",
+    "submitCreate": "إنشاء المنتج",
+    "submitSave": "حفظ التغييرات"
   },
   "price": {
     "set": "تحديد السعر",
@@ -45,6 +51,22 @@
     "historyEmpty": "لا توجد تغييرات على السعر بعد.",
     "from": "{old} ← {new}",
     "firstPrice": "أول سعر: {new}",
-    "readOnly": "تحدّده المالية"
+    "readOnly": "تحدّده المالية",
+    "notSet": "لم يُحدَّد بعد"
+  },
+  "listLabel": "المنتجات",
+  "priceFilterLabel": "السعر",
+  "orderLabel": "ترتيب القائمة",
+  "savingOrder": "جارٍ حفظ الترتيب الجديد…",
+  "editNamed": "تعديل {name}",
+  "historyNamed": "سجل أسعار {name}",
+  "dnd": {
+    "roleDescription": "قابل لإعادة الترتيب",
+    "instructions": "لالتقاط منتج اضغط المسافة أو Enter، ثم استخدم السهمين للأعلى والأسفل لتحريكه، واضغط المسافة أو Enter مرة أخرى لإفلاته في موضعه الجديد. اضغط Escape للإلغاء.",
+    "pickedUp": "تم التقاط {name}، وهو في الموضع {position} من {total}.",
+    "movedTo": "نُقل {name} إلى الموضع {position} من {total}.",
+    "notOver": "{name} خارج القائمة الآن.",
+    "dropped": "أُفلت {name} في الموضع {position} من {total}.",
+    "cancelled": "أُلغيت إعادة الترتيب، وعاد {name} إلى الموضع {position} من {total}."
   }
 }

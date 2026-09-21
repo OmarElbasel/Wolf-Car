@@ -14,6 +14,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { useErrorMessage } from "@/lib/api/use-error-message";
 import type { Profile } from "@/lib/api/types";
 import { base } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import { RECOVERY_CODE_PATTERN, TOTP_CODE_PATTERN } from "@/shared/validation";
 import { useAuth } from "./auth-provider";
 
@@ -23,12 +24,14 @@ const credentialsSchema = z.object({
 });
 type Credentials = z.infer<typeof credentialsSchema>;
 
-export function PasswordInput(props: React.ComponentProps<typeof Input>) {
+export function PasswordInput({ className, ...props }: React.ComponentProps<typeof Input>) {
   const t = useTranslations("Auth");
   const [visible, setVisible] = useState(false);
   return (
-    <div className="relative">
-      <Input {...props} type={visible ? "text" : "password"} className="pe-12" dir="ltr" />
+    // Passwords are always typed left-to-right, so the eye button sits on the
+    // right in both languages (end-0 inside an ltr wrapper).
+    <div className="relative" dir="ltr">
+      <Input {...props} type={visible ? "text" : "password"} className={cn("pe-12", className)} dir="ltr" />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}

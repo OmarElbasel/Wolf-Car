@@ -39,5 +39,14 @@
     "permission_manage": "Manage permissions",
     "activity_read": "View the activity log",
     "showroom_password_view_or_change": "Change own showroom password"
-  }
+  },
+  "noAccessTitle": "You can't open this page",
+  "noAccessBody": "It needs the “{permission}” permission. Ask a Super Admin if you need access.",
+  "permission": "Permission",
+  "userLocked": "Super Admin accounts always have every permission, so there's nothing to change here.",
+  "searchUsers": "Search users",
+  "noUsers": "No users match.",
+  "pickUserHint": "Choose a user to see their permissions and set exceptions to their role.",
+  "exceptions": "{count, plural, =0 {No exceptions} one {# exception} other {# exceptions}}",
+  "save": "Save changes"
 }

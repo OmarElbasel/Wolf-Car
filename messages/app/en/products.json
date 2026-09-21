@@ -32,7 +32,13 @@
     "replaceImage": "Replace image",
     "noPriceNote": "Finance sets the price after the product is created.",
     "created": "Product created",
-    "updated": "Product updated"
+    "updated": "Product updated",
+    "dropZone": "Drop an image here, or click to choose one",
+    "currentImage": "Current image",
+    "newImage": "New image selected",
+    "duplicateBarcode": "Another product already uses this barcode.",
+    "submitCreate": "Create product",
+    "submitSave": "Save changes"
   },
   "price": {
     "set": "Set price",
@@ -45,6 +51,22 @@
     "historyEmpty": "No price changes yet.",
     "from": "{old} → {new}",
     "firstPrice": "First price: {new}",
-    "readOnly": "Set by Finance"
+    "readOnly": "Set by Finance",
+    "notSet": "Not set yet"
+  },
+  "listLabel": "Products",
+  "priceFilterLabel": "Price",
+  "orderLabel": "List order",
+  "savingOrder": "Saving the new order…",
+  "editNamed": "Edit {name}",
+  "historyNamed": "Price history of {name}",
+  "dnd": {
+    "roleDescription": "sortable",
+    "instructions": "To pick up a product, press Space or Enter. Use the up and down arrow keys to move it, then press Space or Enter again to drop it in its new position. Press Escape to cancel.",
+    "pickedUp": "Picked up {name}. It is at position {position} of {total}.",
+    "movedTo": "{name} moved to position {position} of {total}.",
+    "notOver": "{name} is no longer over the list.",
+    "dropped": "{name} dropped at position {position} of {total}.",
+    "cancelled": "Reordering cancelled. {name} is back at position {position} of {total}."
   }
 }

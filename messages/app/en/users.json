@@ -37,5 +37,18 @@
   "deleteBody": "{name} is removed. Their history stays in the activity log.",
   "deleted": "User deleted",
   "permissions": "Permissions",
-  "branchStaffNote": "Branch staff are replaced from the Branches page."
+  "branchStaffNote": "Branch staff are replaced from the Branches page.",
+  "actionsFor": "Actions for {name}",
+  "anyRole": "All roles",
+  "anyStatus": "All statuses",
+  "you": "You",
+  "displayName": "Full name",
+  "twoFactorOn": "2FA on",
+  "roleSuperAdminHint": "Full access, including users, branches and permissions.",
+  "roleFinanceHint": "Sets prices and follows the orders of every branch.",
+  "isActive": "Account active",
+  "isActiveHint": "Inactive accounts can't sign in.",
+  "selfNote": "You can't change your own role or deactivate your own account.",
+  "activated": "Account activated",
+  "deactivated": "Account deactivated"
 }

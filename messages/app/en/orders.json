@@ -42,5 +42,15 @@
   "receiptEn": "English receipt",
   "receiptOnlyConfirmed": "Receipts are available after confirmation.",
   "lockedNote": "Confirmed orders can't be changed.",
-  "adminOverride": "You're editing a confirmed order as Super Admin. This is recorded in the activity log."
+  "adminOverride": "You're editing a confirmed order as Super Admin. This is recorded in the activity log.",
+  "subtitleAdmin": "Orders from every branch. You can edit, confirm or cancel them.",
+  "openOrder": "Open order {code}",
+  "product": "Product",
+  "numberPlaceholder": "e.g. GH-000042",
+  "placedLine": "Placed {date} by {name}",
+  "saveChanges": "Save changes",
+  "cancelEdit": "Discard changes",
+  "minOneLine": "An order needs at least one item.",
+  "downloading": "Preparing…",
+  "adminOverrideCancelled": "You're editing a cancelled order as Super Admin. This is recorded in the activity log."
 }

@@ -91,7 +91,6 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 function UserMenu() {
   const t = useTranslations();
-  const router = useRouter();
   const locale = useLocale();
   const { user, logout } = useAuth();
   if (!user) return null;
@@ -127,10 +126,7 @@ function UserMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onSelect={async () => {
-            await logout();
-            router.replace("/login");
-          }}
+          onSelect={() => void logout()}
         >
           <LogOut className="rtl:-scale-x-100" aria-hidden="true" />
           {t("Common.signOut")}
@@ -147,14 +143,17 @@ function UserMenu() {
  */
 export function DashboardShell({ children }: { children: ReactNode }) {
   const t = useTranslations();
-  const { status } = useAuth();
+  const { status, endReason } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (status === "anonymous") router.replace(`/login?reason=expired&next=${encodeURIComponent(`/${pathname}`.replace("//", "/"))}`);
-  }, [status, router, pathname]);
+    if (status !== "anonymous") return;
+    if (endReason === "signedOut") router.replace("/login");
+    else if (endReason === "password") router.replace("/login?reason=password");
+    else router.replace(`/login?reason=expired&next=${encodeURIComponent(`/${pathname}`.replace("//", "/"))}`);
+  }, [status, endReason, router, pathname]);
 
   if (status !== "authenticated") {
     return (

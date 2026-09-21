@@ -1,0 +1,316 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { Lock, ShoppingCart } from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { BrandMark } from "@/components/app/brand";
+import { ConfirmDialog } from "@/components/app/confirm-dialog";
+import { EmptyState, ErrorState } from "@/components/app/states";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useRouter } from "@/i18n/navigation";
+import { api } from "@/lib/api/client";
+import type { BranchSummary, OrderDetail, Profile, ShowroomProduct } from "@/lib/api/types";
+import { formatMoney } from "@/lib/format";
+import { ORDER_MAX_LINES, ORDER_MAX_QUANTITY } from "@/shared/validation";
+import { canAdd, itemCount, quantityOf, total as cartTotal } from "./cart";
+import { type CartEntry, CartPanel } from "./cart-panel";
+import { CheckoutDialog } from "./checkout-dialog";
+import { newIdempotencyKey } from "./idempotency";
+import { ProductCard } from "./product-card";
+import { SuccessOverlay } from "./success-overlay";
+import { clearStoredCart, useCart } from "./use-cart";
+import { IDLE_TIMEOUT_MS, useIdleTimeout } from "./use-idle-timeout";
+
+export interface ShowroomCatalog {
+  branch: BranchSummary;
+  products: ShowroomProduct[];
+}
+
+export const SHOWROOM_PRODUCTS_KEY = ["showroom", "products"] as const;
+const HEADER_H = "76px";
+
+function KioskSplash() {
+  const t = useTranslations();
+  return (
+    <div className="grid min-h-dvh place-items-center bg-sand px-6" role="status" aria-live="polite">
+      <div className="grid justify-items-center gap-5">
+        <BrandMark name={t("Brand.name")} sub={t("Showroom.title")} />
+        <Skeleton className="h-1.5 w-40 rounded-full" />
+        <span className="sr-only">{t("Common.loading")}</span>
+      </div>
+    </div>
+  );
+}
+
+function ProductGridSkeleton() {
+  const t = useTranslations("Common");
+  return (
+    <div role="status" aria-live="polite" className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      <span className="sr-only">{t("loading")}</span>
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface">
+          <Skeleton className="aspect-[4/3] rounded-none" />
+          <div className="grid gap-2 p-4">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-7 w-1/2" />
+            <Skeleton className="h-[60px] w-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }) {
+  const t = useTranslations("Showroom");
+  const tc = useTranslations("Common");
+  const brand = useTranslations("Brand");
+  const locale = useLocale();
+  const router = useRouter();
+  const { logout } = useAuth();
+  const { cart, add, increment, decrement, remove, clear, prune } = useCart({ persist: true });
+  const topRef = useRef<HTMLDivElement>(null);
+  /** set when an order is placed so the closing dialog doesn't pull focus from the confirmation */
+  const placedRef = useRef(false);
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [checkoutKey, setCheckoutKey] = useState<string | null>(null);
+  const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
+
+  const catalog = useQuery({
+    queryKey: SHOWROOM_PRODUCTS_KEY,
+    queryFn: async () => {
+      const data = await api<ShowroomCatalog>("/showroom/products", { audience: "showroom" });
+      // products that were unpriced or removed since they were added leave the cart
+      prune(data.products.map((p) => p.id));
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
+  const products = catalog.data?.products ?? [];
+  const byId = new Map(products.map((p) => [p.id, p]));
+  const entries: CartEntry[] = cart.lines.flatMap((line) => {
+    const product = byId.get(line.productId);
+    return product ? [{ product, quantity: line.quantity }] : [];
+  });
+  const lines = entries.map((e) => ({ productId: e.product.id, quantity: e.quantity }));
+  const count = itemCount({ lines });
+  const total = cartTotal({ lines }, new Map(products.map((p) => [p.id, p.price])));
+  const branch = catalog.data?.branch ?? user.branch;
+  const branchName = branch ? (locale === "ar" ? branch.nameAr : branch.name) : null;
+
+  const reset = () => {
+    placedRef.current = false;
+    clear();
+    setOrder(null);
+    setCheckoutKey(null);
+    setSheetOpen(false);
+    topRef.current?.scrollIntoView({ block: "start" });
+  };
+
+  useIdleTimeout(
+    cart.lines.length > 0 && order === null,
+    () => {
+      reset();
+      toast(t("idleReset"));
+    },
+    idleTimeoutMs,
+  );
+
+  const handleAdd = (product: ShowroomProduct) => {
+    if (!canAdd(cart, product.id)) {
+      toast(
+        quantityOf(cart, product.id) > 0
+          ? t("maxQuantity", { max: ORDER_MAX_QUANTITY })
+          : t("cartFull", { max: ORDER_MAX_LINES }),
+      );
+      return false;
+    }
+    add(product.id);
+    return true;
+  };
+
+  const openCheckout = () => {
+    setSheetOpen(false);
+    setCheckoutKey(newIdempotencyKey());
+  };
+
+  const handlers = { onIncrement: increment, onDecrement: decrement, onRemove: remove };
+  const panelProps = {
+    entries,
+    count,
+    total,
+    onClear: () => setClearOpen(true),
+    onCheckout: openCheckout,
+    ...handlers,
+  };
+
+  return (
+    <div ref={topRef} className="min-h-dvh bg-sand">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface" style={{ height: HEADER_H }}>
+        <div className="flex h-full items-center justify-between gap-3 px-4 lg:px-6">
+          <div className="flex min-w-0 items-center gap-4">
+            <BrandMark name={brand("name")} sub={t("title")} />
+            {branchName && (
+              <>
+                <span className="hidden h-9 w-px bg-line min-[560px]:block" aria-hidden="true" />
+                <p dir="auto" className="hidden truncate text-lg font-extrabold text-ink-2 min-[560px]:block" data-testid="branch-name">
+                  {branchName}
+                </p>
+              </>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <LocaleSwitcher className="px-2" />
+            <ThemeToggle />
+            <Button
+              variant="outline"
+              size="lg"
+              className="ms-1 px-3 sm:px-4"
+              onClick={() => setLockOpen(true)}
+              aria-label={t("lock")}
+            >
+              <Lock aria-hidden="true" strokeWidth={1.8} />
+              <span className="hidden text-[15px] sm:inline">{t("lock")}</span>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
+        <main className="min-w-0 px-4 pt-5 pb-36 lg:px-6 lg:pb-8">
+          <h1 className="sr-only">{branchName ? `${t("title")} · ${branchName}` : t("title")}</h1>
+          {catalog.isPending ? (
+            <ProductGridSkeleton />
+          ) : catalog.isError && !catalog.data ? (
+            <ErrorState error={catalog.error} onRetry={() => void catalog.refetch()} />
+          ) : products.length === 0 ? (
+            <EmptyState title={t("noProducts")} />
+          ) : (
+            <ul className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-label={t("title")}>
+              {products.map((product) => (
+                <li key={product.id} className="grid">
+                  <ProductCard product={product} quantity={quantityOf(cart, product.id)} onAdd={() => handleAdd(product)} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </main>
+
+        <aside className="hidden border-s border-line bg-surface lg:block">
+          <div className="sticky" style={{ top: HEADER_H, height: `calc(100dvh - ${HEADER_H})` }}>
+            <CartPanel heading={<h2 className="text-xl leading-tight font-extrabold">{t("cart")}</h2>} {...panelProps} />
+          </div>
+        </aside>
+      </div>
+
+      {/* tablets in portrait: a bottom bar that opens the cart as a sheet */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] lg:hidden">
+        <div className="mx-auto flex max-w-3xl items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-ink-2">{t("items", { count })}</p>
+            <p className="text-2xl leading-tight font-extrabold tabular-nums" aria-live="polite">
+              <span dir="ltr">{formatMoney(total, locale)}</span>
+            </p>
+          </div>
+          <Button size="touch" className="relative" onClick={() => setSheetOpen(true)}>
+            <ShoppingCart aria-hidden="true" strokeWidth={1.8} />
+            {t("viewCart")}
+            {count > 0 && (
+              <span className="grid h-7 min-w-7 place-items-center rounded-full bg-white px-1.5 text-sm font-extrabold text-accent-ink tabular-nums" aria-hidden="true">
+                {count}
+              </span>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="bottom" closeLabel={tc("close")} className="h-[88dvh] gap-0 overflow-hidden" aria-describedby={undefined}>
+          <CartPanel
+            heading={<SheetTitle className="text-xl leading-tight">{t("cart")}</SheetTitle>}
+            headerClassName="pe-16"
+            {...panelProps}
+          />
+        </SheetContent>
+      </Sheet>
+
+      <CheckoutDialog
+        open={checkoutKey !== null && order === null}
+        restoreFocus={() => !placedRef.current}
+        idempotencyKey={checkoutKey ?? ""}
+        lines={lines}
+        count={count}
+        total={total}
+        userId={user.id}
+        onPlaced={(placed) => {
+          placedRef.current = true;
+          setOrder(placed);
+        }}
+        onUnavailable={async () => {
+          const fresh = await catalog.refetch();
+          const valid = new Set(fresh.data?.products.map((p) => p.id) ?? []);
+          return cart.lines.filter((l) => valid.has(l.productId)).length;
+        }}
+        onClose={() => setCheckoutKey(null)}
+      />
+
+      <ConfirmDialog
+        open={clearOpen}
+        onOpenChange={setClearOpen}
+        title={t("clearTitle")}
+        body={t("clearBody")}
+        confirmLabel={t("clear")}
+        destructive
+        onConfirm={async () => {
+          clear();
+          setSheetOpen(false);
+        }}
+      />
+
+      <ConfirmDialog
+        open={lockOpen}
+        onOpenChange={setLockOpen}
+        title={t("lockTitle")}
+        body={t("lockBody")}
+        confirmLabel={t("lock")}
+        onConfirm={async () => {
+          clear();
+          clearStoredCart();
+          await logout();
+          router.replace("/showroom/login");
+        }}
+      />
+
+      <AnimatePresence>{order && <SuccessOverlay key={order.id} order={order} onDone={reset} />}</AnimatePresence>
+    </div>
+  );
+}
+
+/**
+ * The showroom kiosk: a full-screen product grid for customers with a cart
+ * and checkout. Signed-out tablets are sent to the showroom sign-in.
+ */
+export function ShowroomKiosk({ idleTimeoutMs = IDLE_TIMEOUT_MS }: { idleTimeoutMs?: number }) {
+  const { status, user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "anonymous") router.replace("/showroom/login");
+  }, [status, router]);
+
+  if (status !== "authenticated" || !user) return <KioskSplash />;
+  return <Kiosk user={user} idleTimeoutMs={idleTimeoutMs} />;
+}

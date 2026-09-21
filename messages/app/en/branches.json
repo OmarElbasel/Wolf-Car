@@ -22,5 +22,9 @@
   "replaceTitle": "Replace the {role}",
   "replaceBody": "{name}'s account is closed and a new account is created in its place. This can't be undone.",
   "replaced": "{role} replaced",
-  "empty": "No branches yet."
+  "empty": "No branches yet.",
+  "codeTaken": "A branch with this code already exists.",
+  "vacant": "Not assigned",
+  "noEmail": "No email",
+  "replaceHint": "Enter the new person's details. Their username and passwords are generated."
 }

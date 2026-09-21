@@ -14,10 +14,14 @@ import {
 import type { AuthResult, PermissionKey, Profile, TwoFactorChallenge } from "@/lib/api/types";
 
 type Status = "loading" | "authenticated" | "anonymous";
+/** Why the session ended; decides the message on the login page. */
+export type EndReason = "expired" | "signedOut" | "password";
 
 interface AuthApi {
   status: Status;
   user: Profile | null;
+  /** Set once the session ends in this tab; null while signed in or never signed in. */
+  endReason: EndReason | null;
   /** UX only — the API enforces every permission itself. */
   can: (permission: PermissionKey) => boolean;
   canAny: (...permissions: PermissionKey[]) => boolean;
@@ -27,7 +31,7 @@ interface AuthApi {
   /** Re-reads the profile (e.g. after enabling 2FA). */
   reload: () => Promise<void>;
   /** Clears the local session after the server revoked it (e.g. password change). */
-  expire: () => void;
+  expire: (reason?: EndReason) => void;
 }
 
 const AuthContext = createContext<AuthApi | null>(null);
@@ -46,23 +50,29 @@ export function AuthProvider({ audience, children }: { audience: Audience; child
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<Status>("loading");
   const [user, setUser] = useState<Profile | null>(null);
+  const [endReason, setEndReason] = useState<EndReason | null>(null);
 
   const accept = useCallback(
     (result: AuthResult) => {
       setAccessToken(audience, result.accessToken);
       setUser(result.user);
+      setEndReason(null);
       setStatus("authenticated");
       return result.user;
     },
     [audience],
   );
 
-  const expire = useCallback(() => {
-    setAccessToken(audience, null);
-    setUser(null);
-    setStatus("anonymous");
-    queryClient.clear();
-  }, [audience, queryClient]);
+  const expire = useCallback(
+    (reason: EndReason = "expired") => {
+      setAccessToken(audience, null);
+      setUser(null);
+      setEndReason(reason);
+      setStatus("anonymous");
+      queryClient.clear();
+    },
+    [audience, queryClient],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +96,7 @@ export function AuthProvider({ audience, children }: { audience: Audience; child
     return {
       status,
       user,
+      endReason,
       can: (p) => permissions.has(p),
       canAny: (...ps) => ps.some((p) => permissions.has(p)),
       login: async (username, password) => {
@@ -96,7 +107,7 @@ export function AuthProvider({ audience, children }: { audience: Audience; child
         accept(await publicPost<AuthResult>(PATHS[audience].twoFactor, { challengeToken, ...second })),
       logout: async () => {
         await logoutSession(audience);
-        expire();
+        expire("signedOut");
       },
       reload: async () => {
         const result = await refreshSession(audience);
@@ -105,7 +116,7 @@ export function AuthProvider({ audience, children }: { audience: Audience; child
       },
       expire,
     };
-  }, [status, user, audience, accept, expire]);
+  }, [status, user, endReason, audience, accept, expire]);
 
   return <AuthContext.Provider value={api}>{children}</AuthContext.Provider>;
 }
@@ -127,6 +138,7 @@ export function StaticAuthProvider({
   const value: AuthApi = {
     status: user ? "authenticated" : "anonymous",
     user,
+    endReason: null,
     can: (p) => permissions.has(p),
     canAny: (...ps) => ps.some((p) => permissions.has(p)),
     login: async () => {

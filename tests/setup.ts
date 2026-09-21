@@ -49,6 +49,9 @@ window.matchMedia ??= ((query: string) => ({
 })) as typeof window.matchMedia;
 Element.prototype.scrollIntoView ??= () => undefined;
 Element.prototype.hasPointerCapture ??= () => false;
+// input-otp probes for password-manager badges with elementFromPoint, which jsdom lacks
+document.elementFromPoint ??= () => null;
+window.scrollTo = () => undefined;
 Element.prototype.releasePointerCapture ??= () => undefined;
 if (!navigator.clipboard) {
   Object.defineProperty(navigator, "clipboard", { value: { writeText: vi.fn().mockResolvedValue(undefined) }, configurable: true });

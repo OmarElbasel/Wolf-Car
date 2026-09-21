@@ -21,6 +21,7 @@
   "UNSUPPORTED_IMAGE": "Use a JPEG, PNG or WebP image.",
   "UNREADABLE_IMAGE": "This image file is damaged.",
   "IMAGE_TOO_SMALL": "The image must be at least 64 × 64 pixels.",
+  "IMAGE_TOO_LARGE": "The image must be at most 40 megapixels.",
   "FILE_TOO_LARGE": "The image is larger than 5 MB.",
   "DUPLICATE": "Something with the same value already exists.",
   "ORDER_MISMATCH": "The product list changed. Refresh and reorder again.",
