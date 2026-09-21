@@ -1,0 +1,14 @@
+# Allowlist: only what the API image needs (context = repository root).
+*
+!api/package.json
+!api/package-lock.json
+!api/tsconfig.json
+!api/tsconfig.build.json
+!api/nest-cli.json
+!api/prisma.config.ts
+!api/prisma/
+!api/src/
+!api/assets/
+!shared/
+api/src/generated/
+api/**/*.spec.ts
