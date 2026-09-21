@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Wrap } from "./Button";
 import { Icon } from "./Icon";
+import { Link } from "@/i18n/navigation";
 import { getBranchList } from "@/lib/branches";
 import { LOGO, SOCIAL } from "@/lib/content";
 
@@ -71,8 +72,16 @@ export async function Footer() {
             </p>
           </div>
         </div>
-        <div className="mt-[26px] border-t border-[#2C2C2C] pt-4 text-[13px] text-[#8F8F8F]">
-          {t("copyright")}
+        <div className="mt-[26px] flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-[#2C2C2C] pt-4 text-[13px] text-[#8F8F8F]">
+          <span>{t("copyright")}</span>
+          <nav aria-label={t("linksAria")} className="flex gap-4">
+            <Link href="/products" className="hover:text-white">
+              {t("catalogLink")}
+            </Link>
+            <Link href="/login" className="hover:text-white">
+              {t("staffLogin")}
+            </Link>
+          </nav>
         </div>
       </Wrap>
     </footer>
