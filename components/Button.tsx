@@ -68,15 +68,17 @@ export function SectionHead({
   body,
   id,
   tone = "light",
+  center = false,
 }: {
   label: string;
   title: string;
   body?: string;
   id?: string;
   tone?: "light" | "dark";
+  center?: boolean;
 }) {
   return (
-    <div className="mb-7 max-w-[620px]">
+    <div className={`mb-7 max-w-[620px] ${center ? "mx-auto text-center" : ""}`}>
       <div className={`text-sm font-bold ${tone === "dark" ? "text-[#FF9A62]" : "text-accent-ink"}`}>
         {label}
       </div>

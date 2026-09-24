@@ -11,8 +11,13 @@ export interface Branch {
   tel: string;
   wa: string;
   maps: string;
-  photoAlt: string;
+  /** Google Maps embed for the branch card (plus code, so no API key is needed) */
+  mapEmbed: string;
+  mapTitle: string;
 }
+
+const embed = (plusCode: string, lang: Locale) =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(`${plusCode} Doha`)}&hl=${lang}&z=16&output=embed`;
 
 /** Confirmed 2026-09-17. The old Bin Omran number 71009848 is dead — do not use. */
 const BRANCHES: Record<Locale, Record<BranchId, Branch>> = {
@@ -25,7 +30,8 @@ const BRANCHES: Record<Locale, Record<BranchId, Branch>> = {
       tel: "+97471008939",
       wa: "97471008939",
       maps: "https://www.google.com/maps/search/?api=1&query=8F8V%2B4X%20Doha",
-      photoAlt: "واجهة فرع بن عمران",
+      mapEmbed: embed("8F8V+4X", "ar"),
+      mapTitle: "موقع فرع بن عمران على الخريطة",
     },
     gharrafa: {
       id: "gharrafa",
@@ -35,7 +41,8 @@ const BRANCHES: Record<Locale, Record<BranchId, Branch>> = {
       tel: "+97471007113",
       wa: "97471007113",
       maps: "https://www.google.com/maps/search/?api=1&query=8FG7%2BRR%20Doha",
-      photoAlt: "واجهة فرع الغرافة",
+      mapEmbed: embed("8FG7+RR", "ar"),
+      mapTitle: "موقع فرع الغرافة على الخريطة",
     },
   },
   en: {
@@ -47,7 +54,8 @@ const BRANCHES: Record<Locale, Record<BranchId, Branch>> = {
       tel: "+97471008939",
       wa: "97471008939",
       maps: "https://www.google.com/maps/search/?api=1&query=8F8V%2B4X%20Doha",
-      photoAlt: "Bin Omran branch storefront",
+      mapEmbed: embed("8F8V+4X", "en"),
+      mapTitle: "Map of the Bin Omran branch",
     },
     gharrafa: {
       id: "gharrafa",
@@ -57,7 +65,8 @@ const BRANCHES: Record<Locale, Record<BranchId, Branch>> = {
       tel: "+97471007113",
       wa: "97471007113",
       maps: "https://www.google.com/maps/search/?api=1&query=8FG7%2BRR%20Doha",
-      photoAlt: "Al Gharrafa branch storefront",
+      mapEmbed: embed("8FG7+RR", "en"),
+      mapTitle: "Map of the Al Gharrafa branch",
     },
   },
 };

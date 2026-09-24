@@ -1,6 +1,7 @@
 import type { Config } from 'jest';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const swc = require('./test/swc-jest.cjs');
+// Static import, not require(): Node 22.22+ strips types natively and loads this
+// config as ESM, where `require` is not defined.
+import swc from './test/swc-jest.cjs';
 
 /** Unit tests: *.spec.ts next to the code, no database. */
 const config: Config = {

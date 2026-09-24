@@ -1,37 +1,23 @@
-import { getTranslations } from "next-intl/server";
-import { ButtonLink, Photo, SectionHead, Wrap } from "./Button";
+import { getLocale, getTranslations } from "next-intl/server";
+import { ButtonLink, SectionHead, Wrap } from "./Button";
 import { Icon } from "./Icon";
-import { SOCIAL } from "@/lib/content";
+import { WorkVideos } from "./WorkVideos";
+import { SOCIAL, getWorkVideos } from "@/lib/content";
 
 export async function Work() {
   const t = await getTranslations("Work");
-
-  const TILES = [
-    { label: t("tileTiktok"), tall: true },
-    { label: t("tileBeforeAfter"), tall: false },
-    { label: t("tileBeforeAfter"), tall: false },
-    { label: t("tileInstagram"), tall: true },
-    { label: t("tileBeforeAfter"), tall: false },
-    { label: t("tileBeforeAfter"), tall: false },
-  ];
+  const videos = getWorkVideos(await getLocale());
 
   return (
     <section id="work" className="bg-charcoal py-14 text-white lg:py-20">
       <Wrap>
-        <SectionHead tone="dark" label={t("label")} title={t("title")} body={t("body")} />
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          {TILES.map((tile, i) => (
-            <div
-              key={i}
-              className={`overflow-hidden rounded-[var(--radius-brand)] ${
-                tile.tall ? "row-span-2" : "aspect-square"
-              }`}
-            >
-              <Photo label={tile.label} dark />
-            </div>
-          ))}
-        </div>
-        <div className="mt-[18px] flex flex-wrap gap-2.5">
+        <SectionHead
+          tone="dark"
+          label={t("label")}
+          title={t("title")}
+          body={t("body")}
+        />
+        <WorkVideos videos={videos}>
           <ButtonLink
             variant="outline"
             size="sm"
@@ -54,7 +40,7 @@ export async function Work() {
             <Icon name="ig" />
             {t("instagramLabel")}
           </ButtonLink>
-        </div>
+        </WorkVideos>
       </Wrap>
     </section>
   );

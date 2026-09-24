@@ -37,7 +37,8 @@ cd api
 cp .env.example .env          # then set JWT_ACCESS_SECRET and TOTP_ENCRYPTION_KEY (commands are in the file)
 npm install
 npx prisma migrate deploy     # create the schema
-npm run db:seed               # demo data (wipes the dev database!)
+npm run db:seed               # demo accounts and branches (wipes the dev database!)
+npm run db:import-legacy      # the real catalogue, from ../old products data
 npm run start:dev             # http://localhost:4000/api  (Swagger: /api/docs)
 
 # 3. web (in another terminal, repo root)
@@ -54,11 +55,62 @@ Staff sign-in: `/ar/login` · Showroom: `/ar/showroom` · Catalog: `/ar/products
 ```bash
 cp api/.env.example api/.env   # set the two secrets
 docker compose up -d --build    # db, db-test and the API on :4000 (migrations run on start)
-docker compose exec api npx tsx prisma/seed.ts   # optional demo data
+docker compose exec api npx tsx prisma/seed.ts   # optional demo accounts (wipes the database)
 API_INTERNAL_URL=http://localhost:4000 npm run build && npm start   # web on :3000
 ```
 
-## 3. Demo accounts (created by the seed — development only)
+### Testing from other devices (phone, laptop)
+
+Devices on the same Wi-Fi only need to reach the web app, because Next.js proxies `/api/*` to the API on this machine.
+
+1. In `api/.env`, set `COOKIE_SECURE=false` and restart the API. Browsers drop `Secure` cookies over plain `http://` on any host except `localhost`, so without this, signing in fails silently.
+2. Run `npm run dev` and open the **Network:** URL it prints (for example `http://192.168.1.34:3000`) on the other device. `next.config.ts` adds this machine's LAN IPs to `allowedDevOrigins` when the server starts. If your IP changes, restart `npm run dev`.
+3. If the page doesn't load at all, allow incoming connections for `node` in the macOS firewall.
+
+Over `http://<LAN IP>`, copy-to-clipboard buttons don't work, because the browser allows clipboard access only on `localhost` and HTTPS.
+
+## 3. Importing the legacy catalogue
+
+The previous Supabase catalogue exports as two CSVs (`categories_rows.csv`,
+`products_rows.csv`) whose images are inline base64 data URIs. To load them:
+
+```bash
+cd api
+npm run db:import-legacy                       # reads ../old products data
+npm run db:import-legacy -- --dir /path/to/csvs
+npm run db:import-legacy -- --force-images     # re-encode product images that already exist
+```
+
+Category (car) images are always re-encoded, with their empty margins trimmed
+so every car fills its card the same way, and get their English name for the
+/en pages from `CATEGORY_NAMES_EN` in `api/src/legacy-import/legacy-rows.ts`
+(add a line there for a new category).
+
+Unlike the seed, the import **never wipes anything**. Rows are keyed on their
+legacy primary keys (`cat-…`, `prod-…`) in the `legacy_id` columns, so
+re-running updates what is already there instead of duplicating it. Products
+are appended to every active branch's showroom order, after whatever the branch
+manager has already arranged.
+
+What it does to the data on the way in:
+
+- **Images** are decoded and re-encoded through the same pipeline as an upload,
+  producing `<uuid>.webp` and `<uuid>-sm.webp` in `UPLOAD_DIR`. The source
+  pictures are small (often under 200 px), so they are never enlarged — see the
+  note on `Product.imageKey` in the schema.
+- **Arabic text** is NFKC-normalised. The export stores much of it as
+  Presentation Forms-B (`ﻟﻴﻮﺑﺎرد`), which renders inconsistently and never
+  matches what a user types into search; NFKC folds it to `ليوبارد`.
+- **Barcodes** are kept as-is, including duplicates. The legacy catalogue lists
+  the same part once per car model, so ~147 barcodes are shared by several
+  products — `products.barcode` is therefore indexed, not unique. A value that
+  is not a usable barcode is dropped with a warning.
+- **Rows without a usable image are skipped**, because `image_key` is NOT NULL
+  and a product with no picture is useless on the kiosk.
+
+Every change and skip is printed as a warning at the end of the run.
+
+## 4. Demo accounts (created by the seed — development only)
 
 | Username | Role | Dashboard password | Showroom password |
 |---|---|---|---|
@@ -69,11 +121,11 @@ API_INTERNAL_URL=http://localhost:4000 npm run build && npm start   # web on :30
 | `gh.manager` | Branch Manager, Al Gharrafa | `Manager#Wolf2026!` | `Showroom#2026!` |
 | `gh.cashier` | Cashier, Al Gharrafa | `Cashier#Wolf2026!` | `Showroom#2026!` |
 
-The seed also creates 13 products (2 without a price, to show Finance's queue), a different showroom order per branch and a few orders. **Never run the seed in production** — it empties the database first (it refuses to run when `NODE_ENV=production`).
+The seed creates no products: the catalogue comes from `npm run db:import-legacy` (`npm run db:reset` runs both). Only the Playwright suite sets `SEED_DEMO_CATALOG=1`, which adds 13 made-up products (2 without a price, to show Finance's queue), a different showroom order per branch and a few orders. **Never run the seed in production** — it empties the database first (it refuses to run when `NODE_ENV=production`).
 
 There is no public registration: the Super Admin creates every account. New accounts get an auto-generated username (e.g. `wk.cashier`) and generated passwords that are shown **once** in a copyable dialog.
 
-## 4. Environment variables
+## 5. Environment variables
 
 ### API (`api/.env`, validated at startup — the API refuses to start with a bad value)
 
@@ -92,7 +144,7 @@ There is no public registration: the Super Admin creates every account. New acco
 | `JWT_ACCESS_TTL_SECONDS` | `900` | Access token lifetime (15 min) |
 | `REFRESH_TTL_DAYS` | `7` | Dashboard session lifetime |
 | `SHOWROOM_SESSION_TTL_HOURS` | `16` | Showroom session lifetime |
-| `COOKIE_SECURE` | `true` | `Secure` flag on cookies (browsers accept it on `http://localhost`) |
+| `COOKIE_SECURE` | `true` | `Secure` flag on cookies (browsers accept it on `http://localhost`, not on a LAN IP; see "Testing from other devices") |
 | `LOGIN_MAX_ATTEMPTS` / `LOGIN_LOCK_MINUTES` | `5` / `15` | Account lockout |
 | `RATE_LIMIT_PER_MINUTE` | `300` | General per-IP budget |
 | `AUTH_THROTTLE_LIMIT` / `AUTH_THROTTLE_TTL_SECONDS` | `10` / `60` | Per-IP budget on sign-in and security endpoints |
@@ -107,7 +159,7 @@ There is no public registration: the Super Admin creates every account. New acco
 |---|---|---|
 | `API_INTERNAL_URL` | `http://localhost:4000` | Where the Next.js server reaches the API (`/api/*` rewrite and the catalog page). Read at **build** time for the rewrite. |
 
-## 5. Tests
+## 6. Tests
 
 ```bash
 # API — unit tests (no database)
@@ -136,7 +188,7 @@ What they cover:
 - **Web** — forms (login/2FA, products, prices, passwords with strength meter, users, branches), permission-gated UI, the showroom cart and checkout, drag-and-drop reordering.
 - **Playwright** — the complete story (admin creates a branch and its staff → manager adds a product → finance prices it → showroom places an order → cashier confirms and downloads the receipt → admin sees it all in the activity log), role landing pages, the public catalogue (no prices in DOM or network), and **visual snapshots of the landing page**.
 
-## 6. Permission model
+## 7. Permission model
 
 **Roles** (`SUPER_ADMIN`, `FINANCE`, `BRANCH_MANAGER`, `CASHIER`) map to **granular permissions stored in the database**. The Super Admin edits them on *Dashboard → Permissions*:
 
@@ -171,7 +223,7 @@ Effective permissions = role permissions + user grants − user revokes, **resol
 
 **Branch staffing is enforced by the database**: partial unique indexes allow at most one (non-deleted) manager and one cashier per branch, and a deferred constraint trigger requires at least one of each at commit. That's why a branch is created together with its two accounts, and staff are *replaced* (old account retired and new one created in one transaction) rather than added.
 
-## 7. Security notes
+## 8. Security notes
 
 - **Passwords**: argon2id (19 MiB, t=2, p=1); never stored or returned in plain text. Policy (shared by API and web): ≥ 12 characters, upper, lower, number, symbol, not containing the username; live strength meter in the UI.
 - **Sessions**: 15-minute JWT access token kept in memory only; opaque refresh token (stored hashed) in an `httpOnly; Secure; SameSite=Strict` cookie scoped to `/api/auth`, rotated on every use, with reuse detection that revokes the session. Logout, password change, admin reset and deactivation revoke sessions immediately. The showroom uses a separate cookie, password and session type that cannot reach dashboard routes.
@@ -182,14 +234,14 @@ Effective permissions = role permissions + user grants − user revokes, **resol
 - **Receipts**: rendered from an escaped template by Chromium with JavaScript disabled and no network access.
 - **Audit log**: an interceptor records every state-changing request (and receipt downloads, sign-ins, failed sign-ins, permission denials) with actor, role, branch, action, entity, before/after (secrets redacted), IP, user agent and request id. The table is append-only (a trigger blocks UPDATE/DELETE), and a test fails if a new state-changing route isn't audited.
 
-## 8. Database notes
+## 9. Database notes
 
 - Schema: `api/prisma/schema.prisma`. Migrations: `api/prisma/migrations/` (apply with `npx prisma migrate deploy`).
 - Hand-written SQL at the end of the first migration adds what Prisma can't model: the branch staffing indexes and trigger, CHECK constraints (role ↔ branch, money, quantities, line totals), the deferrable `(branch, position)` unique constraint for reordering, and the append-only activity log. When generating a new migration, review it for accidental `DROP`s of these objects.
 - Order lines snapshot the product **name and unit price** at order time; later price or name changes never alter existing orders or receipts.
-- `npm run db:reset` (in `api/`) recreates the dev database and reseeds it.
+- `npm run db:reset` (in `api/`) recreates the dev database, reseeds the accounts and re-imports the legacy catalogue.
 
-## 9. Project structure
+## 10. Project structure
 
 ```
 app/[locale]/page.tsx              landing page (unchanged)

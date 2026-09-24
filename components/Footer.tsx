@@ -74,9 +74,18 @@ export async function Footer() {
         </div>
         <div className="mt-[26px] flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-[#2C2C2C] pt-4 text-[13px] text-[#8F8F8F]">
           <span>{t("copyright")}</span>
-          <nav aria-label={t("linksAria")} className="flex gap-4">
+          <nav aria-label={t("linksAria")} className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link href="/about" className="hover:text-white">
+              {t("aboutLink")}
+            </Link>
             <Link href="/products" className="hover:text-white">
               {t("catalogLink")}
+            </Link>
+            <Link href="/privacy" className="hover:text-white">
+              {t("privacyLink")}
+            </Link>
+            <Link href="/terms" className="hover:text-white">
+              {t("termsLink")}
             </Link>
             <Link href="/login" className="hover:text-white">
               {t("staffLogin")}

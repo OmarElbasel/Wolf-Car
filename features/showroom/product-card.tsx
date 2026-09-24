@@ -24,7 +24,9 @@ export function ProductImage({ product, sizes, className }: { product: ShowroomP
       loading="lazy"
       decoding="async"
       draggable={false}
-      className={cn("size-full object-cover", className)}
+      // contain, not cover: catalogue photos are cut-outs of the part on white,
+      // and cropping them to fill the card slices the part in half
+      className={cn("size-full object-contain", className)}
     />
   );
 }
@@ -63,8 +65,10 @@ export function ProductCard({
       )}
       aria-label={product.name}
     >
-      <div className="relative aspect-[4/3] bg-sand">
-        <ProductImage product={product} sizes={PRODUCT_IMAGE_SIZES} />
+      <div className="relative aspect-[4/3] overflow-hidden bg-white">
+        {/* absolute, so the 4/3 box keeps its height: a tall catalogue photo
+            would otherwise stretch the card via the image's intrinsic size */}
+        <ProductImage product={product} sizes={PRODUCT_IMAGE_SIZES} className="absolute inset-0 p-3" />
         {quantity > 0 && (
           <motion.span
             key={quantity}
@@ -88,18 +92,8 @@ export function ProductCard({
             {product.description}
           </p>
         )}
-        {product.barcode && (
-          <p className="mt-1.5 text-xs text-muted">
-            {t.rich("barcode", {
-              code: product.barcode,
-              num: (chunks) => (
-                <span dir="ltr" className="font-mono">
-                  {chunks}
-                </span>
-              ),
-            })}
-          </p>
-        )}
+        {/* the barcode is deliberately not shown to customers — it is for the
+            cashier, who scans it from the order sheet into the till system */}
         <div className="mt-auto pt-3">
           <p className="text-[22px] leading-tight font-extrabold tabular-nums">
             <span dir="ltr">{formatMoney(product.price, locale)}</span>

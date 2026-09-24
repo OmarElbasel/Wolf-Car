@@ -1,6 +1,7 @@
 import type { Config } from 'jest';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const swc = require('./swc-jest.cjs');
+// Static import, not require(): Node 22.22+ strips types natively and loads this
+// config as ESM, where `require` is not defined.
+import swc from './swc-jest.cjs';
 
 /** End-to-end tests against a real Postgres (TEST_DATABASE_URL), run in band. */
 const config: Config = {

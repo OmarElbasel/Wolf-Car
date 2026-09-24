@@ -1,9 +1,14 @@
 /**
- * Demo data: one Super Admin, one Finance user, two branches (Bin Omran, Al
- * Gharrafa) each with a manager and a cashier, sample products with generated
- * images, and a few orders. Wipes the database first — development only.
+ * Demo data: one Super Admin, one Finance user and two branches (Bin Omran, Al
+ * Gharrafa) each with a manager and a cashier. Wipes the database first —
+ * development only. The real catalogue comes from the legacy import, which
+ * db:reset runs straight after this.
  *
- *   npm run db:seed          (or: npm run db:reset — migrate + seed)
+ * SEED_DEMO_CATALOG=1 also adds made-up products with generated images and a
+ * few orders. Only the Playwright suite sets it; they must never reach a real
+ * database, where they would show up on the public website.
+ *
+ *   npm run db:seed          (or: npm run db:reset — migrate + seed + legacy import)
  */
 import { createPgAdapter } from '../src/prisma/pg-adapter';
 import sharp from 'sharp';
@@ -84,7 +89,7 @@ async function main(): Promise<void> {
   try {
     console.log('Wiping existing data…');
     await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE activity_logs, order_items, orders, price_history, branch_products, products, ' +
+      'TRUNCATE TABLE activity_logs, order_items, orders, price_history, branch_products, products, categories, ' +
         'refresh_tokens, sessions, recovery_codes, user_permission_overrides, role_permissions, permissions, users, branches ' +
         'RESTART IDENTITY CASCADE',
     );
@@ -112,7 +117,7 @@ async function main(): Promise<void> {
       },
     });
 
-    const branches: { id: string; code: string; managerId: string; cashierId: string }[] = [];
+    const branches: SeededBranch[] = [];
     for (const b of BRANCHES) {
       // branch + its two staff in one transaction: the staffing constraint is checked at commit
       const created = await prisma.$transaction(async (tx) => {
@@ -136,83 +141,8 @@ async function main(): Promise<void> {
       branches.push(created);
     }
 
-    console.log('Generating product images…');
-    const products: { id: string; name: string; price: Prisma.Decimal | null }[] = [];
-    for (const [i, p] of PRODUCTS.entries()) {
-      const imageKey = await processAndStoreImage(await placeholderImage(p.badge, p.color), uploadDir);
-      const creator = branches[i % branches.length].managerId;
-      const product = await prisma.product.create({
-        data: {
-          name: p.name,
-          description: p.description,
-          barcode: p.barcode,
-          imageKey,
-          createdById: creator,
-          ...(p.price
-            ? {
-                price: p.price,
-                priceUpdatedAt: new Date(),
-                priceHistory: { create: { oldPrice: null, newPrice: p.price, changedById: finance.id } },
-              }
-            : {}),
-        },
-        select: { id: true, name: true, price: true },
-      });
-      products.push(product);
-    }
-
-    // each branch shows the catalogue in its own order (Al Gharrafa reversed, to make the difference visible)
-    for (const [bi, branch] of branches.entries()) {
-      const ordered = bi === 0 ? products : [...products].reverse();
-      await prisma.branchProduct.createMany({
-        data: ordered.map((p, position) => ({ branchId: branch.id, productId: p.id, position })),
-      });
-    }
-
-    console.log('Creating sample orders…');
-    const priced = products.filter((p) => p.price !== null);
-    const sample = [
-      { customer: 'Mohammed Al-Kuwari', lines: [[0, 1], [4, 2]], status: 'CONFIRMED' },
-      { customer: 'سارة المنصوري', lines: [[7, 2], [8, 2], [10, 1]], status: 'PENDING' },
-      { customer: 'Rashid Hassan', lines: [[3, 1]], status: 'PENDING' },
-    ] as const;
-    for (const branch of branches) {
-      for (const s of sample) {
-        await prisma.$transaction(async (tx) => {
-          const { orderSeq } = await tx.branch.update({
-            where: { id: branch.id },
-            data: { orderSeq: { increment: 1 } },
-            select: { orderSeq: true },
-          });
-          const items = s.lines.map(([idx, quantity], position) => {
-            const product = priced[idx];
-            const unitPrice = product.price as Prisma.Decimal;
-            return {
-              productId: product.id,
-              productName: product.name,
-              unitPrice,
-              quantity,
-              lineTotal: unitPrice.mul(quantity),
-              position,
-            };
-          });
-          const total = items.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
-          await tx.order.create({
-            data: {
-              branchId: branch.id,
-              number: orderSeq,
-              code: `${branch.code}-${String(orderSeq).padStart(6, '0')}`,
-              customerName: s.customer,
-              status: s.status,
-              total,
-              createdById: branch.managerId,
-              ...(s.status === 'CONFIRMED' ? { confirmedById: branch.cashierId, confirmedAt: new Date() } : {}),
-              items: { create: items },
-            },
-          });
-        });
-      }
-    }
+    if (process.env.SEED_DEMO_CATALOG === '1') await seedDemoCatalog(prisma, uploadDir, branches, finance.id);
+    else console.log('No demo products (catalogue comes from: npm run db:import-legacy)');
 
     console.log('\nSeed complete. Demo accounts (dashboard password / showroom password):');
     console.table([
@@ -225,6 +155,94 @@ async function main(): Promise<void> {
     ]);
   } finally {
     await prisma.$disconnect();
+  }
+}
+
+type SeededBranch = { id: string; code: string; managerId: string; cashierId: string };
+
+/** Made-up products and orders for the Playwright suite (SEED_DEMO_CATALOG=1). */
+async function seedDemoCatalog(
+  prisma: PrismaClient,
+  uploadDir: string,
+  branches: SeededBranch[],
+  financeId: string,
+): Promise<void> {
+  console.log('Generating demo product images…');
+  const products: { id: string; name: string; price: Prisma.Decimal | null }[] = [];
+  for (const [i, p] of PRODUCTS.entries()) {
+    const imageKey = await processAndStoreImage(await placeholderImage(p.badge, p.color), uploadDir);
+    const creator = branches[i % branches.length].managerId;
+    const product = await prisma.product.create({
+      data: {
+        name: p.name,
+        description: p.description,
+        barcode: p.barcode,
+        imageKey,
+        createdById: creator,
+        ...(p.price
+          ? {
+              price: p.price,
+              priceUpdatedAt: new Date(),
+              priceHistory: { create: { oldPrice: null, newPrice: p.price, changedById: financeId } },
+            }
+          : {}),
+      },
+      select: { id: true, name: true, price: true },
+    });
+    products.push(product);
+  }
+
+  // each branch shows the catalogue in its own order (Al Gharrafa reversed, to make the difference visible)
+  for (const [bi, branch] of branches.entries()) {
+    const ordered = bi === 0 ? products : [...products].reverse();
+    await prisma.branchProduct.createMany({
+      data: ordered.map((p, position) => ({ branchId: branch.id, productId: p.id, position })),
+    });
+  }
+
+  console.log('Creating sample orders…');
+  const priced = products.filter((p) => p.price !== null);
+  const sample = [
+    { customer: 'Mohammed Al-Kuwari', lines: [[0, 1], [4, 2]], status: 'CONFIRMED' },
+    { customer: 'سارة المنصوري', lines: [[7, 2], [8, 2], [10, 1]], status: 'PENDING' },
+    { customer: 'Rashid Hassan', lines: [[3, 1]], status: 'PENDING' },
+  ] as const;
+  for (const branch of branches) {
+    for (const s of sample) {
+      await prisma.$transaction(async (tx) => {
+        const { orderSeq } = await tx.branch.update({
+          where: { id: branch.id },
+          data: { orderSeq: { increment: 1 } },
+          select: { orderSeq: true },
+        });
+        const items = s.lines.map(([idx, quantity], position) => {
+          const product = priced[idx];
+          const unitPrice = product.price as Prisma.Decimal;
+          return {
+            productId: product.id,
+            productName: product.name,
+            unitPrice,
+            quantity,
+            lineTotal: unitPrice.mul(quantity),
+            position,
+          };
+        });
+        const total = items.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
+        await tx.order.create({
+          data: {
+            branchId: branch.id,
+            number: orderSeq,
+            code: `${branch.code}-${String(orderSeq).padStart(6, '0')}`,
+            customerName: s.customer,
+            status: s.status,
+            total,
+            createdById: branch.managerId,
+            ...(s.status === 'CONFIRMED' ? { confirmedById: branch.cashierId, confirmedAt: new Date() } : {}),
+            items: { create: items },
+          },
+        });
+      });
+    }
   }
 }
 

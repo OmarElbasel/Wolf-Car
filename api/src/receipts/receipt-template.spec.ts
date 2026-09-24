@@ -15,12 +15,32 @@ const data: ReceiptData = {
   branch: { name: 'Al Gharrafa Branch', nameAr: 'فرع الغرافة' },
   cashier: 'GH Cashier',
   items: [
-    { productName: 'Dash Cam <script>alert(1)</script>', quantity: 2, unitPrice: '499.00', lineTotal: '998.00' },
-    { productName: 'عطر سيارة فاخر', quantity: 1, unitPrice: '120.50', lineTotal: '120.50' },
+    { productName: 'Dash Cam <script>alert(1)</script>', barcode: '6291041500244', quantity: 2, unitPrice: '499.00', lineTotal: '998.00' },
+    { productName: 'عطر سيارة فاخر', barcode: null, quantity: 1, unitPrice: '120.50', lineTotal: '120.50' },
   ],
 };
 
 describe('receipt template', () => {
+  it('prints scannable bars for an item that has a barcode', () => {
+    const html = renderReceiptHtml(data, 'en', assets);
+    // the PDF renders with JavaScript disabled, so the SVG must be inlined
+    expect(html).toContain('class="bc"');
+    expect(html).toContain('<svg');
+    expect(html).toContain('6291041500244');
+  });
+
+  it('omits the bars for an item without a barcode', () => {
+    const single = { ...data, items: [{ ...data.items[1] }] };
+    expect(renderReceiptHtml(single, 'en', assets)).not.toContain('class="bc"');
+  });
+
+  it('falls back to no bars when the barcode is not CODE128-encodable', () => {
+    // one legacy row had Arabic text in the barcode column
+    const arabic = { ...data, items: [{ ...data.items[0], barcode: 'علبة مناديل' }] };
+    const html = renderReceiptHtml(arabic, 'en', assets);
+    expect(html).not.toContain('class="bc"');
+  });
+
   it('escapes every dynamic value', () => {
     const html = renderReceiptHtml(data, 'en', assets);
     expect(html).not.toContain('<script>alert');

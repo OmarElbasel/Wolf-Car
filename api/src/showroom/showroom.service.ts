@@ -15,27 +15,61 @@ export class ShowroomService {
     private readonly trail: AuditTrail,
   ) {}
 
-  /** The branch's priced products in the manager-defined order, with full details. */
+  /**
+   * The branch's priced products in the manager-defined order, with full
+   * details, plus the catalogue's categories so the kiosk can offer tabs.
+   * Only categories that actually have a priced product here are returned.
+   */
   async products(user: AuthUser) {
     const branch = await this.activeBranch(user);
     const rows = await this.prisma.branchProduct.findMany({
       where: { branchId: branch.id, product: { price: { not: null } } },
       orderBy: { position: 'asc' },
       select: {
-        product: { select: { id: true, name: true, description: true, barcode: true, price: true, imageKey: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            barcode: true,
+            price: true,
+            imageKey: true,
+            categoryId: true,
+          },
+        },
       },
     });
+    const products = rows.map(({ product: p }) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      barcode: p.barcode,
+      categoryId: p.categoryId,
+      price: money(p.price) as string,
+      imageUrl: imageUrl(p.imageKey),
+      thumbUrl: imageUrl(p.imageKey, 'sm'),
+    }));
+
+    const used = new Set(products.map((p) => p.categoryId).filter((id): id is string => id !== null));
+    const categories = used.size
+      ? await this.prisma.category.findMany({
+          where: { id: { in: [...used] }, isActive: true },
+          orderBy: [{ position: 'asc' }, { name: 'asc' }],
+          select: { id: true, name: true, carModel: true, imageKey: true },
+        })
+      : [];
+
     return {
       branch: { id: branch.id, code: branch.code, name: branch.name, nameAr: branch.nameAr },
-      products: rows.map(({ product: p }) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        barcode: p.barcode,
-        price: money(p.price) as string,
-        imageUrl: imageUrl(p.imageKey),
-        thumbUrl: imageUrl(p.imageKey, 'sm'),
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        carModel: c.carModel,
+        imageUrl: c.imageKey ? imageUrl(c.imageKey) : null,
+        thumbUrl: c.imageKey ? imageUrl(c.imageKey, 'sm') : null,
+        count: products.filter((p) => p.categoryId === c.id).length,
       })),
+      products,
     };
   }
 

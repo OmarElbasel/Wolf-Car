@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
+import { Barcode } from "@/components/barcode";
 import { OrderStatusBadge } from "@/components/app/badges";
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { ErrorState, LoadingRows } from "@/components/app/states";
@@ -203,11 +204,9 @@ function OrderDetailBody({ id }: { id: string }) {
                     {item.productName}
                   </p>
                   {item.barcode && (
-                    <p className="truncate text-[13px] text-muted">
-                      <span dir="ltr" className="font-mono">
-                        {item.barcode}
-                      </span>
-                    </p>
+                    // scannable: the cashier reads this straight off the screen
+                    // into the till system, so the bars matter more than the digits
+                    <Barcode value={item.barcode} className="mt-1 mb-0.5" />
                   )}
                   <p className="text-[13px] text-ink-2">
                     {t("quantity")}{" "}

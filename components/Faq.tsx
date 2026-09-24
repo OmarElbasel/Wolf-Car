@@ -9,7 +9,7 @@ export async function Faq() {
   const faqs = getFaqs(locale);
 
   return (
-    <section id="faq" className="pb-14 lg:pb-20">
+    <section id="faq" className="py-14 lg:py-20">
       <Wrap className="max-w-[860px]!">
         <SectionHead label={t("label")} title={t("title")} />
         {faqs.map((f) => (

@@ -4,6 +4,8 @@
  * disabled and no network access.
  */
 
+import { code128Svg, isCode128Encodable } from '../../../shared/code128';
+
 export type ReceiptLocale = 'ar' | 'en';
 
 export interface ReceiptData {
@@ -15,7 +17,16 @@ export interface ReceiptData {
   total: string;
   branch: { name: string; nameAr: string };
   cashier: string | null;
-  items: { productName: string; quantity: number; unitPrice: string; lineTotal: string }[];
+  items: { productName: string; barcode?: string | null; quantity: number; unitPrice: string; lineTotal: string }[];
+}
+
+/**
+ * Bars under the product name so the cashier can scan the printed sheet. The
+ * page renders with JavaScript disabled, so the SVG has to be inlined here.
+ */
+function barcodeCell(barcode: string | null | undefined): string {
+  if (!isCode128Encodable(barcode)) return '';
+  return `<div class="bc">${code128Svg(barcode, { height: 30, moduleWidth: 1.1, showLabel: true })}</div>`;
 }
 
 export interface ReceiptAssets {
@@ -91,11 +102,12 @@ export function renderReceiptHtml(data: ReceiptData, locale: ReceiptLocale, asse
   const ARABIC = 'U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200E, U+2010-2011, U+204F, U+2E41';
   const LATIN = 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD';
 
+
   const rows = data.items
     .map(
       (i, n) => `<tr>
         <td class="n">${n + 1}</td>
-        <td class="name"><bdi>${e(i.productName)}</bdi></td>
+        <td class="name"><bdi>${e(i.productName)}</bdi>${barcodeCell(i.barcode)}</td>
         <td class="num">${i.quantity}</td>
         <td class="num">${money(i.unitPrice)}</td>
         <td class="num strong">${money(i.lineTotal)}</td>
@@ -133,6 +145,8 @@ th { text-align: start; font-size: 8.5pt; color: #6e6e6e; font-weight: 700; bord
 td { padding: 7px 4px; border-bottom: 1px solid #f0ede7; vertical-align: top; }
 td.n { color: #9c968c; width: 18px; }
 .num { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bc { margin-top: 3px; color: #161616; }
+.bc svg { display: block; }
 th.num { text-align: end; }
 .strong { font-weight: 700; }
 .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding: 10px 12px; background: #f5f4f1; border-radius: 10px; }

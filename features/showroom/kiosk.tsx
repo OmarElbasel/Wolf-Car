@@ -17,11 +17,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api/client";
-import type { BranchSummary, OrderDetail, Profile, ShowroomProduct } from "@/lib/api/types";
+import type { BranchSummary, OrderDetail, Profile, ShowroomCategory, ShowroomProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 import { ORDER_MAX_LINES, ORDER_MAX_QUANTITY } from "@/shared/validation";
 import { canAdd, itemCount, quantityOf, total as cartTotal } from "./cart";
 import { type CartEntry, CartPanel } from "./cart-panel";
+import { ALL_CATEGORIES, CategoryTabs } from "./category-tabs";
 import { CheckoutDialog } from "./checkout-dialog";
 import { newIdempotencyKey } from "./idempotency";
 import { ProductCard } from "./product-card";
@@ -31,6 +32,7 @@ import { IDLE_TIMEOUT_MS, useIdleTimeout } from "./use-idle-timeout";
 
 export interface ShowroomCatalog {
   branch: BranchSummary;
+  categories: ShowroomCategory[];
   products: ShowroomProduct[];
 }
 
@@ -86,6 +88,7 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   const [checkoutKey, setCheckoutKey] = useState<string | null>(null);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
+  const [category, setCategory] = useState<string>(ALL_CATEGORIES);
   const [lockOpen, setLockOpen] = useState(false);
 
   const catalog = useQuery({
@@ -100,6 +103,9 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   });
 
   const products = catalog.data?.products ?? [];
+  const categories = catalog.data?.categories ?? [];
+  // the cart still resolves against every product, not just the visible tab
+  const visible = category === ALL_CATEGORIES ? products : products.filter((p) => p.categoryId === category);
   const byId = new Map(products.map((p) => [p.id, p]));
   const entries: CartEntry[] = cart.lines.flatMap((line) => {
     const product = byId.get(line.productId);
@@ -199,13 +205,20 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
           ) : products.length === 0 ? (
             <EmptyState title={t("noProducts")} />
           ) : (
-            <ul className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-label={t("title")}>
-              {products.map((product) => (
-                <li key={product.id} className="grid">
-                  <ProductCard product={product} quantity={quantityOf(cart, product.id)} onAdd={() => handleAdd(product)} />
-                </li>
-              ))}
-            </ul>
+            <>
+              <CategoryTabs categories={categories} selected={category} total={products.length} onSelect={setCategory} />
+              {visible.length === 0 ? (
+                <EmptyState title={t("noProducts")} />
+              ) : (
+                <ul className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-label={t("title")}>
+                  {visible.map((product) => (
+                    <li key={product.id} className="grid">
+                      <ProductCard product={product} quantity={quantityOf(cart, product.id)} onAdd={() => handleAdd(product)} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </main>
 

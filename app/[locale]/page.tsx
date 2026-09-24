@@ -36,9 +36,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <Catalog />
         <Steps />
         <Work />
-        <Reviews />
         <Branches />
         <BookingForm />
+        <Reviews />
         <Faq />
         <FinalCta />
       </main>

@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ButtonLink, Photo, SectionHead, Wrap } from "./Button";
+import { ButtonLink, SectionHead, Wrap } from "./Button";
 import { Icon } from "./Icon";
 import { getBranchList, getHours, telLink, waLink } from "@/lib/branches";
 
@@ -20,8 +20,14 @@ export async function Branches() {
               key={b.id}
               className="overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface"
             >
-              <div className="aspect-video">
-                <Photo label={b.photoAlt} />
+              <div className="aspect-video bg-sand">
+                <iframe
+                  src={b.mapEmbed}
+                  title={b.mapTitle}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="size-full border-0"
+                />
               </div>
               <div className="px-5 pt-[18px] pb-5">
                 <h3 className="text-[22px] font-extrabold">{b.name}</h3>

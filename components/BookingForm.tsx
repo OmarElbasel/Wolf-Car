@@ -1,11 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Wrap, SectionHead, buttonClass } from "./Button";
 import { Icon } from "./Icon";
 import { getBranchList, bookingMessage, waLink, type BranchId } from "@/lib/branches";
 import { getBookingServices } from "@/lib/content";
+
+type Place = "branch" | "home";
+const BOOK_EVENT = "wolfcar:book";
+
+/**
+ * Scrolls to the booking form with the service location preselected. Used by
+ * the hero's "book an appointment" / "book home service" actions.
+ */
+export function openBooking(place: Place) {
+  window.dispatchEvent(new CustomEvent<Place>(BOOK_EVENT, { detail: place }));
+  const form = document.getElementById("book");
+  if (!form) return;
+  const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  form.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  history.replaceState(null, "", "#book");
+}
 
 function Choice({
   name,
@@ -69,14 +85,22 @@ export function BookingForm() {
   const t = useTranslations("Booking");
   const branchList = getBranchList(locale);
   const bookingServices = getBookingServices(locale);
-  const places = [t("placeBranch"), t("placeHome")];
+  const placeBranch = t("placeBranch");
+  const placeHome = t("placeHome");
+  const places = [placeBranch, placeHome];
 
   const [branch, setBranch] = useState<BranchId>("binomran");
   const [service, setService] = useState(bookingServices[0].value);
   const [place, setPlace] = useState(places[0]);
 
+  useEffect(() => {
+    const onBook = (e: Event) => setPlace((e as CustomEvent<Place>).detail === "home" ? placeHome : placeBranch);
+    window.addEventListener(BOOK_EVENT, onBook);
+    return () => window.removeEventListener(BOOK_EVENT, onBook);
+  }, [placeBranch, placeHome]);
+
   return (
-    <section id="book" className="py-14 lg:py-20">
+    <section id="book" className="scroll-mt-16 py-14 lg:py-20">
       <Wrap className="max-w-[860px]!">
         <SectionHead label={t("label")} title={t("title")} body={t("body")} />
         <form

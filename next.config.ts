@@ -1,3 +1,4 @@
+import { networkInterfaces } from "node:os";
 import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
@@ -14,12 +15,24 @@ const APP_HEADERS = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
+/** This machine's LAN IPv4 addresses, so phones and laptops on the same Wi-Fi can use the dev server. */
+const LAN_HOSTS = Object.values(networkInterfaces())
+  .flat()
+  .filter((net) => net?.family === "IPv4" && !net.internal)
+  .map((net) => net!.address);
+
 const nextConfig: NextConfig = {
+  // dev only: Next blocks HMR and dev assets for hostnames other than localhost
+  allowedDevOrigins: LAN_HOSTS,
   // this app lives inside a non-git workspace folder; pin the root so Turbopack
   // does not walk up and pick a stray lockfile
   turbopack: { root: path.resolve(__dirname) },
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      // TEMP: placeholder service photos on the landing page
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
   },
   // one origin for the browser: /api/* is proxied to the API, so its cookies are first-party
   async rewrites() {

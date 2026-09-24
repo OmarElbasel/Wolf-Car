@@ -4,6 +4,7 @@ import { Wrap } from "./Button";
 import { CallButton } from "./ContactButtons";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
+import { Link } from "@/i18n/navigation";
 import { LOGO } from "@/lib/content";
 
 export async function Header() {
@@ -15,6 +16,7 @@ export async function Header() {
     { href: "#catalog", label: t("navCatalog") },
     { href: "#work", label: t("navWork") },
     { href: "#branches", label: t("navBranches") },
+    { href: "/about", label: t("navAbout") },
   ];
 
   return (
@@ -31,11 +33,17 @@ export async function Header() {
         </a>
 
         <nav aria-label={t("navAria")} className="hidden gap-[26px] font-semibold text-ink-2 lg:flex">
-          {LINKS.map((l) => (
-            <a key={l.href} href={l.href} className="hover:text-ink">
-              {l.label}
-            </a>
-          ))}
+          {LINKS.map((l) =>
+            l.href.startsWith("/") ? (
+              <Link key={l.href} href={l.href} className="hover:text-ink">
+                {l.label}
+              </Link>
+            ) : (
+              <a key={l.href} href={l.href} className="hover:text-ink">
+                {l.label}
+              </a>
+            ),
+          )}
         </nav>
 
         <div className="flex items-center gap-1">

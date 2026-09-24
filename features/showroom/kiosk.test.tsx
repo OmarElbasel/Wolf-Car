@@ -3,7 +3,7 @@ import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Toaster } from "@/components/ui/sonner";
 import { setAccessToken } from "@/lib/api/client";
-import type { OrderDetail, ShowroomProduct } from "@/lib/api/types";
+import type { OrderDetail, ShowroomCategory, ShowroomProduct } from "@/lib/api/types";
 import { server } from "@/tests/msw";
 import { makeUser, renderWithApp } from "@/tests/render";
 import { router } from "@/tests/setup";
@@ -18,6 +18,7 @@ const BRAKES: ShowroomProduct = {
   name: "Brake pads",
   description: "Ceramic front pads",
   barcode: "BP-100",
+  categoryId: "cat-1",
   price: "145.50",
   imageUrl: "/api/uploads/brakes.webp",
   thumbUrl: "/api/uploads/brakes-sm.webp",
@@ -27,12 +28,18 @@ const CLIP: ShowroomProduct = {
   name: "Trim clip",
   description: null,
   barcode: null,
+  categoryId: "cat-2",
   price: "0.10",
   imageUrl: "/api/uploads/clip.webp",
   thumbUrl: "/api/uploads/clip-sm.webp",
 };
-const catalog = (products: ShowroomProduct[] = [BRAKES, CLIP]): ShowroomCatalog => ({
+const CATEGORIES: ShowroomCategory[] = [
+  { id: "cat-1", name: "Leopard 5", carModel: "Leopard 5", imageUrl: null, thumbUrl: null, count: 1 },
+  { id: "cat-2", name: "Tank 500", carModel: "Tank 500", imageUrl: null, thumbUrl: null, count: 1 },
+];
+const catalog = (products: ShowroomProduct[] = [BRAKES, CLIP], categories = CATEGORIES): ShowroomCatalog => ({
   branch: { id: "b-gh", code: "GH", name: "Al Gharrafa Branch", nameAr: "فرع الغرافة" },
+  categories,
   products,
 });
 
@@ -97,11 +104,38 @@ describe("showroom kiosk", () => {
     expect(await screen.findByRole("heading", { name: "Brake pads" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
     expect(screen.getByText("Ceramic front pads")).toBeInTheDocument();
-    expect(screen.getByText("BP-100")).toHaveAttribute("dir", "ltr");
+    // barcodes belong to the cashier, never the customer-facing kiosk
+    expect(screen.queryByText("BP-100")).not.toBeInTheDocument();
     expect(screen.getByTestId("branch-name")).toHaveTextContent("Al Gharrafa Branch");
     expect(auth[0]).toBe("Bearer showroom-token");
     expect(within(panel()).getByText("Your cart is empty")).toBeInTheDocument();
     expect(within(panel()).getByRole("button", { name: "Place order" })).toBeDisabled();
+  });
+
+  it("filters the grid by car model and keeps an All tab", async () => {
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
+    const { user } = renderKiosk();
+
+    expect(await screen.findByRole("heading", { name: "Brake pads" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /Leopard 5/ }));
+    expect(screen.getByRole("heading", { name: "Brake pads" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Trim clip" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /All/ }));
+    expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
+  });
+
+  it("keeps a filtered-out product in the cart", async () => {
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
+    const { user } = renderKiosk();
+
+    await screen.findByRole("heading", { name: "Brake pads" });
+    await user.click(screen.getByRole("button", { name: "Add Brake pads" }));
+    // switching to a tab that excludes it must not drop it from the cart
+    await user.click(screen.getByRole("tab", { name: /Tank 500/ }));
+    expect(within(panel()).getByText("Brake pads")).toBeInTheDocument();
   });
 
   it("adds products and adjusts quantities with exact totals", async () => {

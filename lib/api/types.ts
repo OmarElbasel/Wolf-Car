@@ -75,9 +75,21 @@ export interface ShowroomProduct {
   name: string;
   description: string | null;
   barcode: string | null;
+  categoryId: string | null;
   price: string;
   imageUrl: string;
   thumbUrl: string;
+}
+
+/** A showroom tab: usually a car model, sometimes an accessory line. */
+export interface ShowroomCategory {
+  id: string;
+  name: string;
+  carModel: string | null;
+  imageUrl: string | null;
+  thumbUrl: string | null;
+  /** how many priced products this branch has in the category */
+  count: number;
 }
 
 export interface OrderSummary {
@@ -200,8 +212,25 @@ export interface PublicProduct {
   id: string;
   name: string;
   description: string | null;
+  categoryId: string | null;
+  /** "1800.00" (QAR), or null while the product has no price yet */
+  price: string | null;
   imageUrl: string;
   thumbUrl: string;
+}
+
+/** A car-model category on the public site. */
+export interface PublicCategory {
+  id: string;
+  /** Arabic name, as the branches use it */
+  name: string;
+  /** English name for /en; null means show `name` */
+  nameEn: string | null;
+  carModel: string | null;
+  imageUrl: string | null;
+  thumbUrl: string | null;
+  /** how many products the category holds */
+  count: number;
 }
 
 export interface BranchOption {

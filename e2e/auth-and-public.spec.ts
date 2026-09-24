@@ -44,7 +44,7 @@ test.describe("sign-in and role landing pages", () => {
 });
 
 test.describe("public catalog", () => {
-  test("is linked from the landing page footer and never shows prices or barcodes", async ({ page, request }) => {
+  test("is linked from the landing page footer and shows prices but never barcodes", async ({ page, request }) => {
     await page.goto("/en");
     const footerLinks = page.locator("footer nav");
     await expect(footerLinks.getByRole("link", { name: "Product catalog" })).toHaveAttribute("href", "/en/products");
@@ -55,18 +55,37 @@ test.describe("public catalog", () => {
     const cards = page.getByTestId("catalog-grid").getByRole("listitem");
     await expect(cards).toHaveCount(13);
     const text = await page.locator("main").innerText();
-    expect(text).not.toMatch(/QAR|499|1,800|6291041500213/);
+    expect(text).toMatch(/QAR\s1,800\.00/);
+    expect(text).not.toMatch(/6291041500213/);
 
     const api = await request.get("/api/public/products");
     const body = await api.text();
-    expect(body).not.toMatch(/"price"|"barcode"/);
+    expect(body).not.toMatch(/"barcode"|6291041500213/);
     for (const product of JSON.parse(body) as Record<string, unknown>[]) {
-      expect(Object.keys(product).sort()).toEqual(["description", "id", "imageUrl", "name", "thumbUrl"]);
+      expect(Object.keys(product).sort()).toEqual(["categoryId", "description", "id", "imageUrl", "name", "price", "thumbUrl"]);
     }
+  });
+
+  test("sends the cart to the Bin Omran branch on WhatsApp", async ({ page }) => {
+    await page.goto("/en/products");
+    const card = page.getByTestId("catalog-grid").getByRole("listitem").filter({ hasText: "Oil Filter" });
+    await card.getByRole("button", { name: "Add to cart" }).click();
+    await card.getByRole("button", { name: "Increase quantity" }).click();
+    await page.getByRole("button", { name: /View cart/ }).click();
+
+    const order = page.getByRole("link", { name: "Order on WhatsApp · Bin Omran" });
+    const href = decodeURIComponent((await order.getAttribute("href")) ?? "");
+    expect(href).toContain("https://wa.me/97471008939?text=");
+    expect(href).toMatch(/1\. Oil Filter × 2 — QAR\s70\.00/);
+    expect(href).toMatch(/Total: QAR\s70\.00/);
+
+    // the basket survives a reload
+    await page.reload();
+    await expect(page.getByRole("button", { name: /View cart/ })).toBeVisible();
   });
 
   test("is available in Arabic", async ({ page }) => {
     await page.goto("/ar/products");
-    await expect(page.getByRole("heading", { name: "كتالوج المنتجات" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "كل القطع والإكسسوارات" })).toBeVisible();
   });
 });

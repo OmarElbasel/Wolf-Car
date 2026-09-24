@@ -37,6 +37,7 @@
   "lock": "Lock showroom",
   "lockTitle": "Sign out of the showroom?",
   "lockBody": "The cart will be cleared and the tablet will ask for the showroom password again.",
-  "barcode": "Barcode <num>{code}</num>",
-  "idleReset": "The cart was cleared after a few minutes without activity."
+  "idleReset": "The cart was cleared after a few minutes without activity.",
+  "categories": "Car categories",
+  "allCategories": "All"
 }

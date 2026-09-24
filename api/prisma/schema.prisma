@@ -191,11 +191,42 @@ model RecoveryCode {
   @@map("recovery_codes")
 }
 
+/// Catalogue grouping shown as the showroom tabs — usually a car model
+/// ("ﻟﻴﻮﺑﺎرد 5"), sometimes an accessory line ("اكسسوارات تسلا").
+model Category {
+  id     String  @id @default(uuid()) @db.Uuid
+  name   String  @db.VarChar(120)
+  /// English name for the public website's /en pages; `name` (Arabic) when null.
+  nameEn String? @map("name_en") @db.VarChar(120)
+  /// The car this grouping is for, as printed on the showroom header.
+  carModel String? @map("car_model") @db.VarChar(120)
+  /// UUID of the processed hero image in UPLOAD_DIR, as for Product.imageKey.
+  imageKey String? @map("image_key") @db.Uuid
+  position Int     @default(0)
+  isActive Boolean @default(true) @map("is_active")
+  /// Primary key from the legacy Supabase catalogue ("cat-1787146025137"), so
+  /// re-running the import updates rows instead of duplicating them.
+  legacyId  String?  @unique @map("legacy_id") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  products Product[]
+
+  @@index([position])
+  @@map("categories")
+}
+
 model Product {
   id             String    @id @default(uuid()) @db.Uuid
   name           String    @db.VarChar(120)
   description    String?   @db.VarChar(2000)
-  barcode        String?   @unique @db.VarChar(64)
+  /// NOT unique: the legacy catalogue lists the same part once per car model,
+  /// so 147 barcodes are shared by several products. Cashiers scan the code
+  /// into their own counting system, where it identifies the part, not the row.
+  barcode        String?   @db.VarChar(64)
+  categoryId     String?   @map("category_id") @db.Uuid
+  /// Primary key from the legacy Supabase catalogue ("prod-1787146069197").
+  legacyId       String?   @unique @map("legacy_id") @db.VarChar(64)
   /// UUID of the processed image files in UPLOAD_DIR (<key>.webp and <key>-sm.webp).
   imageKey       String    @map("image_key") @db.Uuid
   /// Null until Finance sets it. Unpriced products are hidden from the showroom.
@@ -208,11 +239,14 @@ model Product {
 
   createdBy       User            @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   updatedBy       User?           @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  category        Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   branchPositions BranchProduct[]
   priceHistory    PriceHistory[]
   orderItems      OrderItem[]
 
   @@index([name])
+  @@index([barcode])
+  @@index([categoryId])
   @@map("products")
 }
 

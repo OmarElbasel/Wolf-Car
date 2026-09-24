@@ -20,7 +20,8 @@
     "navWork": "Our Work",
     "navBranches": "Branches",
     "languageSwitch": "Switch to Arabic",
-    "themeToggle": "Toggle light and dark mode"
+    "themeToggle": "Toggle light and dark mode",
+    "navAbout": "About us"
   },
   "ContactSheet": {
     "heading": "Choose a branch",
@@ -33,46 +34,62 @@
   },
   "Hero": {
     "eyebrow": "Wolf Car Auto Services · Qatar",
-    "title": "Specialists in Chinese cars — we service all makes",
-    "body": "Accessories, PPF paint protection, insulation & tinting, programming, spare parts and maintenance. At our Al Gharrafa and Bin Omran branches, or at your home.",
-    "servicesCta": "Browse services",
+    "title": "Book your car service in a minute",
+    "body": "Specialists in Chinese cars, serving all makes: accessories, PPF, tinting, programming, parts and maintenance. Pick what you need and we'll confirm on WhatsApp.",
+    "bookTitle": "Book an appointment",
+    "bookBody": "At Bin Omran or Al Gharrafa",
+    "homeTitle": "Book home service",
+    "homeBody": "We come to your home or office",
+    "breakdownTitle": "Breakdown? Get a tow",
+    "breakdownBody": "Free tow to our branch",
+    "breakdownMessage": "I need a breakdown / tow service. My location and car model:",
+    "actionsAria": "Book a service",
+    "hours": "Open daily · Sat–Thu 10 AM – 11 PM",
     "vanAlt": "Wolf Car Auto Services van"
   },
   "Services": {
     "label": "Our Services",
     "title": "Everything your car needs, in one place",
-    "body": "Services are available at both branches.",
-    "atHome": "Available at home"
+    "body": "Services are available at both branches."
   },
   "Catalog": {
     "label": "Parts & Accessories",
-    "title": "Browse by category",
-    "body": "Availability varies by car model. Send us your car type and we'll confirm what's in stock.",
-    "askAvailability": "Ask about availability",
-    "paylaterTitle": "Pay for your purchases in installments with PayLater",
-    "paylaterBody": "4 installments for orders over 300 QAR, and up to 12 months for orders over 4,000 QAR.",
+    "title": "Browse by car model",
+    "body": "Parts and accessories for each car we specialise in. Pick your car to see what we carry.",
+    "itemCount": "{count, plural, one {# item} other {# items}}",
+    "showMore": "Show more",
+    "viewAll": "View all {count} car models",
+    "paylaterTag": "Easy payment options at both branches and with home service",
+    "paylaterTitle": "Split it with PayLater: 4 installments over 300 QAR, and up to 12 over 6,000 QAR",
+    "paylaterInstant": "Instant by card",
+    "paylaterInstantNote": "No hassle or paperwork",
     "paylaterCta": "Ask about installments",
     "paylaterMessage": "I'd like to ask about installments with PayLater"
   },
   "Steps": {
     "label": "How we work",
-    "title": "Just three steps"
+    "title": "Just three steps",
+    "body": "From your first message to driving away, here's how it goes."
   },
   "Work": {
     "label": "Our Work",
     "title": "Real work from our workshop",
-    "body": "Before and after, plus clips from TikTok and Instagram.",
-    "tileTiktok": "TikTok video",
-    "tileBeforeAfter": "Before & after",
-    "tileInstagram": "Instagram video",
+    "body": "Clips from our workshop on TikTok and Instagram. Tap a video to play it here.",
     "tiktokLabel": "TikTok",
-    "instagramLabel": "Instagram"
+    "instagramLabel": "Instagram",
+    "play": "Play: {title}",
+    "prev": "Previous videos",
+    "next": "More videos"
   },
   "Reviews": {
     "label": "Customer Reviews",
     "title": "What our customers say on Google",
-    "ratingMeta": "Al Gharrafa branch · 27 reviews",
-    "placeholder": "[Real review from Google]"
+    "placeholder": "[Real review from Google]",
+    "placeholderName": "[Customer name]",
+    "prev": "Previous review",
+    "next": "Next review",
+    "stars": "{rating} out of 5 stars",
+    "count": "{count, plural, one {# review} other {# reviews}}"
   },
   "Branches": {
     "label": "Our Branches",
@@ -87,7 +104,7 @@
     "serviceLabel": "Service",
     "placeLabel": "Service location",
     "placeBranch": "At the branch",
-    "placeHome": "At home",
+    "placeHome": "Home service",
     "homeFeeNote": "Home service fees depend on the area.",
     "submit": "Send via WhatsApp"
   },
@@ -107,22 +124,97 @@
     "copyright": "© 2026 Wolf Car Auto Services",
     "catalogLink": "Product catalog",
     "staffLogin": "Staff login",
-    "linksAria": "More links"
+    "linksAria": "More links",
+    "aboutLink": "About us",
+    "privacyLink": "Privacy",
+    "termsLink": "Terms"
   },
   "StickyBar": {
     "aria": "Quick contact"
   },
   "ProductsPage": {
     "metaTitle": "Products | Wolf Car Auto Services",
-    "metaDescription": "Browse the parts, accessories and protection products available at Wolf Car in Qatar.",
-    "label": "Our products",
-    "title": "Product catalog",
-    "body": "Availability varies by branch. Contact us on WhatsApp or visit a branch for prices and stock.",
+    "metaDescription": "Parts and accessories for Chinese cars and more, with prices in QAR. Add to your cart and order on WhatsApp from Wolf Car Bin Omran.",
+    "label": "Parts & Accessories",
+    "title": "All parts & accessories",
+    "body": "Prices in QAR. Add what you need to your cart and send the order to our Bin Omran branch on WhatsApp.",
     "search": "Search products",
     "count": "{count, plural, =0 {No products} one {# product} other {# products}}",
     "empty": "No products to show yet.",
     "noMatch": "No products match your search.",
     "unavailable": "The catalog can't be loaded right now. Please try again shortly.",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "allModels": "All products",
+    "models": "Car models",
+    "modelBody": "{count, plural, one {# product} other {# products}} for this car. Prices in QAR, order on WhatsApp.",
+    "allShort": "ALL",
+    "shopByCar": "Shop by car",
+    "sortLabel": "Sort",
+    "sortName": "Name",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "showMore": "Show more ({count} left)",
+    "priceOnRequest": "Price on request",
+    "addToCart": "Add to cart",
+    "qtyFor": "Quantity of {name}",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
+    "perkOrderTitle": "Order on WhatsApp",
+    "perkOrderBody": "Bin Omran confirms stock and fit",
+    "perkFitTitle": "Installation available",
+    "perkFitBody": "At the branch or with home service",
+    "perkPayTitle": "Pay later with PayLater",
+    "perkPayBody": "4 installments · up to 12"
+  },
+  "Cart": {
+    "open": "View cart",
+    "title": "Your cart",
+    "description": "We'll send this list to our {branch} branch on WhatsApp. The team confirms stock and fit before you pay.",
+    "empty": "Your cart is empty.",
+    "remove": "Remove",
+    "total": "Total",
+    "unpricedNote": "{count, plural, one {# item has} other {# items have}} no price yet — the branch will confirm it.",
+    "priceOnRequest": "Price on request",
+    "checkout": "Order on WhatsApp · {branch}",
+    "clear": "Empty cart",
+    "close": "Close"
+  },
+  "Legal": {
+    "metaTitle": "{page} | Wolf Car Auto Services",
+    "updated": "Last updated {date}",
+    "contactTitle": "Contact us",
+    "email": "Email"
+  },
+  "About": {
+    "metaTitle": "About us | Wolf Car Auto Services",
+    "metaDescription": "Wolf Car: specialists in Chinese cars, serving every make, from two branches in Doha and with home service.",
+    "label": "About us",
+    "title": "Specialists in Chinese cars, serving every make",
+    "body": "Wolf Car Auto Services looks after cars from two branches in Doha, Al Gharrafa and Bin Omran, and at your door through our home service. Paint protection, tinting, body kits, programming, spare parts and maintenance are all done by one team, in one place.",
+    "statBranches": "Branches",
+    "statBranchesNote": "Al Gharrafa & Bin Omran",
+    "statRating": "Google rating",
+    "statHome": "Home service",
+    "statHomeNote": "Accessories, tinting & programming",
+    "statHomeValue": "Available",
+    "statXpel": "Paint protection",
+    "statXpelNote": "XPEL protective film",
+    "servicesTitle": "What we do",
+    "groupLabel": "Our group",
+    "groupTitle": "Part of a group that knows cars",
+    "groupBody": "The companies and brands we work with.",
+    "logoPlaceholder": "[Group logo]",
+    "teamLabel": "Our team",
+    "teamTitle": "The people behind your car",
+    "teamBody": "Installers, programmers and advisors at both branches.",
+    "teamName": "[Name]",
+    "teamRole": "[Role]",
+    "teamPhoto": "[Team photo]",
+    "galleryLabel": "Our workshop",
+    "galleryTitle": "Inside Wolf Car",
+    "galleryAlt": "Wolf Car workshop",
+    "ctaTitle": "Ready to take care of your car?",
+    "ctaBook": "Book an appointment",
+    "ctaBranches": "Find a branch"
   }
 }

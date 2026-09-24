@@ -1,49 +1,52 @@
-import type { IconName } from "@/components/Icon";
 import type { Locale } from "@/i18n/routing";
+import type { BranchId } from "@/lib/branches";
 
 export interface Service {
   title: string;
   blurb: string;
-  atHome?: boolean;
   /** WhatsApp topic; when absent the card links to `href` instead */
   topic?: string;
   href?: string;
   linkLabel: string;
   photoAlt: string;
+  /** TEMP: placeholder stock photo until the real shop photos arrive */
+  image: string;
 }
+
+// TEMP placeholders (Unsplash) — swap for real photos of the shop's work
+const SERVICE_IMAGES = {
+  bodyKit: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=70",
+  protection: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=1200&q=70",
+  programming: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1200&q=70",
+  parts: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1200&q=70",
+  maintenance: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1200&q=70",
+};
 
 const SERVICES: Record<Locale, Service[]> = {
   ar: [
     {
       title: "إكسسوارات وبودي كيت",
       blurb: "شبك أمامي، صدامات، جناح خلفي، وشعارات الإصدار الأسود.",
-      atHome: true,
       topic: "الإكسسوارات والبودي كيت",
       linkLabel: "استفسر عبر واتساب",
       photoAlt: "صورة بودي كيت",
+      image: SERVICE_IMAGES.bodyKit,
     },
     {
-      title: "حماية الطلاء PPF",
-      blurb: "فيلم حماية XPEL لجميع أنواع السيارات.",
-      topic: "حماية الطلاء PPF",
+      title: "حماية PPF وعازل وتظليل",
+      blurb: "فيلم حماية XPEL لجميع أنواع السيارات، مع عازل حراري وتظليل للزجاج.",
+      topic: "حماية الطلاء والعازل والتظليل",
       linkLabel: "استفسر عبر واتساب",
-      photoAlt: "صورة PPF",
-    },
-    {
-      title: "عازل وتظليل",
-      blurb: "عازل حراري وتظليل للزجاج.",
-      atHome: true,
-      topic: "العازل والتظليل",
-      linkLabel: "استفسر عبر واتساب",
-      photoAlt: "صورة تظليل",
+      photoAlt: "صورة حماية وتظليل",
+      image: SERVICE_IMAGES.protection,
     },
     {
       title: "برمجة وتشخيص",
       blurb: "برمجة وتحديثات، باشتراك سنوي أو لمرة واحدة.",
-      atHome: true,
       topic: "البرمجة والتشخيص",
       linkLabel: "استفسر عبر واتساب",
       photoAlt: "صورة برمجة",
+      image: SERVICE_IMAGES.programming,
     },
     {
       title: "قطع غيار",
@@ -51,6 +54,7 @@ const SERVICES: Record<Locale, Service[]> = {
       href: "#catalog",
       linkLabel: "تصفح الفئات",
       photoAlt: "صورة قطع غيار",
+      image: SERVICE_IMAGES.parts,
     },
     {
       title: "زيوت وصيانة",
@@ -58,39 +62,33 @@ const SERVICES: Record<Locale, Service[]> = {
       topic: "الزيوت والصيانة",
       linkLabel: "استفسر عبر واتساب",
       photoAlt: "صورة صيانة",
+      image: SERVICE_IMAGES.maintenance,
     },
   ],
   en: [
     {
       title: "Accessories & Body Kits",
       blurb: "Front grilles, bumpers, rear spoilers, and Black Edition badges.",
-      atHome: true,
       topic: "Accessories & body kits",
       linkLabel: "Ask on WhatsApp",
       photoAlt: "Body kit photo",
+      image: SERVICE_IMAGES.bodyKit,
     },
     {
-      title: "PPF Paint Protection",
-      blurb: "XPEL protective film for all car types.",
-      topic: "PPF paint protection",
+      title: "PPF, Insulation & Tinting",
+      blurb: "XPEL protective film for all car types, plus heat insulation and window tinting.",
+      topic: "PPF, insulation & tinting",
       linkLabel: "Ask on WhatsApp",
-      photoAlt: "PPF photo",
-    },
-    {
-      title: "Insulation & Tinting",
-      blurb: "Heat insulation and window tinting.",
-      atHome: true,
-      topic: "Insulation & tinting",
-      linkLabel: "Ask on WhatsApp",
-      photoAlt: "Tinting photo",
+      photoAlt: "Protection and tinting photo",
+      image: SERVICE_IMAGES.protection,
     },
     {
       title: "Programming & Diagnostics",
       blurb: "Programming and updates, yearly subscription or one-time.",
-      atHome: true,
       topic: "Programming & diagnostics",
       linkLabel: "Ask on WhatsApp",
       photoAlt: "Programming photo",
+      image: SERVICE_IMAGES.programming,
     },
     {
       title: "Spare Parts",
@@ -98,6 +96,7 @@ const SERVICES: Record<Locale, Service[]> = {
       href: "#catalog",
       linkLabel: "Browse categories",
       photoAlt: "Spare parts photo",
+      image: SERVICE_IMAGES.parts,
     },
     {
       title: "Oils & Maintenance",
@@ -105,95 +104,70 @@ const SERVICES: Record<Locale, Service[]> = {
       topic: "Oils & maintenance",
       linkLabel: "Ask on WhatsApp",
       photoAlt: "Maintenance photo",
+      image: SERVICE_IMAGES.maintenance,
     },
   ],
 };
 
-export interface Category {
-  icon: IconName;
+export interface WorkVideo {
+  platform: "tiktok" | "instagram";
+  /** TikTok: the number at the end of the video link. Instagram: the code after /reel/ */
+  id: string;
+  /** saved copy of the video's cover in public/assets/work (the platforms' own links expire) */
+  thumb: string;
   title: string;
-  items: string[];
-  topic: string;
 }
 
-const CATEGORIES: Record<Locale, Category[]> = {
+/** Clips in "Our Work", in display order. Add a video: its id, a cover image, a short title. */
+const WORK_VIDEOS: Record<Locale, WorkVideo[]> = {
   ar: [
-    {
-      icon: "shield",
-      title: "الحماية",
-      items: ["حماية الشاشة ولوحة العدادات", "رفارف وملصقات حماية", "حصائر سيليكون"],
-      topic: "قطع الحماية",
-    },
-    {
-      icon: "car",
-      title: "الشكل الخارجي",
-      items: ["شبك أمامي (صيني وخليجي)", "صدامات بإضاءة", "جناح خلفي وأغطية مرايا"],
-      topic: "إكسسوارات الشكل الخارجي",
-    },
-    {
-      icon: "seat",
-      title: "المقصورة الداخلية",
-      items: ["قطع ديكور داخلية", "دواسات مفصّلة (5 مقاعد وأكثر)"],
-      topic: "إكسسوارات المقصورة الداخلية",
-    },
-    {
-      icon: "cpu",
-      title: "الإلكترونيات",
-      items: ["كاميرا أمامية 8.2 إنش", "فتح الصندوق عن بُعد", "قواعد شفط كهربائية للأبواب"],
-      topic: "الإلكترونيات",
-    },
-    {
-      icon: "box",
-      title: "التخزين",
-      items: ["صناديق الكونسول وأدراج أسفل الكونسول", "صناديق خلفية (3 مقاسات، أسود أو بيج)"],
-      topic: "حلول التخزين",
-    },
-    {
-      icon: "wrench",
-      title: "قطع الغيار والفلاتر",
-      items: ["قطع غيار صينية وغير صينية", "فلاتر مكيف وفلاتر رياضية"],
-      topic: "قطع الغيار",
-    },
+    { platform: "tiktok", id: "7685463028988497172", thumb: "/assets/work/tt-7685463028988497172.webp", title: "روكس 01 بحماية XPEL كاملة" },
+    { platform: "instagram", id: "DbliRNpMWUP", thumb: "/assets/work/ig-DbliRNpMWUP.webp", title: "خبراء برمجة السيارات الصينية" },
+    { platform: "tiktok", id: "7679947663978138901", thumb: "/assets/work/tt-7679947663978138901.webp", title: "عبدالله الغافري في وولف كار" },
+    { platform: "instagram", id: "DcbHWGTN-Yu", thumb: "/assets/work/ig-DcbHWGTN-Yu.webp", title: "من باب بيتك بالسطحة… والباقي علينا" },
+    { platform: "tiktok", id: "7675892113573170452", thumb: "/assets/work/tt-7675892113573170452.webp", title: "إصلاح الطعجات PDR بدون صبغ" },
+    { platform: "instagram", id: "Db52PjhNUTI", thumb: "/assets/work/ig-Db52PjhNUTI.webp", title: "كل خدمات سيارتك بمكان واحد" },
   ],
   en: [
-    {
-      icon: "shield",
-      title: "Protection",
-      items: ["Screen & dashboard protection", "Fender liners & protective decals", "Silicone floor mats"],
-      topic: "Protection parts",
-    },
-    {
-      icon: "car",
-      title: "Exterior",
-      items: ["Front grille (Chinese & GCC)", "Bumpers with lighting", "Rear spoiler & mirror covers"],
-      topic: "Exterior accessories",
-    },
-    {
-      icon: "seat",
-      title: "Interior",
-      items: ["Interior trim pieces", "Tailored floor mats (5-seat and larger)"],
-      topic: "Interior accessories",
-    },
-    {
-      icon: "cpu",
-      title: "Electronics",
-      items: ["8.2\" front camera", "Remote trunk release", "Electric suction door mounts"],
-      topic: "Electronics",
-    },
-    {
-      icon: "box",
-      title: "Storage",
-      items: ["Console boxes & under-console drawers", "Rear organizers (3 sizes, black or beige)"],
-      topic: "Storage solutions",
-    },
-    {
-      icon: "wrench",
-      title: "Spare Parts & Filters",
-      items: ["Chinese and non-Chinese spare parts", "AC filters & performance filters"],
-      topic: "Spare parts",
-    },
+    { platform: "tiktok", id: "7685463028988497172", thumb: "/assets/work/tt-7685463028988497172.webp", title: "ROX 01 with full XPEL protection" },
+    { platform: "instagram", id: "DbliRNpMWUP", thumb: "/assets/work/ig-DbliRNpMWUP.webp", title: "Chinese car programming experts" },
+    { platform: "tiktok", id: "7679947663978138901", thumb: "/assets/work/tt-7679947663978138901.webp", title: "Abdullah Al-Ghafri at Wolf Car" },
+    { platform: "instagram", id: "DcbHWGTN-Yu", thumb: "/assets/work/ig-DcbHWGTN-Yu.webp", title: "Picked up from your door by flatbed" },
+    { platform: "tiktok", id: "7675892113573170452", thumb: "/assets/work/tt-7675892113573170452.webp", title: "PDR dent repair, no repaint" },
+    { platform: "instagram", id: "Db52PjhNUTI", thumb: "/assets/work/ig-Db52PjhNUTI.webp", title: "Every car service in one place" },
   ],
 };
+
+export interface GoogleReview {
+  name: string;
+  /** copied word for word from the Google listing, in the language it was written */
+  text: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  branch: BranchId;
+}
+
+/**
+ * Real reviews only, copied from the branches' Google listings — never write,
+ * edit or translate one (reviews Google only showed translated are left out).
+ * Collected 2026-09-23.
+ */
+export const GOOGLE_REVIEWS: GoogleReview[] = [
+  {
+    name: "Nas Ali abu Rayyan",
+    text: "Excellent service, friendly and supportive staff, and a wide of accessories for Chinese cars, with best BBF qualities Their car programming service is also professional. 🚗👍appreciated all staff members …",
+    rating: 5,
+    branch: "binomran",
+  },
+  { name: "Feras aloraibi", text: "Best place to buy accessories for your Chinese car", rating: 5, branch: "gharrafa" },
+  { name: "A A M", text: "Amazing services with amazing Hospitality.", rating: 5, branch: "binomran" },
+  { name: "Mohammad Zahid", text: "Good job", rating: 5, branch: "gharrafa" },
+];
+
+/** Each branch's Google rating and its listing. Update the numbers from Google now and then. */
+export const GOOGLE_RATINGS: { branch: BranchId; rating: string; count: number; url: string }[] = [
+  { branch: "binomran", rating: "5.0", count: 9, url: "https://share.google/YZWDu79vQCysrXZsq" },
+  { branch: "gharrafa", rating: "4.8", count: 25, url: "https://share.google/aajPmo5exVWZ5yP5Z" },
+];
 
 export interface CarBrand {
   name: string;
@@ -238,7 +212,7 @@ const STEPS: Record<Locale, { n: string; title: string; body: string }[]> = {
     {
       n: "02",
       title: "نحدد الموعد",
-      body: "في الفرع الأقرب لك أو في بيتك. وإذا احتاجت سيارتك الورشة، نرسل البريكداون مجانًا.",
+      body: "في الفرع الأقرب لك أو عبر الخدمة المنزلية. وإذا احتاجت سيارتك الورشة، نرسل البريكداون مجانًا.",
     },
     {
       n: "03",
@@ -255,7 +229,7 @@ const STEPS: Record<Locale, { n: string; title: string; body: string }[]> = {
     {
       n: "02",
       title: "We set an appointment",
-      body: "At the branch nearest you or at your home. If your car needs the workshop, we send a free breakdown/tow.",
+      body: "At the branch nearest you, or through our home service. If your car needs the workshop, we send a free breakdown/tow.",
     },
     {
       n: "03",
@@ -268,8 +242,8 @@ const STEPS: Record<Locale, { n: string; title: string; body: string }[]> = {
 const FAQS: Record<Locale, { q: string; a: string }[]> = {
   ar: [
     {
-      q: "هل تقدمون الخدمة في البيت؟",
-      a: "نعم، نركّب الإكسسوارات ونعمل التظليل والبرمجة أمام بيتك، والرسوم حسب المنطقة.",
+      q: "هل تقدمون خدمة منزلية؟",
+      a: "نعم، خدمتنا المنزلية تشمل تركيب الإكسسوارات والتظليل والبرمجة، والرسوم حسب المنطقة.",
     },
     {
       q: "كم تكلفة البريكداون؟",
@@ -282,13 +256,13 @@ const FAQS: Record<Locale, { q: string; a: string }[]> = {
     { q: "أي فرع أزور؟", a: "الأقرب لك، فالفرعان يقدمان الخدمات نفسها." },
     {
       q: "هل يمكنني التقسيط؟",
-      a: "نعم مع PayLater: 4 أقساط للطلبات فوق 300 ريال، وحتى 12 شهرًا للطلبات فوق 4,000 ريال.",
+      a: "نعم مع PayLater: 4 أقساط للطلبات فوق 300 ريال، وحتى 12 قسطًا للطلبات فوق 6,000 ريال.",
     },
   ],
   en: [
     {
       q: "Do you offer home service?",
-      a: "Yes — we install accessories and do tinting and programming right at your home; fees depend on the area.",
+      a: "Yes — our home service covers accessory installation, tinting and programming; fees depend on the area.",
     },
     {
       q: "How much does the breakdown/tow cost?",
@@ -301,23 +275,8 @@ const FAQS: Record<Locale, { q: string; a: string }[]> = {
     { q: "Which branch should I visit?", a: "Whichever is closer — both branches offer the same services." },
     {
       q: "Can I pay in installments?",
-      a: "Yes, with PayLater: 4 installments for orders over 300 QAR, and up to 12 months for orders over 4,000 QAR.",
+      a: "Yes, with PayLater: 4 installments for orders over 300 QAR, and up to 12 installments for orders over 6,000 QAR.",
     },
-  ],
-};
-
-const HERO_FACTS: Record<Locale, { b: string; s: string }[]> = {
-  ar: [
-    { b: "فرعان", s: "الغرافة وبن عمران" },
-    { b: "خدمة في البيت", s: "إكسسوارات وتظليل وبرمجة" },
-    { b: "بريكداون مجاني", s: "ننقل سيارتك إلى الفرع" },
-    { b: "تقسيط PayLater", s: "4 أقساط · وحتى 12 شهر" },
-  ],
-  en: [
-    { b: "Two branches", s: "Al Gharrafa and Bin Omran" },
-    { b: "Home service", s: "Accessories, tinting & programming" },
-    { b: "Free breakdown/tow", s: "We bring your car to the branch" },
-    { b: "PayLater installments", s: "4 installments · up to 12 months" },
   ],
 };
 
@@ -352,20 +311,17 @@ export const LOGO =
 export function getServices(locale: Locale) {
   return SERVICES[locale];
 }
-export function getCategories(locale: Locale) {
-  return CATEGORIES[locale];
-}
 export function getCarBrands(locale: Locale) {
   return CAR_BRANDS[locale];
+}
+export function getWorkVideos(locale: Locale) {
+  return WORK_VIDEOS[locale];
 }
 export function getSteps(locale: Locale) {
   return STEPS[locale];
 }
 export function getFaqs(locale: Locale) {
   return FAQS[locale];
-}
-export function getHeroFacts(locale: Locale) {
-  return HERO_FACTS[locale];
 }
 export function getBookingServices(locale: Locale) {
   return BOOKING_SERVICES[locale];
