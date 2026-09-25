@@ -65,7 +65,7 @@ export function CartSheet() {
                         <Image src={l.thumbUrl} alt="" fill sizes="64px" className="object-contain p-1" unoptimized />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p dir="auto" className="line-clamp-2 text-start text-[14px] leading-snug font-bold">
+                        <p dir="auto" className="line-clamp-3 text-start text-[14px] leading-snug font-bold">
                           {l.name}
                         </p>
                         <p className="mt-0.5 text-sm font-bold text-accent-ink tabular-nums">

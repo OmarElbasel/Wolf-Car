@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import { Icon } from "./Icon";
 
 const AUTONYM: Record<string, string> = { ar: "العربية", en: "English" };
@@ -18,7 +19,7 @@ export function LocaleSwitcher({ className = "" }: { className?: string }) {
       locale={other}
       title={t("languageSwitch")}
       aria-label={t("languageSwitch")}
-      className={`inline-flex min-h-11 items-center gap-1 px-1 text-sm font-bold text-ink-2 hover:text-ink ${className}`}
+      className={cn("inline-flex min-h-11 items-center gap-1 px-1 text-sm font-bold text-ink-2 hover:text-ink", className)}
     >
       <Icon name="globe" className="size-[18px]" />
       {AUTONYM[other]}

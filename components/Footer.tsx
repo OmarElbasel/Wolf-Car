@@ -64,8 +64,22 @@ export async function Footer() {
               >
                 <Icon name="tt" />
               </a>
+              <a
+                href={SOCIAL.salehSnap}
+                target="_blank"
+                rel="noopener"
+                aria-label={t("snapAria")}
+                className="grid size-11 place-items-center rounded-[var(--radius-brand)] border border-[#3A3A3A] hover:border-white"
+              >
+                <Icon name="snap" />
+              </a>
             </div>
             <p className="mt-2.5">
+              <a href={SOCIAL.salehSnap} target="_blank" rel="noopener" className="hover:text-white">
+                {t("salehSnap")}
+              </a>
+            </p>
+            <p className="mt-1">
               <a href={`mailto:${SOCIAL.email}`} dir="ltr" className="hover:text-white">
                 {SOCIAL.email}
               </a>

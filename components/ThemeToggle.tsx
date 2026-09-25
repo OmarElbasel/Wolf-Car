@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { toggleTheme } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import { Icon } from "./Icon";
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
@@ -13,7 +14,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={toggleTheme}
       title={t("themeToggle")}
       aria-label={t("themeToggle")}
-      className={`grid size-11 flex-none place-items-center text-ink-2 ${className}`}
+      className={cn("grid size-11 flex-none place-items-center text-ink-2", className)}
     >
       {/* both icons render identically on server and client; the .dark class
           (set before paint by THEME_SCRIPT) picks which one is visible, so

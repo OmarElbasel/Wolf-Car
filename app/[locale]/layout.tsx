@@ -90,7 +90,7 @@ export default async function LocaleLayout({
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={dir} className={cairo.variable} suppressHydrationWarning>
+    <html lang={locale} dir={dir} className={cairo.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="font-sans pb-[76px] md:pb-0">
         {/* First in <body> so it runs before anything paints, which is what
             keeps the theme from flashing. React dev-warns about executable

@@ -54,7 +54,6 @@ export async function Reviews() {
                   <span className="font-semibold text-ink-2">
                     {branchName[g.branch]}
                   </span>
-                  <span>· {t("count", { count: g.count })}</span>
                 </a>
               </li>
             ))}

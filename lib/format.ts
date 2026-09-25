@@ -4,9 +4,12 @@
  */
 const tag = (locale: string) => `${locale === "ar" ? "ar" : "en"}-QA-u-nu-latn`;
 
-export function formatMoney(amount: string | number | null | undefined, locale: string): string {
+/** `whole` drops the halalas, for round prices shown large (the protection packages). */
+export function formatMoney(amount: string | number | null | undefined, locale: string, { whole = false } = {}): string {
   if (amount === null || amount === undefined || amount === "") return "—";
-  return new Intl.NumberFormat(tag(locale), { style: "currency", currency: "QAR" }).format(Number(amount));
+  return new Intl.NumberFormat(tag(locale), { style: "currency", currency: "QAR", ...(whole && { maximumFractionDigits: 0 }) }).format(
+    Number(amount),
+  );
 }
 
 export function formatNumber(value: number, locale: string): string {

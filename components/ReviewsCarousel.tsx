@@ -46,7 +46,7 @@ export function ReviewsCarousel({ reviews }: { reviews: ReviewCard[] }) {
   const arrow =
     "grid size-11 flex-none place-items-center rounded-full text-ink-2 transition-colors hover:bg-surface hover:text-ink";
   const side =
-    "hidden w-[250px] flex-none rounded-[var(--radius-brand-lg)] bg-surface/70 px-6 py-7 text-center text-[13px] leading-relaxed text-muted lg:block";
+    "hidden h-[190px] w-[250px] flex-none flex-col justify-center rounded-[var(--radius-brand-lg)] bg-surface/70 px-6 py-7 text-center text-[13px] leading-relaxed text-muted lg:flex";
 
   const prev = at(-1);
   const current = at(0);
@@ -69,22 +69,22 @@ export function ReviewsCarousel({ reviews }: { reviews: ReviewCard[] }) {
           <p dir="auto" className="line-clamp-4">
             &ldquo;{prev.text}&rdquo;
           </p>
-          <p className="mt-4 font-semibold">{prev.name}</p>
+          <p className="mt-4 truncate font-semibold">{prev.name}</p>
         </div>
       )}
 
       <figure
         aria-live="polite"
-        className="relative w-full max-w-[440px] rounded-[var(--radius-brand-lg)] bg-surface px-7 pt-9 pb-12 text-center shadow-[0_10px_30px_-18px_rgba(0,0,0,0.25)] md:px-10"
+        className="relative flex h-[340px] w-full max-w-[440px] flex-col items-center rounded-[var(--radius-brand-lg)] bg-surface px-7 pt-9 pb-12 text-center shadow-[0_10px_30px_-18px_rgba(0,0,0,0.25)] md:px-10"
       >
         <Stars rating={current.rating} size="text-[26px]" />
         <blockquote
           dir="auto"
-          className="mt-4 text-[16px] leading-[1.8] text-ink-2 md:text-[17px]"
+          className="mt-4 line-clamp-4 shrink-0 text-[16px] leading-[1.8] text-ink-2 md:text-[17px]"
         >
           &ldquo;{current.text}&rdquo;
         </blockquote>
-        <figcaption className="mt-5">
+        <figcaption className="mt-auto pt-5">
           <b className="block">{current.name}</b>
           <small className="text-[13px] text-muted">{current.place}</small>
         </figcaption>
@@ -101,7 +101,7 @@ export function ReviewsCarousel({ reviews }: { reviews: ReviewCard[] }) {
           <p dir="auto" className="line-clamp-4">
             &ldquo;{next.text}&rdquo;
           </p>
-          <p className="mt-4 font-semibold">{next.name}</p>
+          <p className="mt-4 truncate font-semibold">{next.name}</p>
         </div>
       )}
 

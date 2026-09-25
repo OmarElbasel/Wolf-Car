@@ -2,8 +2,9 @@ import { expect, test } from "./fixtures/test";
 
 /**
  * The landing page must stay exactly as it was, apart from the two footer
- * links. These snapshots were reviewed against the pre-change baseline; any
- * other visual change fails here.
+ * links and the way into the protection packages (a "Packages" header link,
+ * and the PPF service card's link). These snapshots were reviewed against the
+ * pre-change baseline; any other visual change fails here.
  */
 for (const locale of ["ar", "en"] as const) {
   for (const theme of ["light", "dark"] as const) {

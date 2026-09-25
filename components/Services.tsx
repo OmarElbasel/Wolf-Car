@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 import { SectionHead, Wrap } from "./Button";
 import { AskLink } from "./ContactButtons";
+import { Link } from "@/i18n/navigation";
 import { getServices } from "@/lib/content";
 
 /**
@@ -15,6 +16,8 @@ const SPANS = [
   "lg:col-span-4",
   "lg:col-span-4",
 ];
+
+const LINK = "inline-flex min-h-[44px] items-center gap-1.5 font-bold text-accent-ink hover:underline hover:underline-offset-4";
 
 export async function Services() {
   const locale = await getLocale();
@@ -48,11 +51,12 @@ export async function Services() {
                 <div className="mt-auto">
                   {s.topic ? (
                     <AskLink topic={s.topic}>{s.linkLabel}</AskLink>
+                  ) : s.href?.startsWith("/") ? (
+                    <Link href={s.href} className={LINK}>
+                      {s.linkLabel}
+                    </Link>
                   ) : (
-                    <a
-                      href={s.href}
-                      className="inline-flex min-h-[44px] items-center gap-1.5 font-bold text-accent-ink hover:underline hover:underline-offset-4"
-                    >
+                    <a href={s.href} className={LINK}>
                       {s.linkLabel}
                     </a>
                   )}

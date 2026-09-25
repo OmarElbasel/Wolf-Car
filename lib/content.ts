@@ -6,6 +6,7 @@ export interface Service {
   blurb: string;
   /** WhatsApp topic; when absent the card links to `href` instead */
   topic?: string;
+  /** an in-page anchor ("#catalog") or a site page ("/packages") */
   href?: string;
   linkLabel: string;
   photoAlt: string;
@@ -35,8 +36,8 @@ const SERVICES: Record<Locale, Service[]> = {
     {
       title: "حماية PPF وعازل وتظليل",
       blurb: "فيلم حماية XPEL لجميع أنواع السيارات، مع عازل حراري وتظليل للزجاج.",
-      topic: "حماية الطلاء والعازل والتظليل",
-      linkLabel: "استفسر عبر واتساب",
+      href: "/packages",
+      linkLabel: "شاهد الباقات والأسعار",
       photoAlt: "صورة حماية وتظليل",
       image: SERVICE_IMAGES.protection,
     },
@@ -77,8 +78,8 @@ const SERVICES: Record<Locale, Service[]> = {
     {
       title: "PPF, Insulation & Tinting",
       blurb: "XPEL protective film for all car types, plus heat insulation and window tinting.",
-      topic: "PPF, insulation & tinting",
-      linkLabel: "Ask on WhatsApp",
+      href: "/packages",
+      linkLabel: "See packages & prices",
       photoAlt: "Protection and tinting photo",
       image: SERVICE_IMAGES.protection,
     },
@@ -303,6 +304,8 @@ export const SOCIAL = {
   instagram: "https://www.instagram.com/wolfcar_qa/",
   tiktok: "https://www.tiktok.com/@wolfcar_qa",
   email: "info@wolfcar.qa",
+  /** Saleh (the owner) posts daily on his own Snapchat — a content channel, not a personal extra */
+  salehSnap: "https://www.snapchat.com/add/saleh.wolf",
 };
 
 export const LOGO =

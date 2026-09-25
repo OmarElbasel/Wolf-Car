@@ -89,3 +89,36 @@ test.describe("public catalog", () => {
     await expect(page.getByRole("heading", { name: "كل القطع والإكسسوارات" })).toBeVisible();
   });
 });
+
+test.describe("protection packages", () => {
+  test("are linked from the landing page and the catalogue, and go into the same basket as parts", async ({ page }) => {
+    await page.goto("/en");
+    await expect(page.locator("header").getByRole("link", { name: "Packages" })).toHaveAttribute("href", "/en/packages");
+    await page.locator("#services").getByRole("link", { name: "See packages & prices" }).click();
+    await expect(page).toHaveURL(/\/en\/packages$/);
+
+    const bundle = page.locator("#complete li").filter({ has: page.getByRole("heading", { name: "Package 2" }) });
+    await bundle.getByRole("button", { name: "Add to order" }).click();
+    await page.getByRole("button", { name: "SUV / 4×4" }).click();
+    await page.getByRole("button", { name: "Add Full front protection · German film · Premium · SUV / 4×4 to your order" }).click();
+
+    // a part from the catalogue joins the same WhatsApp order
+    await page.goto("/en/products");
+    await expect(page.getByRole("link", { name: /Protection packages/ })).toHaveAttribute("href", "/en/packages");
+    const card = page.getByTestId("catalog-grid").getByRole("listitem").filter({ hasText: "Oil Filter" });
+    await card.getByRole("button", { name: "Add to cart" }).click();
+    await page.getByRole("button", { name: /View cart/ }).click();
+
+    const href = decodeURIComponent((await page.getByRole("link", { name: "Order on WhatsApp · Bin Omran" }).getAttribute("href")) ?? "");
+    expect(href).toMatch(/1\. Package 2 · complete protection · German film × 1 — QAR\s6,999\.00/);
+    expect(href).toMatch(/2\. Full front protection · German film · Premium · SUV \/ 4×4 × 1 — QAR\s3,500\.00/);
+    expect(href).toMatch(/3\. Oil Filter × 1 — QAR\s35\.00/);
+    expect(href).toMatch(/Total: QAR\s10,534\.00/);
+  });
+
+  test("are available in Arabic", async ({ page }) => {
+    await page.goto("/ar/packages");
+    await expect(page.getByRole("heading", { name: "باقات الحماية المتكاملة" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "فورويل" })).toHaveAttribute("aria-pressed", "false");
+  });
+});

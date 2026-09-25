@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,7 +11,10 @@ import { CartSheet } from "@/features/catalog/cart-sheet";
 import { CatalogGrid } from "@/features/catalog/catalog-grid";
 import { categoryName } from "@/features/catalog/category-name";
 import { ModelSidebar, ModelTabs } from "@/features/catalog/model-tabs";
+import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { formatMoney } from "@/lib/format";
+import { FLAG_BADGE, lowestPrices } from "@/lib/packages";
 import { fetchPublicCatalog, fetchPublicCategories } from "@/lib/public-catalog";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -37,6 +41,8 @@ export default async function ProductsPage({
   const locale = hasLocale(routing.locales, raw) ? raw : routing.defaultLocale;
   setRequestLocale(locale);
   const t = await getTranslations("ProductsPage");
+  const pkg = await getTranslations("Packages");
+  const from = lowestPrices();
   const categories = (await fetchPublicCategories()) ?? [];
   // an unknown or stale id falls back to every product instead of an empty page
   const selected = categories.find((c) => c.id === rawCategory);
@@ -75,6 +81,24 @@ export default async function ProductsPage({
               />
             </div>
           </section>
+
+          {/* protection packages are services, not parts: a way across to their page */}
+          <Link
+            href="/packages"
+            className="group mb-5 flex items-center gap-3 rounded-[var(--radius-brand-lg)] border border-line bg-surface px-4 py-3 transition-colors hover:border-accent"
+          >
+            <Image src={FLAG_BADGE.de} alt="" width={35} height={40} className="h-10 w-auto shrink-0" unoptimized />
+            <span className="min-w-0 flex-1 leading-snug">
+              <b className="block text-[15px] font-extrabold">{pkg("promoTitle")}</b>
+              <small className="block text-[13px] text-muted tabular-nums">
+                {pkg("promoBody", { bundle: formatMoney(from.bundle, locale, { whole: true }), front: formatMoney(from.front, locale, { whole: true }) })}
+              </small>
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-accent-ink">
+              <span className="hidden sm:inline">{pkg("promoCta")}</span>
+              <ArrowRight className="size-[18px] transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" aria-hidden="true" strokeWidth={2.2} />
+            </span>
+          </Link>
 
           <ul className="mb-7 hidden gap-2.5 sm:grid sm:grid-cols-3">
             {perks.map((p) => (
