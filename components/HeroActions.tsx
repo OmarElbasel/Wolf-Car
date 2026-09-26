@@ -35,7 +35,7 @@ export function HeroActions() {
         <a
           href="#book"
           onClick={book("home")}
-          className="inline-flex min-h-[56px] items-center justify-center gap-2.5 rounded-[14px] border border-white/20 bg-white/[0.07] px-6 text-[17px] font-bold text-white backdrop-blur-md transition-colors hover:border-white/40 hover:bg-white/[0.12]"
+          className="inline-flex min-h-[56px] items-center justify-center gap-2.5 rounded-[14px] border border-black/15 bg-white px-6 text-[17px] font-bold text-ink backdrop-blur-md transition-colors hover:border-black/30 dark:border-white/20 dark:bg-white/[0.07] dark:text-white dark:hover:border-white/40 dark:hover:bg-white/[0.12]"
         >
           <House className="size-5" aria-hidden="true" strokeWidth={2} />
           {t("homeTitle")}
@@ -44,16 +44,16 @@ export function HeroActions() {
       <button
         type="button"
         onClick={() => ask({ kind: "wa", message: t("breakdownMessage") })}
-        className="group mt-4 inline-flex min-h-11 items-center gap-2.5 text-start text-[15px] font-bold text-white/85 transition-colors hover:text-white"
+        className="group mt-4 inline-flex min-h-11 items-center gap-2.5 text-start text-[15px] font-bold text-ink-2 transition-colors hover:text-ink dark:text-white/85 dark:hover:text-white"
       >
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 text-brand">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/10 text-accent dark:bg-white/10 dark:text-brand">
           <Truck className="size-[18px]" aria-hidden="true" strokeWidth={2} />
         </span>
         <span>
-          {t("breakdownTitle")} <span className="hidden font-semibold text-white/55 sm:inline">· {t("breakdownBody")}</span>
+          {t("breakdownTitle")} <span className="hidden font-semibold text-muted sm:inline dark:text-white/55">· {t("breakdownBody")}</span>
         </span>
         <ChevronRight
-          className="size-4 shrink-0 text-white/55 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+          className="size-4 shrink-0 text-muted transition-transform dark:text-white/55 group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
           aria-hidden="true"
           strokeWidth={2.4}
         />

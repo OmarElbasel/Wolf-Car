@@ -16,8 +16,8 @@ import { LocaleSwitcher } from "./LocaleSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
 
 /**
- * Landing-page header: a floating glass bar over the dark hero that turns
- * solid once the hero has scrolled away. Below lg the links move into a menu
+ * Landing-page header: a floating glass bar over the hero (light or dark with
+ * the theme) that turns solid once the hero has scrolled away. Below lg the links move into a menu
  * sheet (call and WhatsApp stay in the bottom StickyBar on phones).
  */
 export function Header() {
@@ -75,14 +75,16 @@ export function Header() {
     }, 260);
   };
 
-  const onHero = "text-white/80 hover:text-white group-data-[solid=true]:text-ink-2 group-data-[solid=true]:hover:text-ink";
+  // over the hero the dark theme needs light text; the light hero already suits the solid colours
+  const onHero =
+    "text-ink-2 hover:text-ink dark:text-white/80 dark:hover:text-white dark:group-data-[solid=true]:text-ink-2 dark:group-data-[solid=true]:hover:text-ink";
 
   return (
     <header data-solid={solid} className="group fixed inset-x-0 top-0 z-50 px-3 pt-3 lg:px-5 lg:pt-4">
       <div
         className={cn(
           "mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 rounded-[18px] border ps-3 pe-2 transition-[background-color,border-color,box-shadow] duration-300 lg:ps-4",
-          "border-white/12 bg-[#0d0c0b]/55 text-white backdrop-blur-xl",
+          "border-black/10 bg-white/60 text-ink backdrop-blur-xl dark:border-white/12 dark:bg-[#0d0c0b]/55 dark:text-white",
           "group-data-[solid=true]:border-line group-data-[solid=true]:bg-surface/92 group-data-[solid=true]:text-ink group-data-[solid=true]:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.25)]",
         )}
       >

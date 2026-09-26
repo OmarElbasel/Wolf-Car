@@ -49,7 +49,7 @@ function Choice({
       />
       <label
         htmlFor={`${name}-${value}`}
-        className="inline-flex min-h-[44px] cursor-pointer items-center rounded-[var(--radius-brand)] border-[1.5px] border-line px-3.5 text-[15px] font-semibold transition-colors peer-checked:border-charcoal peer-checked:bg-charcoal peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-ink"
+        className="inline-flex min-h-[44px] cursor-pointer items-center rounded-[var(--radius-brand)] border-[1.5px] border-line px-3.5 text-[15px] font-semibold transition-colors peer-checked:border-charcoal peer-checked:bg-charcoal peer-checked:text-white dark:peer-checked:border-accent dark:peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-ink"
       >
         {label}
       </label>

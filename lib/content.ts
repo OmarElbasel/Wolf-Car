@@ -10,16 +10,17 @@ export interface Service {
   href?: string;
   linkLabel: string;
   photoAlt: string;
-  /** TEMP: placeholder stock photo until the real shop photos arrive */
+  /** 1600×900 (PPF 1600×700), subject centred — the cards crop the edges */
   image: string;
 }
 
-// TEMP placeholders (Unsplash) — swap for real photos of the shop's work
+// Our own photos in public/assets/services; maintenance is still a stock
+// placeholder (Unsplash) until its photo arrives
 const SERVICE_IMAGES = {
-  bodyKit: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=70",
-  protection: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=1200&q=70",
-  programming: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1200&q=70",
-  parts: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1200&q=70",
+  bodyKit: "/assets/services/accessories.webp",
+  protection: "/assets/services/ppf.webp",
+  programming: "/assets/services/programming.webp",
+  parts: "/assets/services/parts.webp",
   maintenance: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1200&q=70",
 };
 
@@ -30,7 +31,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "شبك أمامي، صدامات، جناح خلفي، وشعارات الإصدار الأسود.",
       topic: "الإكسسوارات والبودي كيت",
       linkLabel: "استفسر عبر واتساب",
-      photoAlt: "صورة بودي كيت",
+      photoAlt: "سيارة جيتور وأمامها إكسسوارات وقطع بودي كيت في ورشة وولف كار",
       image: SERVICE_IMAGES.bodyKit,
     },
     {
@@ -38,7 +39,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "فيلم حماية XPEL لجميع أنواع السيارات، مع عازل حراري وتظليل للزجاج.",
       href: "/packages",
       linkLabel: "شاهد الباقات والأسعار",
-      photoAlt: "صورة حماية وتظليل",
+      photoAlt: "فريق وولف كار يركّب فيلم حماية على سيارة بيضاء",
       image: SERVICE_IMAGES.protection,
     },
     {
@@ -46,7 +47,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "برمجة وتحديثات، باشتراك سنوي أو لمرة واحدة.",
       topic: "البرمجة والتشخيص",
       linkLabel: "استفسر عبر واتساب",
-      photoAlt: "صورة برمجة",
+      photoAlt: "جهاز تشخيص وبرمجة موصول بالسيارة",
       image: SERVICE_IMAGES.programming,
     },
     {
@@ -54,7 +55,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "قطع للسيارات الصينية وغير الصينية.",
       href: "#catalog",
       linkLabel: "تصفح الفئات",
-      photoAlt: "صورة قطع غيار",
+      photoAlt: "قطع غيار أمامية لسيارة في ورشة وولف كار",
       image: SERVICE_IMAGES.parts,
     },
     {
@@ -72,7 +73,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "Front grilles, bumpers, rear spoilers, and Black Edition badges.",
       topic: "Accessories & body kits",
       linkLabel: "Ask on WhatsApp",
-      photoAlt: "Body kit photo",
+      photoAlt: "A Jetour with accessories and body kit parts laid out in the Wolf Car workshop",
       image: SERVICE_IMAGES.bodyKit,
     },
     {
@@ -80,7 +81,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "XPEL protective film for all car types, plus heat insulation and window tinting.",
       href: "/packages",
       linkLabel: "See packages & prices",
-      photoAlt: "Protection and tinting photo",
+      photoAlt: "The Wolf Car team applying protective film to a white car",
       image: SERVICE_IMAGES.protection,
     },
     {
@@ -88,7 +89,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "Programming and updates, yearly subscription or one-time.",
       topic: "Programming & diagnostics",
       linkLabel: "Ask on WhatsApp",
-      photoAlt: "Programming photo",
+      photoAlt: "A diagnostic and programming tablet connected to a car",
       image: SERVICE_IMAGES.programming,
     },
     {
@@ -96,7 +97,7 @@ const SERVICES: Record<Locale, Service[]> = {
       blurb: "Parts for Chinese and non-Chinese cars.",
       href: "#catalog",
       linkLabel: "Browse categories",
-      photoAlt: "Spare parts photo",
+      photoAlt: "Front-end spare parts for a car in the Wolf Car workshop",
       image: SERVICE_IMAGES.parts,
     },
     {

@@ -69,7 +69,7 @@
   --t-line: #e4e1db;
   --t-sand: #f5f4f1;
   --t-surface: #ffffff;
-  --t-accent-ink: #c94a12; /* orange text, calibrated per-mode for contrast */
+  --t-accent-ink: #c2470f; /* orange text, calibrated per-mode for contrast (≥4.5:1 on sand) */
 }
 
 .dark {
@@ -84,8 +84,8 @@
 
 @theme {
   --color-brand: #f2702a; /* brand orange — accents only, same in both modes */
-  --color-accent: #d9541a; /* flat buttons, white text */
-  --color-accent-dark: #b8420f;
+  --color-accent: #c94a12; /* flat buttons, white text (4.7:1) */
+  --color-accent-dark: #a93b0c;
   --color-accent-ink: var(--t-accent-ink);
   --color-ink: var(--t-ink);
   --color-ink-2: var(--t-ink-2);
@@ -151,9 +151,10 @@
 /* ---- hero -------------------------------------------------------------- */
 /* faint grid, fading out toward the edges */
 .hero-grid {
+  --grid-line: rgb(0 0 0 / 0.05);
   background-image:
-    linear-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 56px 56px;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
@@ -161,7 +162,13 @@
 /* outlined ghost wordmark behind the van */
 .hero-outline {
   color: transparent;
-  -webkit-text-stroke: 1.5px rgb(255 255 255 / 0.09);
+  -webkit-text-stroke: 1.5px rgb(0 0 0 / 0.07);
+}
+.dark .hero-grid {
+  --grid-line: rgb(255 255 255 / 0.04);
+}
+.dark .hero-outline {
+  -webkit-text-stroke-color: rgb(255 255 255 / 0.09);
 }
 /* the mirrored van under the real one: visible at the wheels, gone within a
    third of its height (the mask runs before the flip, so "to top" reads downward) */
@@ -274,7 +281,7 @@
   --color-card-foreground: var(--t-ink);
   --color-popover: var(--t-surface);
   --color-popover-foreground: var(--t-ink);
-  --color-primary: #d9541a;
+  --color-primary: var(--color-accent); /* same orange as the site buttons */
   --color-primary-foreground: #ffffff;
   --color-secondary: var(--t-sand);
   --color-secondary-foreground: var(--t-ink);

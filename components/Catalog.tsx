@@ -15,7 +15,7 @@ const SHOWN = 6;
  * brand orange and charcoal, the others sit on the plain surface.
  */
 const TONES = {
-  accent: { card: "bg-accent text-white", sub: "text-white/70", dot: "bg-white text-accent" },
+  accent: { card: "bg-accent text-white", sub: "text-white", dot: "bg-white text-accent" },
   dark: { card: "bg-charcoal text-white", sub: "text-white/55", dot: "bg-white text-charcoal" },
   plain: { card: "bg-surface text-ink border border-line", sub: "text-muted", dot: "bg-ink text-surface" },
 } as const;

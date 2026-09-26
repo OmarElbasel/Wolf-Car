@@ -91,7 +91,7 @@ export default async function AboutPage({
         {/* story: the same dark stage as the home hero, with both real storefronts */}
         <section className="relative isolate overflow-hidden bg-[#0b0a09] py-14 text-white lg:py-20">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-            <div className="hero-grid absolute inset-0" />
+            <div className="hero-grid absolute inset-0 [--grid-line:rgb(255_255_255/0.04)]" />
             <div className="absolute top-[10%] right-[-10%] h-[80%] w-[60%] rounded-full bg-[radial-gradient(closest-side,rgba(242,112,42,0.22),transparent)]" />
           </div>
           <Wrap>
