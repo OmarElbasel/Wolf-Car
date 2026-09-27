@@ -56,7 +56,8 @@
     "payValue": "Installments",
     "payLabel": "PayLater · up to 12 installments",
     "homeValue": "Home service",
-    "homeLabel": "Fitting · tinting · programming"
+    "homeLabel": "Fitting · tinting · programming",
+    "trackTitle": "We come to your door"
   },
   "Services": {
     "label": "Our Services",

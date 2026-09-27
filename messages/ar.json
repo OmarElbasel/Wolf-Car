@@ -56,7 +56,8 @@
     "payValue": "تقسيط",
     "payLabel": "PayLater · حتى 12 قسطًا",
     "homeValue": "خدمة منزلية",
-    "homeLabel": "تركيب · تظليل · برمجة"
+    "homeLabel": "تركيب · تظليل · برمجة",
+    "trackTitle": "نصل إلى باب بيتك"
   },
   "Services": {
     "label": "خدماتنا",
