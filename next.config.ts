@@ -22,6 +22,8 @@ const LAN_HOSTS = Object.values(networkInterfaces())
   .map((net) => net!.address);
 
 const nextConfig: NextConfig = {
+  // Docker: .next/standalone holds server.js plus only the traced node_modules
+  output: "standalone",
   // dev only: Next blocks HMR and dev assets for hostnames other than localhost
   allowedDevOrigins: LAN_HOSTS,
   // this app lives inside a non-git workspace folder; pin the root so Turbopack
