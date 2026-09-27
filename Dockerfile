@@ -14,8 +14,11 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 ARG API_INTERNAL_URL=http://api:4000
+# Node sizes its heap from physical RAM (~490 MB on a 1 GB droplet) and ignores
+# swap, which is too little for next build's type check. Build step only.
 ENV API_INTERNAL_URL=$API_INTERNAL_URL \
-    NEXT_TELEMETRY_DISABLED=1
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS=--max-old-space-size=3072
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runtime
