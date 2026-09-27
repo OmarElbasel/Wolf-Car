@@ -30,9 +30,6 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
-    icons: {
-      icon: "https://res.cloudinary.com/dzcq09k8h/image/upload/v1777807970/Logo-removebg-preview_mg3e4j.png",
-    },
   };
 }
 
