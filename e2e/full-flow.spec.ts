@@ -84,8 +84,14 @@ test("admin → manager → finance → showroom → cashier → activity log", 
     await handle.focus();
     await page.keyboard.press("Space");
     await expect(announcer).toContainText("moved to position 14 of 14");
-    await page.keyboard.press("ArrowUp");
-    await expect(announcer).toContainText("moved to position 13 of 14");
+    // the pick-up announcement comes before dnd-kit is ready for arrow keys, and
+    // an arrow pressed in that gap is ignored (nothing on the page shows when it
+    // is ready). Press again only while the row is still at 14, so it never
+    // moves twice.
+    await expect(async () => {
+      if ((await announcer.textContent())?.includes("position 14 of 14")) await page.keyboard.press("ArrowUp");
+      await expect(announcer).toContainText("moved to position 13 of 14", { timeout: 300 });
+    }).toPass({ timeout: 5_000 });
     await page.keyboard.press("Space");
     await expect(announcer).toContainText("dropped at position 13 of 14");
     await expect(page.getByText("Showroom order saved")).toBeVisible();
