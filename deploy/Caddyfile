@@ -1,0 +1,20 @@
+# /etc/caddy/Caddyfile — shared by every site on this server.
+# Other projects add their own site block below; do not remove ours.
+{
+	email __ACME_EMAIL__
+}
+
+# Wolf Car — temporary address until wolfcar.qa points here.
+wolfcar.167-172-106-106.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+
+# Wolf Car — enable at the DNS switch (DEPLOY.md, "Launch"):
+# wolfcar.qa {
+# 	encode zstd gzip
+# 	reverse_proxy 127.0.0.1:3000
+# }
+# www.wolfcar.qa {
+# 	redir https://wolfcar.qa{uri} permanent
+# }
