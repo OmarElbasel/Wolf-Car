@@ -4,7 +4,8 @@
     "SUPER_ADMIN": "كل ما يحدث في الفرعين بنظرة واحدة.",
     "FINANCE": "الأسعار والطلبات في جميع الفروع.",
     "BRANCH_MANAGER": "منتجات فرعك ومعرضه.",
-    "CASHIER": "طلبات فرعك."
+    "CASHIER": "طلبات فرعك.",
+    "RESERVATIONS": "حجوزات PPF والحجوزات العامة."
   },
   "pendingOrders": "طلبات قيد الانتظار",
   "confirmedToday": "مؤكّدة اليوم",
@@ -18,5 +19,6 @@
   "viewAll": "عرض الكل",
   "setPrices": "تحديد الأسعار",
   "reorderShowroom": "ترتيب المعرض",
-  "reviewOrders": "مراجعة الطلبات"
+  "reviewOrders": "مراجعة الطلبات",
+  "waitingRequests": "طلبات بالانتظار"
 }

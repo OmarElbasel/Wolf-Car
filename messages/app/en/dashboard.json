@@ -4,7 +4,8 @@
     "SUPER_ADMIN": "Everything across both branches at a glance.",
     "FINANCE": "Prices and orders across all branches.",
     "BRANCH_MANAGER": "Your branch's products and showroom.",
-    "CASHIER": "Your branch's orders."
+    "CASHIER": "Your branch's orders.",
+    "RESERVATIONS": "PPF bookings and general reservations."
   },
   "pendingOrders": "Pending orders",
   "confirmedToday": "Confirmed today",
@@ -18,5 +19,6 @@
   "viewAll": "View all",
   "setPrices": "Set prices",
   "reorderShowroom": "Arrange showroom",
-  "reviewOrders": "Review orders"
+  "reviewOrders": "Review orders",
+  "waitingRequests": "Requests waiting"
 }
