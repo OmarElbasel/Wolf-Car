@@ -24,6 +24,7 @@ import { PermissionsGuard } from './rbac/permissions.guard';
 import { RbacModule } from './rbac/rbac.module';
 import { SalesAccessModule } from './sales-access/sales-access.module';
 import { ReceiptsModule } from './receipts/receipts.module';
+import { ReservationsModule } from './reservations/reservations.module';
 import { ShowroomModule } from './showroom/showroom.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
@@ -92,6 +93,7 @@ type IdRequest = IncomingMessage & { id?: string };
     OrdersModule,
     PpfModule,
     SalesAccessModule,
+    ReservationsModule,
     ReceiptsModule,
     PublicModule,
   ],

@@ -96,6 +96,11 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'GET /api/slots': { public: 401 },
   'POST /api/slots/requests': { public: 401 },
 
+  'GET /api/reservations': ['admin', 'reservations'],
+  'POST /api/reservations': ['admin', 'reservations'],
+  'PATCH /api/reservations/:id': ['admin', 'reservations'],
+  'POST /api/reservations/:id/cancel': ['admin', 'reservations'],
+
   'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },
 
