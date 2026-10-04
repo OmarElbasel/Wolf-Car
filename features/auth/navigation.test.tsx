@@ -33,6 +33,11 @@ describe("permission-gated navigation", () => {
     expect(labels(["product.read", "product.update.price", "order.read.all"])).toEqual(["overview", "products", "orders", "account"]);
   });
 
+  it("shows the call center the two booking pages", () => {
+    expect(labels(["booking.ppf.read", "booking.ppf.manage", "booking.general.manage"])).toEqual(["overview", "ppfBookings", "reservations", "account"]);
+    expect(labels(["booking.ppf.read"])).toEqual(["overview", "ppfBookings", "account"]);
+  });
+
   it("follows per-user grants (e.g. activity.read given to Finance)", () => {
     expect(labels(["product.read", "activity.read"])).toContain("activity");
   });

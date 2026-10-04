@@ -2,6 +2,8 @@
 
 import {
   Building2,
+  CalendarCheck,
+  CalendarClock,
   ChevronDown,
   History,
   LayoutDashboard,
@@ -32,6 +34,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/features/auth/auth-provider";
 import { type NavItem, visibleNav } from "@/features/auth/navigation";
+import { usePendingRequests } from "@/features/bookings/ppf/queries";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +42,8 @@ const ICONS: Record<NavItem["icon"], typeof Package> = {
   home: LayoutDashboard,
   products: Package,
   orders: ReceiptText,
+  ppf: CalendarCheck,
+  reservations: CalendarClock,
   users: Users,
   branches: Building2,
   permissions: ShieldCheck,
@@ -53,6 +58,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { user, can } = useAuth();
   const items = visibleNav(user?.permissions ?? []);
+  const tp = useTranslations("PpfBookings");
+  const pending = usePendingRequests(can("booking.ppf.read"));
   return (
     <nav aria-label={t("overview")} className="grid gap-1">
       {items.map((item) => {
@@ -71,6 +78,12 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           >
             <Icon className={cn("size-5 shrink-0", active && "text-accent-ink")} strokeWidth={1.8} aria-hidden="true" />
             {t(item.label)}
+            {item.icon === "ppf" && pending > 0 && (
+              <span className="ms-auto grid h-6 min-w-6 place-items-center rounded-full bg-accent px-1.5 text-[12px] font-extrabold text-white tabular-nums">
+                <span aria-hidden="true">{pending}</span>
+                <span className="sr-only">{tp("pending", { count: pending })}</span>
+              </span>
+            )}
           </Link>
         );
       })}

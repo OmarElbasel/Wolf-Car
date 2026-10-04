@@ -240,3 +240,104 @@ export interface BranchOption {
   nameAr: string;
   isActive: boolean;
 }
+// ---- PPF bookings, general reservations, sales slots ----
+
+export type PpfBookingType = "FULL" | "LIGHT";
+export type BookingStatus = "BOOKED" | "CANCELLED";
+export type DayState = "OPEN" | "FULL" | "CLOSED";
+export type RequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+/** One day of the PPF calendar. Days are "YYYY-MM-DD" (Qatar). */
+export interface DayInfo {
+  date: string;
+  state: DayState;
+  reason: string | null;
+  lightCount: number;
+}
+
+export interface PpfBooking {
+  id: string;
+  type: PpfBookingType;
+  status: BookingStatus;
+  car: string;
+  ownerName: string;
+  phone: string | null;
+  service: string | null;
+  receiveDate: string;
+  deliveryDate: string | null;
+  note: string | null;
+  /** the salesperson whose approved request created this light job */
+  requestedBy: string | null;
+  createdBy: { id: string; displayName: string };
+  createdAt: string;
+  cancelledAt: string | null;
+}
+
+export interface PpfCalendar {
+  today: string;
+  days: DayInfo[];
+  bookings: PpfBooking[];
+}
+
+export interface LightJobRequest {
+  id: string;
+  date: string;
+  salesName: string;
+  car: string;
+  ownerName: string;
+  phone: string | null;
+  note: string;
+  status: RequestStatus;
+  decisionNote: string | null;
+  decidedAt: string | null;
+  bookingId: string | null;
+  createdAt: string;
+}
+
+export interface SalesAccessStatus {
+  pinSet: boolean;
+  updatedAt: string | null;
+}
+
+export interface GeneralReservation {
+  id: string;
+  date: string;
+  /** "HH:mm" or null */
+  time: string | null;
+  service: string;
+  ownerName: string | null;
+  phone: string | null;
+  car: string | null;
+  note: string | null;
+  status: BookingStatus;
+  createdBy: { id: string; displayName: string };
+  createdAt: string;
+  cancelledAt: string | null;
+}
+
+export interface SalesBooking {
+  id: string;
+  type: PpfBookingType;
+  car: string;
+  ownerName: string;
+  phone: string | null;
+  receiveDate: string;
+  deliveryDate: string | null;
+}
+
+export interface SalesRequest {
+  id: string;
+  date: string;
+  salesName: string;
+  car: string;
+  status: RequestStatus;
+  decisionNote: string | null;
+  createdAt: string;
+}
+
+export interface SlotsView {
+  today: string;
+  days: DayInfo[];
+  bookings: SalesBooking[];
+  requests: SalesRequest[];
+}
