@@ -260,7 +260,7 @@ export interface PpfBooking {
   type: PpfBookingType;
   status: BookingStatus;
   car: string;
-  ownerName: string;
+  ownerName: string | null;
   phone: string | null;
   service: string | null;
   receiveDate: string;
@@ -319,7 +319,7 @@ export interface SalesBooking {
   id: string;
   type: PpfBookingType;
   car: string;
-  ownerName: string;
+  ownerName: string | null;
   phone: string | null;
   receiveDate: string;
   deliveryDate: string | null;

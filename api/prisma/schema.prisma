@@ -363,7 +363,7 @@ model PpfBooking {
   type          PpfBookingType
   status        BookingStatus  @default(BOOKED)
   car           String         @db.VarChar(80)
-  ownerName     String         @map("owner_name") @db.VarChar(80)
+  ownerName     String?        @map("owner_name") @db.VarChar(80)
   phone         String?        @db.VarChar(20)
   service       String?        @db.VarChar(200)
   /// The day the car arrives. This is the day a FULL booking closes.

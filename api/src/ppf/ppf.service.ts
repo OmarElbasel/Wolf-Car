@@ -105,7 +105,7 @@ export class PpfService {
         data: {
           type: dto.type,
           car: dto.car,
-          ownerName: dto.ownerName,
+          ownerName: dto.ownerName ?? null,
           phone: dto.phone ?? null,
           service: dto.service ?? null,
           receiveDate: toDate(dto.receiveDate),

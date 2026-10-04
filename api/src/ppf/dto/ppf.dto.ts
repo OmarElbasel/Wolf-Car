@@ -23,8 +23,10 @@ export class CreatePpfBookingDto {
   @NameField()
   car: string;
 
+  @IsOptional()
+  @EmptyToUndefined()
   @NameField()
-  ownerName: string;
+  ownerName?: string | null;
 
   @IsOptional()
   @EmptyToUndefined()
@@ -61,9 +63,10 @@ export class UpdatePpfBookingDto {
   @NameField()
   car?: string;
 
-  @IfSent()
+  @IsOptional()
+  @EmptyToNull()
   @NameField()
-  ownerName?: string;
+  ownerName?: string | null;
 
   @IsOptional()
   @EmptyToNull()

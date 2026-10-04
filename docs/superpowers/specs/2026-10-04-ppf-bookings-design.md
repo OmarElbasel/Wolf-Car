@@ -46,7 +46,7 @@ The Super Admin can see and do everything in all three.
   |---|---|
   | Type | Full PPF or Light job |
   | Car | required, free text (make and model), 2–80 characters |
-  | Owner name | required, 2–80 characters |
+  | Owner name | optional, 2–80 characters |
   | Phone | optional, `+` and digits and spaces, 6–20 characters |
   | Service | optional, free text, up to 200 characters (the package, or "tint") |
   | Receive day | required |

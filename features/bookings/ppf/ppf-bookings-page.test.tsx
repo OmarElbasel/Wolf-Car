@@ -70,10 +70,10 @@ describe("PPF bookings page", () => {
     expect(within(dialog).getByRole("radio", { name: /Full PPF/ })).toBeChecked();
     expect(within(dialog).getByLabelText("Receive day")).toHaveValue("2031-03-12");
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(await within(dialog).findAllByText("This field is required.")).toHaveLength(2);
+    expect(await within(dialog).findAllByText("This field is required.")).toHaveLength(1);
 
     await user.type(within(dialog).getByLabelText("Car"), "Patrol");
-    await user.type(within(dialog).getByLabelText("Owner name"), "Hamad Al-Thani");
+    await user.type(within(dialog).getByLabelText(/Owner name/), "Hamad Al-Thani");
     await user.type(within(dialog).getByLabelText(/Phone/), "٥٥٩٩٨٨٧٧");
     fireEvent.change(within(dialog).getByLabelText(/Delivery day/), { target: { value: "2031-03-15" } });
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -99,7 +99,7 @@ describe("PPF bookings page", () => {
     await user.click(screen.getByRole("button", { name: "Add booking" }));
     const dialog = await screen.findByRole("dialog", { name: "New booking" });
     await user.type(within(dialog).getByLabelText("Car"), "Patrol");
-    await user.type(within(dialog).getByLabelText("Owner name"), "Hamad");
+    await user.type(within(dialog).getByLabelText(/Owner name/), "Hamad");
     fireEvent.change(within(dialog).getByLabelText(/Delivery day/), { target: { value: "2031-03-09" } });
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(await within(dialog).findByText("The delivery day can't be before the receive day.")).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe("PPF bookings page", () => {
     await user.click(screen.getByRole("button", { name: "Add booking" }));
     const dialog = await screen.findByRole("dialog", { name: "New booking" });
     await user.type(within(dialog).getByLabelText("Car"), "Patrol");
-    await user.type(within(dialog).getByLabelText("Owner name"), "Hamad");
+    await user.type(within(dialog).getByLabelText(/Owner name/), "Hamad");
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("A full PPF is already booked on this day.");
     expect(within(dialog).getByLabelText("Car")).toHaveValue("Patrol");
@@ -209,5 +209,26 @@ describe("PPF bookings page", () => {
     await user.click(screen.getByRole("button", { name: "Next month" }));
     await waitFor(() => expect(calls.at(-1)).toBe("?from=2031-04-01&to=2031-04-30"));
     expect(screen.getByRole("heading", { name: "April 2031" })).toBeInTheDocument();
+  });
+
+  it("saves a booking with only the car, and shows it without an owner", async () => {
+    let body: Record<string, unknown> = {};
+    const bookings: PpfBooking[] = [];
+    serveCalendar(bookings);
+    server.use(
+      http.post("/api/ppf/bookings", async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        bookings.push(booking({ id: "b-7", car: "Patrol", ownerName: null, phone: null, service: null, deliveryDate: null }));
+        return HttpResponse.json(bookings[0], { status: 201 });
+      }),
+    );
+    const { user } = renderWithApp(<PpfBookingsPage />, { user: amani });
+    await waitFor(() => expect(cell(TODAY)).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Add booking" }));
+    const dialog = await screen.findByRole("dialog", { name: "New booking" });
+    await user.type(within(dialog).getByLabelText("Car"), "Patrol");
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(body).toMatchObject({ car: "Patrol", ownerName: "" }));
+    expect(await screen.findByRole("article", { name: "Patrol" })).toBeInTheDocument();
   });
 });

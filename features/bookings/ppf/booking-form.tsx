@@ -18,7 +18,7 @@ import type { PpfBooking } from "@/lib/api/types";
 import { useErrorMessage } from "@/lib/api/use-error-message";
 import { cn } from "@/lib/utils";
 import { BOOKING_NAME_MAX, BOOKING_NOTE_MAX, BOOKING_SERVICE_MAX } from "@/shared/validation";
-import { dayField, nameField, optionalDay, optionalPhone, optionalText } from "../shared/schemas";
+import { dayField, nameField, optionalDay, optionalName, optionalPhone, optionalText } from "../shared/schemas";
 
 const TYPES = ["FULL", "LIGHT"] as const;
 const FIELDS = ["type", "car", "ownerName", "phone", "service", "receiveDate", "deliveryDate", "note"] as const;
@@ -27,7 +27,7 @@ const schema = z
   .object({
     type: z.enum(TYPES),
     car: nameField,
-    ownerName: nameField,
+    ownerName: optionalName,
     phone: optionalPhone,
     service: optionalText(BOOKING_SERVICE_MAX),
     receiveDate: dayField,
@@ -132,7 +132,7 @@ function BookingForm({ booking, defaultDate, onCancel, onSaved }: { booking: Ppf
         <Input autoComplete="off" dir="auto" maxLength={BOOKING_NAME_MAX} autoFocus {...form.register("car")} />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("PpfBookings.ownerName")} error={fe(errors.ownerName?.message, { max: BOOKING_NAME_MAX })}>
+        <Field label={t("PpfBookings.ownerName")} optional error={fe(errors.ownerName?.message, { max: BOOKING_NAME_MAX })}>
           <Input autoComplete="off" dir="auto" maxLength={BOOKING_NAME_MAX} {...form.register("ownerName")} />
         </Field>
         <Field label={t("PpfBookings.phone")} optional error={errors.phone?.message}>

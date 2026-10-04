@@ -180,7 +180,7 @@ describe('PPF bookings (e2e)', () => {
 
   it('answers malformed input with 400, never 500', async () => {
     const { body } = await book();
-    for (const patch of [{ receiveDate: null }, { type: null }, { car: null }, { ownerName: null }]) {
+    for (const patch of [{ receiveDate: null }, { type: null }, { car: null }]) {
       const res = await t.http().patch(`/api/ppf/bookings/${body.id}`).set(bearer(amani)).send(patch);
       expect([patch, res.status]).toEqual([patch, 400]);
     }
@@ -191,5 +191,18 @@ describe('PPF bookings (e2e)', () => {
     expect(nul.status).toBe(201);
     expect(nul.body.car).toBe('Patrol');
     expect((await t.http().get('/api/ppf/bookings').query({ q: 'a\u0000b' }).set(bearer(amani))).status).toBe(400);
+  });
+
+  it('the owner name is optional, and can be cleared later', async () => {
+    const res = await t.http().post('/api/ppf/bookings').set(bearer(amani)).send({ type: 'FULL', car: 'Patrol', receiveDate: '2031-03-22' });
+    expect(res.status).toBe(201);
+    expect(res.body.ownerName).toBeNull();
+    const named = await book({ receiveDate: '2031-03-23', ownerName: '' });
+    expect(named.status).toBe(201);
+    expect(named.body.ownerName).toBeNull();
+    const { body } = await book({ receiveDate: '2031-03-24' });
+    const cleared = await t.http().patch(`/api/ppf/bookings/${body.id}`).set(bearer(amani)).send({ ownerName: '' });
+    expect(cleared.body.ownerName).toBeNull();
+    expect((await book({ receiveDate: '2031-03-25', ownerName: 'A' })).status).toBe(400);
   });
 });

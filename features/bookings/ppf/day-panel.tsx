@@ -88,10 +88,10 @@ export function DayPanel({
                     {b.car}
                   </p>
                   <p className="text-[15px] text-ink-2">
-                    <span dir="auto">{b.ownerName}</span>
+                    {b.ownerName && <span dir="auto">{b.ownerName}</span>}
                     {b.phone && (
                       <>
-                        {" · "}
+                        {b.ownerName && " · "}
                         <a href={`tel:${b.phone.replaceAll(" ", "")}`} dir="ltr" className="font-semibold underline underline-offset-2">
                           {b.phone}
                         </a>
