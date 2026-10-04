@@ -79,6 +79,14 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'POST /api/orders/:id/cancel': ['admin', 'cashier'],
   'GET /api/orders/:id/receipt': ['admin', 'cashier'],
 
+  'GET /api/ppf/calendar': ['admin', 'reservations'],
+  'GET /api/ppf/bookings': ['admin', 'reservations'],
+  'POST /api/ppf/bookings': ['admin', 'reservations'],
+  'PATCH /api/ppf/bookings/:id': ['admin', 'reservations'],
+  'POST /api/ppf/bookings/:id/cancel': ['admin', 'reservations'],
+  'PUT /api/ppf/closed-days/:date': ['admin', 'reservations'],
+  'DELETE /api/ppf/closed-days/:date': ['admin', 'reservations'],
+
   'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },
 
@@ -91,6 +99,7 @@ const fillPath = (path: string) =>
     .replace(':role/permissions', 'CASHIER/permissions')
     .replace('staff/:role', 'staff/manager')
     .replace(':file', 'missing.webp')
+    .replace(':date', '2031-01-05')
     .replace(/:id/g, randomUUID());
 
 describe('RBAC matrix: every route × every caller', () => {

@@ -16,6 +16,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { type Env, validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
 import { OrdersModule } from './orders/orders.module';
+import { PpfModule } from './ppf/ppf.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
 import { PublicModule } from './public/public.module';
@@ -88,6 +89,7 @@ type IdRequest = IncomingMessage & { id?: string };
     ProductsModule,
     ShowroomModule,
     OrdersModule,
+    PpfModule,
     ReceiptsModule,
     PublicModule,
   ],
