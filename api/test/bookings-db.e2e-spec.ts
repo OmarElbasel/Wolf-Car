@@ -22,9 +22,11 @@ describe('Booking tables: database constraints (e2e)', () => {
       data: { type: 'FULL', car: 'Land Cruiser', ownerName: 'Khalid', receiveDate: day, createdById: world.reservationsId, ...over },
     });
 
-  it('refuses a second active full PPF on the same day', async () => {
+  it('leaves the number of full PPF cars per day to the API; requests are light jobs unless they say otherwise', async () => {
     await booking();
-    await expect(booking()).rejects.toMatchObject({ code: 'P2002' });
+    await expect(booking()).resolves.toMatchObject({ type: 'FULL' });
+    const request = await t.prisma.lightJobRequest.create({ data: { date: day, salesName: 'Yousef', car: 'Lexus LX', ownerName: 'Sara' } });
+    expect(request).toMatchObject({ type: 'LIGHT', note: null, status: 'PENDING' });
   });
 
   it('allows light jobs, and a new full PPF once the first is cancelled', async () => {

@@ -14,8 +14,9 @@ import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@/compo
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWideLayout } from "@/features/admin/shared/ui";
 import { ApiError } from "@/lib/api/client";
-import type { SlotsView } from "@/lib/api/types";
+import type { PpfBookingType, SlotsView } from "@/lib/api/types";
 import { qatarDay } from "@/lib/format";
+import { PPF_MAX_FULL_PER_DAY } from "@/shared/validation";
 import { addMonths, formatDay, monthOf, monthRange } from "../shared/dates";
 import { MonthCalendar } from "../shared/month-calendar";
 import { hasSlotsHint, slotsApi } from "./api";
@@ -28,8 +29,9 @@ const STATE_TONE = { OPEN: "success", FULL: "danger", CLOSED: "neutral" } as con
 const noop = () => () => undefined;
 
 /**
- * The salespeople's read-only view of the PPF calendar, protected by a shared
- * PIN. `null` = not known yet (the hint cookie cannot be read on the server).
+ * The salespeople's view of the PPF calendar, protected by a shared PIN. They
+ * book nothing themselves: they send requests, which wait for the call center.
+ * `null` = not known yet (the hint cookie cannot be read on the server).
  */
 export function SlotsPage() {
   const queryClient = useQueryClient();
@@ -72,6 +74,8 @@ function Slots({ onLocked }: { onLocked: () => void }) {
   /** null = not chosen yet: open on wide screens, closed on phones */
   const [panel, setPanel] = useState<boolean | null>(null);
   const [requesting, setRequesting] = useState(false);
+  /** kept while the dialog closes, so its title does not change on the way out */
+  const [requestType, setRequestType] = useState<PpfBookingType>("LIGHT");
   const panelOpen = panel ?? wide;
 
   const view = useQuery({
@@ -92,8 +96,14 @@ function Slots({ onLocked }: { onLocked: () => void }) {
 
   const data = view.data;
   const info = selected ? data?.days.find((d) => d.date === selected) : undefined;
-  const fullCar = selected ? data?.bookings.find((b) => b.type === "FULL" && b.receiveDate === selected) : undefined;
-  const canRequest = info?.state === "FULL" && data !== undefined && info.date >= data.today;
+  const fullCars = data?.bookings.filter((b) => b.type === "FULL" && b.receiveDate === selected) ?? [];
+  const waiting = data?.requests.filter((r) => r.status === "PENDING" && r.date === selected) ?? [];
+  const canRequest = info !== undefined && data !== undefined && info.state !== "CLOSED" && info.date >= data.today;
+  const fullRoom = info !== undefined && info.fullCount < PPF_MAX_FULL_PER_DAY;
+  const ask = (type: PpfBookingType) => {
+    setRequestType(type);
+    setRequesting(true);
+  };
   const panelBody = <SidePanel bookings={data?.bookings ?? []} requests={data?.requests ?? []} />;
   const PanelIcon = panelOpen ? PanelRightClose : PanelRightOpen;
 
@@ -166,20 +176,42 @@ function Slots({ onLocked }: { onLocked: () => void }) {
               )}
               {info.state === "FULL" && (
                 <>
-                  <p className="mt-2 text-[15px] font-semibold text-ink-2">{t("Slots.dayFull")}</p>
-                  {fullCar && (
-                    <p dir="auto" className="text-[17px] font-extrabold">
-                      {fullCar.car}
+                  <p className="mt-2 text-[15px] font-semibold text-ink-2">{t(fullRoom ? "Slots.dayFull" : "Slots.dayFullTwo")}</p>
+                  {fullCars.map((b) => (
+                    <p key={b.id} dir="auto" className="text-[17px] font-extrabold">
+                      {b.car}
                     </p>
-                  )}
-                  {canRequest && (
-                    <Button size="touch" className="mt-3 w-full sm:w-auto" onClick={() => setRequesting(true)}>
-                      {t("Slots.requestLight")}
-                    </Button>
-                  )}
+                  ))}
                 </>
               )}
               {info.lightCount > 0 && <p className="mt-2 text-[14px] text-ink-2">{t("Calendar.light", { count: info.lightCount })}</p>}
+              {waiting.length > 0 && (
+                <div className="mt-3 rounded-[var(--radius-brand)] bg-warning-soft px-3 py-2.5">
+                  <p className="text-[14px] font-extrabold text-warning">{t("Slots.waiting")}</p>
+                  <ul aria-label={t("Slots.waiting")} className="mt-1 grid gap-1">
+                    {waiting.map((r) => (
+                      <li key={r.id} className="flex flex-wrap items-center gap-x-2 text-[15px]">
+                        <span dir="auto" className="font-semibold">
+                          {r.car}
+                        </span>
+                        <span className="text-ink-2">{t(`PpfBookings.types.${r.type}`)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {canRequest && (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  {fullRoom && (
+                    <Button size="touch" onClick={() => ask("FULL")}>
+                      {t(info.fullCount === 0 ? "Slots.requestFull" : "Slots.requestSecondFull")}
+                    </Button>
+                  )}
+                  <Button size="touch" variant={fullRoom ? "outline" : "default"} onClick={() => ask("LIGHT")}>
+                    {t("Slots.requestLight")}
+                  </Button>
+                </div>
+              )}
             </section>
           )}
         </main>
@@ -205,6 +237,8 @@ function Slots({ onLocked }: { onLocked: () => void }) {
       {selected && (
         <RequestDialog
           date={selected}
+          type={requestType}
+          second={(info?.fullCount ?? 0) > 0}
           open={requesting}
           onOpenChange={setRequesting}
           onSent={() => {

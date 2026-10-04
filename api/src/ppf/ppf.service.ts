@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { CALENDAR_MAX_DAYS } from '../../../shared/validation';
+import { CALENDAR_MAX_DAYS, PPF_MAX_FULL_PER_DAY } from '../../../shared/validation';
 import { AuditTrail } from '../activity/audit-trail.service';
 import { addDays, dayStr, daysBetween, qatarToday, toDate } from '../common/day';
 import { type Page, skipTake } from '../common/pagination';
@@ -9,8 +9,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { type DayInfo, dayStates } from './day-state';
 import type {
   CloseDayDto,
-  CreateLightJobRequestDto,
   CreatePpfBookingDto,
+  CreatePpfRequestDto,
   DecideRequestDto,
   ListPpfBookingsQueryDto,
   ListRequestsQueryDto,
@@ -34,20 +34,20 @@ import {
 export const conflict = (code: string, message: string) => new ConflictException({ statusCode: 409, error: 'Conflict', code, message });
 export const bad = (code: string, message: string) => new BadRequestException({ statusCode: 400, error: 'Bad Request', code, message });
 
-/** ppf_bookings has one unique index besides its primary key: one active full PPF per day. */
-const isDayTaken = (err: unknown) => err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
-const dayFull = () => conflict('PPF_DAY_FULL', 'A full PPF is already booked on this day.');
+const dayFull = () => conflict('PPF_DAY_FULL', `This day already has ${PPF_MAX_FULL_PER_DAY} full PPF cars.`);
 const alreadyDecided = () => conflict('REQUEST_ALREADY_DECIDED', 'This request has already been answered.');
 /** How far ahead the sales page may look, and how long a request stays listed. */
 const SALES_HORIZON_DAYS = 400;
 const REQUEST_LISTED_MS = 14 * 86_400_000;
 
 type Db = Pick<Prisma.TransactionClient, 'ppfClosedDay'>;
+type Tx = Prisma.TransactionClient;
 
 /**
  * PPF and tinting bookings for Bin Omran. A FULL booking closes its receive
- * day (one per day, enforced by the database); LIGHT jobs never do. The call
- * center can also close a day by hand, which blocks new bookings of both kinds.
+ * day; one more FULL may be added as an exception, never a third. LIGHT jobs
+ * are not limited. The call center can also close a day by hand, which blocks
+ * new bookings of both kinds.
  */
 @Injectable()
 export class PpfService {
@@ -100,8 +100,9 @@ export class PpfService {
   async create(user: AuthUser, dto: CreatePpfBookingDto): Promise<PpfBookingView> {
     this.assertDelivery(dto.receiveDate, dto.deliveryDate ?? null);
     await this.assertNotClosed(dto.receiveDate);
-    try {
-      const row = await this.prisma.ppfBooking.create({
+    const row = await this.prisma.$transaction(async (tx) => {
+      if (dto.type === 'FULL') await this.claimFullSlot(tx, dto.receiveDate);
+      return tx.ppfBooking.create({
         data: {
           type: dto.type,
           car: dto.car,
@@ -115,13 +116,10 @@ export class PpfService {
         },
         select: PPF_BOOKING_SELECT,
       });
-      const view = bookingView(row);
-      this.trail.setEntity('PpfBooking', view.id).setChange(null, bookingAuditView(view));
-      return view;
-    } catch (err) {
-      if (isDayTaken(err)) throw dayFull();
-      throw err;
-    }
+    });
+    const view = bookingView(row);
+    this.trail.setEntity('PpfBooking', view.id).setChange(null, bookingAuditView(view));
+    return view;
   }
 
   async update(user: AuthUser, id: string, dto: UpdatePpfBookingDto): Promise<PpfBookingView> {
@@ -135,8 +133,13 @@ export class PpfService {
     // a day closed after the booking was made does not freeze the booking; only moving onto one is refused
     if (receiveDate !== before.receiveDate) await this.assertNotClosed(receiveDate);
 
-    try {
-      const result = await this.prisma.ppfBooking.updateMany({
+    const type = dto.type ?? before.type;
+    // a full PPF arriving on a day (moved there, or turned from a light job) needs one of its two places
+    const arrives = type === 'FULL' && (before.type !== 'FULL' || receiveDate !== before.receiveDate);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (arrives) await this.claimFullSlot(tx, receiveDate, id);
+      const result = await tx.ppfBooking.updateMany({
         where: { id, status: 'BOOKED' },
         data: {
           ...(dto.type !== undefined ? { type: dto.type } : {}),
@@ -151,10 +154,7 @@ export class PpfService {
         },
       });
       if (result.count === 0) throw conflict('BOOKING_CANCELLED', 'A cancelled booking cannot be changed.');
-    } catch (err) {
-      if (isDayTaken(err)) throw dayFull();
-      throw err;
-    }
+    });
     const after = await this.get(id);
     this.trail.setEntity('PpfBooking', id).setChange(bookingAuditView(before), bookingAuditView(after));
     return after;
@@ -200,9 +200,10 @@ export class PpfService {
   }
 
   /**
-   * Claims the request (PENDING → APPROVED) and adds the light job in one
-   * transaction: a second approval, or an approval racing a rejection, finds
-   * nothing to claim. A day closed by hand since then rolls everything back.
+   * Claims the request (PENDING → APPROVED) and adds the booking it asked for
+   * in one transaction: a second approval, or an approval racing a rejection,
+   * finds nothing to claim. A day closed by hand since then, or a full PPF
+   * request for a day that has filled up, rolls everything back.
    */
   async approveRequest(user: AuthUser, id: string, dto: DecideRequestDto): Promise<LightJobRequestView> {
     const view = await this.prisma.$transaction(async (tx) => {
@@ -213,9 +214,10 @@ export class PpfService {
       if (claimed.count === 0) await this.throwDecided(id, tx);
       const request = await tx.lightJobRequest.findUniqueOrThrow({ where: { id }, select: REQUEST_SELECT });
       await this.assertNotClosed(dayStr(request.date), tx);
+      if (request.type === 'FULL') await this.claimFullSlot(tx, dayStr(request.date));
       const booking = await tx.ppfBooking.create({
         data: {
-          type: 'LIGHT',
+          type: request.type,
           car: request.car,
           ownerName: request.ownerName,
           phone: request.phone,
@@ -243,20 +245,19 @@ export class PpfService {
   }
 
   /**
-   * A salesperson asks for a light job. Only for today or later (Qatar), and
-   * only on a day that a full PPF closed — open days are booked through the
-   * call center, and days closed by hand take nothing.
+   * A salesperson asks the call center for a booking; nothing is reserved until
+   * it is approved. Only for today or later (Qatar), never on a day closed by
+   * hand. A full PPF may be asked for while the day has room for one (an empty
+   * day, or the exception on a booked day); light jobs may always be asked for.
    */
-  async createRequest(dto: CreateLightJobRequestDto, now: Date = new Date()): Promise<SalesRequestView> {
+  async createRequest(dto: CreatePpfRequestDto, now: Date = new Date()): Promise<SalesRequestView> {
     if (dto.date < qatarToday(now)) throw bad('REQUEST_DAY_PAST', 'This day has already passed.');
+    const type = dto.type ?? 'LIGHT';
     const date = toDate(dto.date);
-    const [full, closed] = await Promise.all([
-      this.prisma.ppfBooking.count({ where: { receiveDate: date, type: 'FULL', status: 'BOOKED' } }),
-      this.prisma.ppfClosedDay.findUnique({ where: { date } }),
-    ]);
-    if (closed || full === 0) throw conflict('PPF_DAY_NOT_FULL', 'A light-job request is only for a day closed by a full PPF.');
+    await this.assertNotClosed(dto.date);
+    if (type === 'FULL') await this.assertFullRoom(this.prisma, dto.date);
     const row = await this.prisma.lightJobRequest.create({
-      data: { date, salesName: dto.salesName, car: dto.car, ownerName: dto.ownerName, phone: dto.phone ?? null, note: dto.note },
+      data: { date, type, salesName: dto.salesName, car: dto.car, ownerName: dto.ownerName, phone: dto.phone ?? null, note: dto.note ?? null },
       select: REQUEST_SELECT,
     });
     // sales have no account: the typed name is the only "who"
@@ -315,6 +316,23 @@ export class PpfService {
     const row = await this.prisma.ppfBooking.findUnique({ where: { id }, select: PPF_BOOKING_SELECT });
     if (!row) throw new NotFoundException('Booking not found.');
     return bookingView(row);
+  }
+
+  /**
+   * Takes the day's lock until the transaction ends, then checks there is room
+   * for one more full PPF. Everything that puts a full PPF on a day goes
+   * through here, so two people cannot both take the last place.
+   */
+  private async claimFullSlot(tx: Tx, date: string, exceptId?: string): Promise<void> {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`ppf-day:${date}`}))`;
+    await this.assertFullRoom(tx, date, exceptId);
+  }
+
+  private async assertFullRoom(db: Pick<Tx, 'ppfBooking'>, date: string, exceptId?: string): Promise<void> {
+    const full = await db.ppfBooking.count({
+      where: { receiveDate: toDate(date), type: 'FULL', status: 'BOOKED', ...(exceptId ? { id: { not: exceptId } } : {}) },
+    });
+    if (full >= PPF_MAX_FULL_PER_DAY) throw dayFull();
   }
 
   protected assertRange(from: string, to: string): void {

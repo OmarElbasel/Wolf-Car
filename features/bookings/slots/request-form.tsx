@@ -12,10 +12,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useFieldError } from "@/features/admin/shared/ui";
+import type { PpfBookingType } from "@/lib/api/types";
 import { useErrorMessage } from "@/lib/api/use-error-message";
 import { BOOKING_NAME_MAX, BOOKING_NOTE_MAX } from "@/shared/validation";
 import { formatDay } from "../shared/dates";
-import { nameField, optionalPhone, requiredText } from "../shared/schemas";
+import { nameField, optionalPhone, optionalText, requiredText } from "../shared/schemas";
 import { slotsApi } from "./api";
 
 const NAME_KEY = "wc_sales_name";
@@ -35,42 +36,60 @@ function rememberName(name: string): void {
   }
 }
 
-const schema = z.object({
-  salesName: nameField,
-  car: nameField,
-  ownerName: nameField,
-  phone: optionalPhone,
-  note: requiredText(BOOKING_NOTE_MAX),
-});
-type Input_ = z.input<typeof schema>;
-type Output = z.output<typeof schema>;
+/** A light job must say what it is; a full PPF needs no description. */
+const schemaFor = (type: PpfBookingType) =>
+  z.object({
+    salesName: nameField,
+    car: nameField,
+    ownerName: nameField,
+    phone: optionalPhone,
+    note: type === "LIGHT" ? requiredText(BOOKING_NOTE_MAX) : optionalText(BOOKING_NOTE_MAX),
+  });
+type Schema = ReturnType<typeof schemaFor>;
+type Input_ = z.input<Schema>;
+type Output = z.output<Schema>;
 
-/** Asks the call center to fit a light job into a day closed by a full PPF. */
-export function RequestDialog({ date, open, onOpenChange, onSent }: { date: string; open: boolean; onOpenChange: (open: boolean) => void; onSent: () => void }) {
+interface RequestProps {
+  date: string;
+  type: PpfBookingType;
+  /** the day already has a full PPF car: this one would be the exception */
+  second: boolean;
+}
+
+/** Asks the call center for a booking. Nothing is reserved until the request is accepted. */
+export function RequestDialog({
+  date,
+  type,
+  second,
+  open,
+  onOpenChange,
+  onSent,
+}: RequestProps & { open: boolean; onOpenChange: (open: boolean) => void; onSent: () => void }) {
   const t = useTranslations();
   const locale = useLocale();
+  const body = type === "LIGHT" ? "Slots.requestBody" : second ? "Slots.requestSecondBody" : "Slots.requestFullBody";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent closeLabel={t("Common.close")} className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("Slots.requestTitle")}</DialogTitle>
+          <DialogTitle>{t(type === "LIGHT" ? "Slots.requestTitle" : "Slots.requestFullTitle")}</DialogTitle>
           <DialogDescription>
-            {formatDay(date, locale)}. {t("Slots.requestBody")}
+            {formatDay(date, locale)}. {t(body)}
           </DialogDescription>
         </DialogHeader>
-        <RequestForm date={date} onCancel={() => onOpenChange(false)} onSent={onSent} />
+        <RequestForm key={type} date={date} type={type} onCancel={() => onOpenChange(false)} onSent={onSent} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function RequestForm({ date, onCancel, onSent }: { date: string; onCancel: () => void; onSent: () => void }) {
+function RequestForm({ date, type, onCancel, onSent }: Omit<RequestProps, "second"> & { onCancel: () => void; onSent: () => void }) {
   const t = useTranslations();
   const message = useErrorMessage();
   const fe = useFieldError();
   const [error, setError] = useState<string | null>(null);
   const form = useForm<Input_, unknown, Output>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schemaFor(type)),
     defaultValues: { salesName: rememberedName(), car: "", ownerName: "", phone: "", note: "" },
   });
   const { errors, isSubmitting } = form.formState;
@@ -78,7 +97,7 @@ function RequestForm({ date, onCancel, onSent }: { date: string; onCancel: () =>
   const submit = form.handleSubmit(async (values) => {
     setError(null);
     try {
-      await slotsApi("/requests", { method: "POST", json: { date, ...values } });
+      await slotsApi("/requests", { method: "POST", json: { date, type, ...values } });
       rememberName(values.salesName);
       toast.success(t("Slots.sent"));
       onSent();
@@ -108,7 +127,7 @@ function RequestForm({ date, onCancel, onSent }: { date: string; onCancel: () =>
           <Input type="tel" inputMode="tel" autoComplete="off" dir="ltr" className="text-start" maxLength={20} {...form.register("phone")} />
         </Field>
       </div>
-      <Field label={t("Slots.note")} error={fe(errors.note?.message, { max: BOOKING_NOTE_MAX })}>
+      <Field label={t(type === "LIGHT" ? "Slots.note" : "Slots.noteOptional")} optional={type === "FULL"} error={fe(errors.note?.message, { max: BOOKING_NOTE_MAX })}>
         <Textarea dir="auto" rows={3} maxLength={BOOKING_NOTE_MAX} {...form.register("note")} />
       </Field>
       <DialogFooter className="mt-1">

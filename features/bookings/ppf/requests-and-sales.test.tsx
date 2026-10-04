@@ -13,6 +13,7 @@ const viewer = makeUser({ role: "FINANCE", branch: null, permissions: ["booking.
 const request = (over: Partial<LightJobRequest> = {}): LightJobRequest => ({
   id: "r-1",
   date: TODAY,
+  type: "LIGHT",
   salesName: "Yousef",
   car: "Lexus LX",
   ownerName: "Sara Al-Kuwari",
@@ -59,10 +60,21 @@ describe("PPF requests inbox", () => {
     expect(within(card).getByText(/Yousef/)).toBeInTheDocument();
     expect(within(card).getByText("Front windows tint")).toBeInTheDocument();
     expect(within(card).getByText("55123456")).toBeInTheDocument();
+    expect(within(card).getByText("Light job")).toBeInTheDocument();
     const answered = screen.getByRole("article", { name: "Tesla Y" });
     expect(within(answered).getByText("Rejected")).toBeInTheDocument();
     expect(within(answered).getByText("Workshop is full")).toBeInTheDocument();
     expect(within(answered).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("shows a full PPF request as one, with or without a note", async () => {
+    serveRequests([request({ type: "FULL", note: null })]);
+    const { user } = renderWithApp(<PpfBookingsPage />, { user: amani });
+    await openRequests(user);
+    const card = await screen.findByRole("article", { name: "Lexus LX" });
+    expect(within(card).getByText("Full PPF")).toBeInTheDocument();
+    expect(within(card).queryByText("Front windows tint")).not.toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Approve" })).toBeInTheDocument();
   });
 
   it("approves a request", async () => {

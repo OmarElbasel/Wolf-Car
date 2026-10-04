@@ -105,7 +105,7 @@ describe("PPF bookings page", () => {
     expect(await within(dialog).findByText("The delivery day can't be before the receive day.")).toBeInTheDocument();
   });
 
-  it("says so when the day already has a full PPF, and keeps what was typed", async () => {
+  it("says so when the day already has two full PPF cars, and keeps what was typed", async () => {
     serveCalendar([]);
     server.use(http.post("/api/ppf/bookings", () => HttpResponse.json({ statusCode: 409, code: "PPF_DAY_FULL", message: "taken" }, { status: 409 })));
     const { user } = renderWithApp(<PpfBookingsPage />, { user: amani });
@@ -115,7 +115,7 @@ describe("PPF bookings page", () => {
     await user.type(within(dialog).getByLabelText("Car"), "Patrol");
     await user.type(within(dialog).getByLabelText(/Owner name/), "Hamad");
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(await within(dialog).findByRole("alert")).toHaveTextContent("A full PPF is already booked on this day.");
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("This day already has two full PPF cars.");
     expect(within(dialog).getByLabelText("Car")).toHaveValue("Patrol");
   });
 

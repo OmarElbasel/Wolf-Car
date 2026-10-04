@@ -366,7 +366,7 @@ model PpfBooking {
   ownerName     String?        @map("owner_name") @db.VarChar(80)
   phone         String?        @db.VarChar(20)
   service       String?        @db.VarChar(200)
-  /// The day the car arrives. This is the day a FULL booking closes.
+  /// The day the car arrives. A FULL booking closes it; a second FULL is the exception.
   receiveDate   DateTime       @map("receive_date") @db.Date
   /// Information only; closes nothing.
   deliveryDate  DateTime?      @map("delivery_date") @db.Date
@@ -399,21 +399,24 @@ model PpfClosedDay {
   @@map("ppf_closed_days")
 }
 
-/// A salesperson asking the call center to fit a light job into a day closed by a full PPF.
+/// A salesperson asking the call center to book a car: a full PPF (an empty
+/// day, or the one exception on a booked day) or a light job.
 model LightJobRequest {
   id           String                @id @default(uuid()) @db.Uuid
   date         DateTime              @db.Date
+  type         PpfBookingType        @default(LIGHT)
   /// Typed by the salesperson; sales have no accounts.
   salesName    String                @map("sales_name") @db.VarChar(80)
   car          String                @db.VarChar(80)
   ownerName    String                @map("owner_name") @db.VarChar(80)
   phone        String?               @db.VarChar(20)
-  note         String                @db.VarChar(1000)
+  /// What the job is; required for a light job.
+  note         String?               @db.VarChar(1000)
   status       LightJobRequestStatus @default(PENDING)
   decidedById  String?               @map("decided_by_id") @db.Uuid
   decidedAt    DateTime?             @map("decided_at") @db.Timestamptz(3)
   decisionNote String?               @map("decision_note") @db.VarChar(500)
-  /// The light job created when the request was approved.
+  /// The booking created when the request was approved.
   bookingId    String?               @unique @map("booking_id") @db.Uuid
   createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
 

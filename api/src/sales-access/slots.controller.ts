@@ -7,7 +7,7 @@ import { Audit } from '../common/decorators/audit.decorator';
 import { AuthThrottle } from '../common/decorators/auth-throttle.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { Env } from '../config/env';
-import { CalendarQueryDto, CreateLightJobRequestDto } from '../ppf/dto/ppf.dto';
+import { CalendarQueryDto, CreatePpfRequestDto } from '../ppf/dto/ppf.dto';
 import { PpfService } from '../ppf/ppf.service';
 import { PinDto } from './dto/sales-access.dto';
 import { SalesAccessGuard } from './sales-access.guard';
@@ -49,7 +49,7 @@ export class SlotsController {
   @UseGuards(SalesAccessGuard)
   @Audit('ppf_request.create', { entity: 'LightJobRequest' })
   @Post('requests')
-  createRequest(@Body() dto: CreateLightJobRequestDto) {
+  createRequest(@Body() dto: CreatePpfRequestDto) {
     return this.ppf.createRequest(dto);
   }
 }

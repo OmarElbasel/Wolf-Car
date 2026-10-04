@@ -1,4 +1,4 @@
-import { IsIn, IsOptional } from 'class-validator';
+import { IsIn, IsOptional, ValidateIf } from 'class-validator';
 import { BOOKING_NOTE_MAX, BOOKING_SERVICE_MAX, CLOSE_REASON_MAX, DECISION_NOTE_MAX } from '../../../../shared/validation';
 import { IfSent, NameField, PhoneField, SearchField, TextField } from '../../common/booking-fields';
 import { IsDay } from '../../common/day';
@@ -135,9 +135,14 @@ export class DecideRequestDto {
 }
 
 /** Sent from the sales page; sales have no accounts, so the name is typed. */
-export class CreateLightJobRequestDto {
+export class CreatePpfRequestDto {
   @IsDay()
   date: string;
+
+  /** A page loaded before full PPF requests existed sends none: it can only mean a light job. */
+  @IsOptional()
+  @IsIn(PPF_BOOKING_TYPES)
+  type?: (typeof PPF_BOOKING_TYPES)[number];
 
   @NameField()
   salesName: string;
@@ -153,7 +158,9 @@ export class CreateLightJobRequestDto {
   @PhoneField()
   phone?: string | null;
 
-  /** What the light job is. */
+  /** What the job is. A light job must say; a full PPF may leave it out. */
+  @ValidateIf((o: CreatePpfRequestDto, value: unknown) => o.type !== 'FULL' || (value !== undefined && value !== null))
+  @EmptyToUndefined()
   @TextField(BOOKING_NOTE_MAX)
-  note: string;
+  note?: string | null;
 }

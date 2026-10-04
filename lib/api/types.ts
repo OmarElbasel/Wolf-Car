@@ -252,6 +252,8 @@ export interface DayInfo {
   date: string;
   state: DayState;
   reason: string | null;
+  /** full PPF cars on the day: 1 closes it, 2 means the exception is used too */
+  fullCount: number;
   lightCount: number;
 }
 
@@ -266,7 +268,7 @@ export interface PpfBooking {
   receiveDate: string;
   deliveryDate: string | null;
   note: string | null;
-  /** the salesperson whose approved request created this light job */
+  /** the salesperson whose approved request created this booking */
   requestedBy: string | null;
   createdBy: { id: string; displayName: string };
   createdAt: string;
@@ -279,14 +281,16 @@ export interface PpfCalendar {
   bookings: PpfBooking[];
 }
 
+/** A salesperson's request for a booking: a full PPF or a light job. */
 export interface LightJobRequest {
   id: string;
   date: string;
+  type: PpfBookingType;
   salesName: string;
   car: string;
   ownerName: string;
   phone: string | null;
-  note: string;
+  note: string | null;
   status: RequestStatus;
   decisionNote: string | null;
   decidedAt: string | null;
@@ -328,6 +332,7 @@ export interface SalesBooking {
 export interface SalesRequest {
   id: string;
   date: string;
+  type: PpfBookingType;
   salesName: string;
   car: string;
   status: RequestStatus;
