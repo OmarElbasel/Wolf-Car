@@ -236,6 +236,10 @@ Salespeople have no accounts. They open **`/ar/slots`** (or `/en/slots`) and typ
 
 *Dashboard → General reservations* is the call center's private list of every other reservation; nothing in it reaches the sales page.
 
+### Deploying
+
+The droplet follows the `production` branch. Merging into `production` runs `.github/workflows/deploy.yml`, which connects to the server and runs `scripts/deploy.sh` (pull, build, health check, smoke test, automatic rollback). A green check on the commit means it is live; a red one means the previous version is still serving. To deploy by hand: `ssh wolfcar 'cd /opt/wolfcar/app && scripts/deploy.sh'`.
+
 ## 8. Security notes
 
 - **Passwords**: argon2id (19 MiB, t=2, p=1); never stored or returned in plain text. Policy (shared by API and web): ≥ 12 characters, upper, lower, number, symbol, not containing the username; live strength meter in the UI.

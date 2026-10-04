@@ -1,0 +1,49 @@
+# Deploys the site whenever `production` changes: GitHub connects to the
+# droplet with a key that can do one thing only — run scripts/deploy.sh
+# (the key's forced command in /root/.ssh/authorized_keys). That script pulls,
+# builds, waits for health, runs the smoke test and rolls back on failure, so a
+# red run here means the previous version is still the one serving.
+#
+# Secrets: DEPLOY_SSH_KEY (private key), DEPLOY_HOST, DEPLOY_KNOWN_HOSTS.
+name: Deploy
+
+on:
+  push:
+    branches: [production]
+  workflow_dispatch:
+
+# one deploy at a time; a newer push waits for the running one
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Prepare SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # The server ignores whatever command is sent and runs the deploy script.
+      - name: Deploy on the server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes \
+              -o ServerAliveInterval=30 -o ServerAliveCountMax=40 \
+              "root@$DEPLOY_HOST" deploy
+
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deploy
