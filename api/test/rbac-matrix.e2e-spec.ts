@@ -89,6 +89,12 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'GET /api/ppf/requests': ['admin', 'reservations'],
   'POST /api/ppf/requests/:id/approve': ['admin', 'reservations'],
   'POST /api/ppf/requests/:id/reject': ['admin', 'reservations'],
+  'GET /api/ppf/sales-access': ['admin', 'reservations'],
+  'PUT /api/ppf/sales-access/pin': ['admin', 'reservations'],
+  // the sales page: no bearer token of any kind opens these, only the PIN cookie
+  'POST /api/slots/unlock': { public: 400 }, // empty body
+  'GET /api/slots': { public: 401 },
+  'POST /api/slots/requests': { public: 401 },
 
   'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },

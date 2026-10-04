@@ -58,3 +58,17 @@ export function readRefreshCookie(req: Request, audience: SessionAudience): stri
 export function hasCsrfHeader(req: Request): boolean {
   return req.headers[CSRF_HEADER] === CSRF_VALUE;
 }
+/** Sales slots page: a signed token, not a refresh token (there is no user and nothing to rotate). */
+export const SLOTS_COOKIE = { name: 'wc_slt', path: '/api/slots' };
+export const SLOTS_HINT_COOKIE = 'wc_slots';
+
+export function setSlotsCookie(res: Response, token: string, expires: Date, secure: boolean): void {
+  res.cookie(SLOTS_COOKIE.name, token, { httpOnly: true, secure, sameSite: 'strict', path: SLOTS_COOKIE.path, expires });
+  res.cookie(SLOTS_HINT_COOKIE, '1', hintOptions(secure, expires));
+}
+
+export function readSlotsCookie(req: Request): string | undefined {
+  const cookies = (req as Request & { cookies?: Record<string, unknown> }).cookies;
+  const value = cookies?.[SLOTS_COOKIE.name];
+  return typeof value === 'string' && value.length > 0 && value.length < 1000 ? value : undefined;
+}

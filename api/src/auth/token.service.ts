@@ -12,6 +12,9 @@ import { PrismaService } from '../prisma/prisma.service';
 export const JWT_ISSUER = 'wolfcar-api';
 export type AccessAudience = 'dashboard' | 'showroom';
 const CHALLENGE_AUDIENCE = '2fa-challenge';
+const SLOTS_AUDIENCE = 'slots';
+/** How long a phone stays unlocked on the sales slots page. */
+export const SLOTS_TTL_DAYS = 90;
 
 /** A used refresh token presented again within this window is treated as a benign race (two tabs), not theft. */
 const REUSE_GRACE_MS = 10_000;
@@ -73,6 +76,26 @@ export class TokenService {
       return payload.sub;
     } catch {
       throw new AuthFailedException('SESSION_EXPIRED');
+    }
+  }
+
+  /**
+   * Token for the sales slots page (no user). It carries the PIN version, so
+   * changing the PIN invalidates every token already issued. Its audience is
+   * rejected by verifyAccess, so it never opens a dashboard or showroom route.
+   */
+  async signSlots(version: number): Promise<{ token: string; expiresAt: Date }> {
+    const token = await this.jwt.signAsync({ v: version }, { audience: SLOTS_AUDIENCE, expiresIn: SLOTS_TTL_DAYS * 86_400 });
+    return { token, expiresAt: new Date(Date.now() + SLOTS_TTL_DAYS * 86_400_000) };
+  }
+
+  /** The PIN version the token was issued for, or null when the token is not a valid slots token. */
+  async verifySlots(token: string): Promise<number | null> {
+    try {
+      const payload = await this.jwt.verifyAsync<{ v?: unknown }>(token, { audience: SLOTS_AUDIENCE });
+      return typeof payload.v === 'number' ? payload.v : null;
+    } catch {
+      return null;
     }
   }
 

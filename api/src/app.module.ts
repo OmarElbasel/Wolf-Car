@@ -22,6 +22,7 @@ import { ProductsModule } from './products/products.module';
 import { PublicModule } from './public/public.module';
 import { PermissionsGuard } from './rbac/permissions.guard';
 import { RbacModule } from './rbac/rbac.module';
+import { SalesAccessModule } from './sales-access/sales-access.module';
 import { ReceiptsModule } from './receipts/receipts.module';
 import { ShowroomModule } from './showroom/showroom.module';
 import { UploadsModule } from './uploads/uploads.module';
@@ -90,6 +91,7 @@ type IdRequest = IncomingMessage & { id?: string };
     ShowroomModule,
     OrdersModule,
     PpfModule,
+    SalesAccessModule,
     ReceiptsModule,
     PublicModule,
   ],
