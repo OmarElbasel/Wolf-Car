@@ -11,6 +11,7 @@ import { ErrorState, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { api } from "@/lib/api/client";
 import type { PpfBooking } from "@/lib/api/types";
@@ -21,7 +22,9 @@ import { formatDay, monthOf } from "../shared/dates";
 import { MonthCalendar } from "../shared/month-calendar";
 import { BookingDialog } from "./booking-form";
 import { DayPanel } from "./day-panel";
-import { fetchCalendar, ppfKeys } from "./queries";
+import { fetchCalendar, ppfKeys, usePendingRequests } from "./queries";
+import { RequestsInbox } from "./requests-inbox";
+import { SalesAccessCard } from "./sales-access-card";
 
 /** The call center's PPF calendar for Bin Omran. */
 export function PpfBookingsPage() {
@@ -35,10 +38,36 @@ export function PpfBookingsPage() {
       </>
     );
   }
+  return <PpfManager canManage={can("booking.ppf.manage")} />;
+}
+
+function PpfManager({ canManage }: { canManage: boolean }) {
+  const t = useTranslations("PpfBookings");
+  const pending = usePendingRequests(true);
   return (
     <>
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <CalendarTab canManage={can("booking.ppf.manage")} />
+      <Tabs defaultValue="calendar">
+        <TabsList className="mb-5">
+          <TabsTrigger value="calendar">{t("tabCalendar")}</TabsTrigger>
+          <TabsTrigger value="requests">
+            {t("tabRequests")}
+            {pending > 0 && (
+              <span className="ms-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[12px] font-extrabold text-white tabular-nums">
+                <span aria-hidden="true">{pending}</span>
+                <span className="sr-only">{t("pending", { count: pending })}</span>
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="calendar">
+          <CalendarTab canManage={canManage} />
+          <SalesAccessCard canManage={canManage} />
+        </TabsContent>
+        <TabsContent value="requests">
+          <RequestsInbox canManage={canManage} />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
