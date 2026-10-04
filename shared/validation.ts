@@ -69,3 +69,24 @@ export const ORDER_CODE_PATTERN = /^[A-Z]{2,4}-\d{6}$/;
 export const TOTP_CODE_PATTERN = /^\d{6}$/;
 /** Recovery codes are shown as xxxxx-xxxxx (base32, lowercase). */
 export const RECOVERY_CODE_PATTERN = /^[a-z2-7]{5}-[a-z2-7]{5}$/;
+
+/** Bookings and reservations: car, owner name and salesperson name. */
+export const BOOKING_NAME_MIN = 2;
+export const BOOKING_NAME_MAX = 80;
+export const BOOKING_SERVICE_MAX = 200;
+export const BOOKING_NOTE_MAX = 1000;
+export const CLOSE_REASON_MAX = 200;
+export const DECISION_NOTE_MAX = 500;
+/** Local or international: optional "+", then digits and spaces. */
+export const PHONE_PATTERN = /^\+?[0-9 ]{6,20}$/;
+/** A Qatar calendar day, "2026-11-02". The API also checks it is a real date. */
+export const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+export const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const SALES_PIN_PATTERN = /^\d{6}$/;
+/** Most days one calendar request may cover (a month view plus its edges). */
+export const CALENDAR_MAX_DAYS = 62;
+
+/** Arabic-Indic (٠-٩) and Persian (۰-۹) digits as typed on Arabic keyboards → 0-9. */
+export function normaliseDigits(text: string): string {
+  return text.replace(/[٠-٩۰-۹]/g, (d) => String(d.charCodeAt(0) & 0xf));
+}
