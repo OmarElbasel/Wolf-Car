@@ -8,7 +8,7 @@ import { formatDay } from "../shared/dates";
 
 const TONE: Record<RequestStatus, "warning" | "success" | "neutral"> = { PENDING: "warning", APPROVED: "success", REJECTED: "neutral" };
 
-/** What is already booked from today on, and what happened to recent light-job requests. */
+/** What is already booked from today on, and what happened to recent requests. */
 export function SidePanel({ bookings, requests }: { bookings: SalesBooking[]; requests: SalesRequest[] }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -58,7 +58,10 @@ export function SidePanel({ bookings, requests }: { bookings: SalesBooking[]; re
             {requests.map((r) => (
               <li key={r.id}>
                 <article aria-label={r.car} className="rounded-[var(--radius-brand)] border border-line p-3">
-                  <Pill tone={TONE[r.status]}>{t(`PpfBookings.requestStatus.${r.status}`)}</Pill>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Pill tone={TONE[r.status]}>{t(`PpfBookings.requestStatus.${r.status}`)}</Pill>
+                    <Pill tone={r.type === "FULL" ? "danger" : "warning"}>{t(`PpfBookings.types.${r.type}`)}</Pill>
+                  </div>
                   <p dir="auto" className="mt-1.5 text-[16px] font-extrabold">
                     {r.car}
                   </p>

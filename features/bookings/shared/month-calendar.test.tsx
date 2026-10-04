@@ -4,9 +4,9 @@ import type { DayInfo } from "@/lib/api/types";
 import { renderWithApp } from "@/tests/render";
 import { MonthCalendar } from "./month-calendar";
 
-const day = (date: string, over: Partial<DayInfo> = {}): DayInfo => ({ date, state: "OPEN", reason: null, lightCount: 0, ...over });
+const day = (date: string, over: Partial<DayInfo> = {}): DayInfo => ({ date, state: "OPEN", reason: null, fullCount: 0, lightCount: 0, ...over });
 const DAYS: DayInfo[] = Array.from({ length: 30 }, (_, i) => day(`2026-11-${String(i + 1).padStart(2, "0")}`));
-DAYS[1] = day("2026-11-02", { state: "FULL", lightCount: 2 });
+DAYS[1] = day("2026-11-02", { state: "FULL", fullCount: 1, lightCount: 2 });
 DAYS[2] = day("2026-11-03", { state: "CLOSED", reason: "National Day" });
 
 const cell = (date: string) => document.querySelector<HTMLButtonElement>(`button[data-date="${date}"]`)!;

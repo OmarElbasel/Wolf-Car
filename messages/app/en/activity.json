@@ -75,7 +75,7 @@
     "ppf_booking_cancel": "PPF booking cancelled",
     "ppf_day_close": "Day closed",
     "ppf_day_reopen": "Day reopened",
-    "ppf_request_create": "Light job requested",
+    "ppf_request_create": "Booking requested by sales",
     "ppf_request_approve": "Request approved",
     "ppf_request_reject": "Request rejected",
     "sales_access_pin_change": "Sales PIN changed",

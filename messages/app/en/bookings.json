@@ -12,7 +12,7 @@
   },
   "PpfBookings": {
     "title": "PPF bookings",
-    "subtitle": "Bin Omran. One full PPF car closes its day; light jobs fit in on any open day.",
+    "subtitle": "Bin Omran. One full PPF car closes its day; a second fits in as an exception. Light jobs are not limited.",
     "tabCalendar": "Calendar",
     "tabRequests": "Requests",
     "pending": "{count, plural, one {# request waiting} other {# requests waiting}}",
@@ -25,7 +25,7 @@
       "LIGHT": "Light job"
     },
     "typeHints": {
-      "FULL": "Closes the day.",
+      "FULL": "Closes the day. A second one is an exception.",
       "LIGHT": "Tint or a small PPF job. Never closes the day."
     },
     "car": "Car",
@@ -57,7 +57,7 @@
     "requestsEmpty": "No requests yet.",
     "requestFor": "{name} · for {date}",
     "approve": "Approve",
-    "approved": "Light job added",
+    "approved": "Booking added",
     "reject": "Reject",
     "rejectTitle": "Reject this request?",
     "rejectReason": "Reason (sales will see it)",
@@ -121,10 +121,17 @@
     "requests": "Requests",
     "noRequests": "No requests yet.",
     "requestLine": "{name} · for {date}",
-    "dayOpen": "This day is open. Call the call center to book it.",
+    "dayOpen": "This day is open. Send a request to reserve it.",
     "dayFull": "Closed: a full PPF car is booked.",
+    "dayFullTwo": "Closed: two full PPF cars are booked. Light jobs only.",
+    "waiting": "Waiting for the call center",
     "dayClosed": "Closed by the call center.",
     "requestLight": "Request a light job",
+    "requestFull": "Request this day for a full PPF",
+    "requestSecondFull": "Request a second full PPF (exception)",
+    "requestFullTitle": "Request a full PPF",
+    "requestFullBody": "This is a request, not a booking. The day is reserved only when the call center accepts.",
+    "requestSecondBody": "This day already has a full PPF car. A second one is an exception; the call center decides.",
     "requestTitle": "Request a light job",
     "requestBody": "Light jobs only: tint or a small PPF job. The call center answers here.",
     "salesName": "Your name",
@@ -132,6 +139,7 @@
     "ownerName": "Owner name",
     "phone": "Phone",
     "note": "What is the job?",
+    "noteOptional": "Note",
     "send": "Send request",
     "sent": "Request sent to the call center",
     "stale": "Couldn't refresh. This may be out of date."

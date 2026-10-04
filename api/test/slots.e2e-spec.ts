@@ -69,7 +69,7 @@ describe('Sales slots page (e2e)', () => {
 
     const res = await view(cookie);
     expect(res.body.today).toBe(today);
-    expect(res.body.days.find((d: { date: string }) => d.date === tomorrow)).toEqual({ date: tomorrow, state: 'FULL', reason: null, lightCount: 1 });
+    expect(res.body.days.find((d: { date: string }) => d.date === tomorrow)).toEqual({ date: tomorrow, state: 'FULL', reason: null, fullCount: 1, lightCount: 1 });
     expect(res.body.bookings).toHaveLength(2);
     expect(Object.keys(res.body.bookings[0]).sort()).toEqual(['car', 'deliveryDate', 'id', 'ownerName', 'phone', 'receiveDate', 'type']);
     expect(res.body.bookings[0]).toMatchObject({ type: 'FULL', car: 'Land Cruiser', phone: '55123456', deliveryDate: qatarDay(4) });
@@ -86,27 +86,52 @@ describe('Sales slots page (e2e)', () => {
     expect((await t.http().get('/api/slots').query(range).set('Cookie', `wc_slt=${amani}`)).status).toBe(401);
   });
 
-  it('sales can ask for a light job only on a day closed by a full PPF', async () => {
+  it('sales can ask for an empty day; nothing is booked until the call center accepts', async () => {
     await setPin();
     const cookie = cookieOf(await unlock());
 
-    expect((await ask(cookie)).body.code).toBe('PPF_DAY_NOT_FULL'); // open day
-    await book({});
-    expect((await ask(cookie, { date: qatarDay(-1) })).body.code).toBe('REQUEST_DAY_PAST');
-    expect((await t.http().post('/api/slots/requests').set('Cookie', cookie).send({})).body.code).toBe('CSRF');
-    expect((await ask(cookie, { note: '' })).status).toBe(400);
-
-    const ok = await ask(cookie, { phone: '٥٥١٢٣٤٥٦' });
+    const ok = await ask(cookie, { type: 'FULL', note: '', phone: '٥٥١٢٣٤٥٦' });
     expect(ok.status).toBe(201);
-    expect(ok.body).toMatchObject({ date: tomorrow, salesName: 'Yousef', car: 'Lexus LX', status: 'PENDING' });
+    expect(ok.body).toMatchObject({ date: tomorrow, type: 'FULL', salesName: 'Yousef', car: 'Lexus LX', status: 'PENDING' });
     expect((await t.prisma.lightJobRequest.findUniqueOrThrow({ where: { id: ok.body.id } })).phone).toBe('55123456');
 
-    await t.http().put(`/api/ppf/closed-days/${tomorrow}`).set(bearer(amani)).send({});
-    expect((await ask(cookie)).body.code).toBe('PPF_DAY_NOT_FULL'); // closed by hand
+    const before = await view(cookie);
+    expect(before.body.days.find((d: { date: string }) => d.date === tomorrow)).toMatchObject({ state: 'OPEN', fullCount: 0 });
+    expect(before.body.bookings).toHaveLength(0);
+    expect(before.body.requests).toHaveLength(1);
+    expect(Object.keys(before.body.requests[0]).sort()).toEqual(['car', 'createdAt', 'date', 'decisionNote', 'id', 'salesName', 'status', 'type']);
 
-    const listed = await view(cookie);
-    expect(listed.body.requests).toHaveLength(1);
-    expect(Object.keys(listed.body.requests[0]).sort()).toEqual(['car', 'createdAt', 'date', 'decisionNote', 'id', 'salesName', 'status']);
+    await t.http().post(`/api/ppf/requests/${ok.body.id}/approve`).set(bearer(amani)).send({});
+    const after = await view(cookie);
+    expect(after.body.days.find((d: { date: string }) => d.date === tomorrow)).toMatchObject({ state: 'FULL', fullCount: 1 });
+    expect(after.body.bookings[0]).toMatchObject({ type: 'FULL', car: 'Lexus LX' });
+    expect(after.body.requests[0].status).toBe('APPROVED');
+  });
+
+  it('sales can ask for one more full PPF on a booked day, and for light jobs on any day', async () => {
+    await setPin();
+    const cookie = cookieOf(await unlock());
+
+    expect((await ask(cookie)).status).toBe(201); // a light job on an open day; no type sent means a light job
+    await book({});
+    expect((await ask(cookie, { type: 'FULL', car: 'Patrol' })).status).toBe(201); // the exception
+    await book({ car: 'Tahoe' });
+    expect((await ask(cookie, { type: 'FULL', car: 'Yukon' })).body.code).toBe('PPF_DAY_FULL');
+    for (let i = 0; i < 3; i++) expect((await ask(cookie, { type: 'LIGHT' })).status).toBe(201);
+  });
+
+  it('refuses requests that are past, malformed, forged or for a day closed by hand', async () => {
+    await setPin();
+    const cookie = cookieOf(await unlock());
+
+    expect((await ask(cookie, { date: qatarDay(-1) })).body.code).toBe('REQUEST_DAY_PAST');
+    expect((await t.http().post('/api/slots/requests').set('Cookie', cookie).send({})).body.code).toBe('CSRF');
+    expect((await ask(cookie, { note: '' })).status).toBe(400); // a light job must say what it is
+    expect((await ask(cookie, { type: 'HEAVY' })).status).toBe(400);
+    expect((await ask(cookie, { type: null, note: null })).status).toBe(400);
+
+    await t.http().put(`/api/ppf/closed-days/${tomorrow}`).set(bearer(amani)).send({});
+    for (const type of ['FULL', 'LIGHT']) expect((await ask(cookie, { type })).body.code).toBe('PPF_DAY_CLOSED');
   });
 
   it('the answer reaches the sales page', async () => {

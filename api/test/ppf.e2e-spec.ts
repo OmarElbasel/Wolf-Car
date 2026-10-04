@@ -28,9 +28,9 @@ describe('PPF bookings (e2e)', () => {
       .set(bearer(token))
       .send({ type: 'FULL', car: 'Land Cruiser 2024', ownerName: 'Khalid Al-Marri', receiveDate: DAY, ...body });
   const calendar = (from = DAY, to = DAY) => t.http().get('/api/ppf/calendar').query({ from, to }).set(bearer(amani));
-  const dayOf = async (date = DAY) => (await calendar(date, date)).body.days[0] as { state: string; reason: string | null; lightCount: number };
+  const dayOf = async (date = DAY) => (await calendar(date, date)).body.days[0] as { state: string; reason: string | null; fullCount: number; lightCount: number };
 
-  it('a full PPF closes its day; light jobs fit in without limit', async () => {
+  it('a full PPF closes its day; one more fits as the exception, light jobs without limit', async () => {
     const first = await book({ phone: '٥٥١٢٣٤٥٦', deliveryDate: '2031-03-13', service: 'Bundle 1', note: 'Black, two keys' });
     expect(first.status).toBe(201);
     expect(first.body).toMatchObject({
@@ -43,13 +43,15 @@ describe('PPF bookings (e2e)', () => {
       createdBy: { id: world.reservationsId },
     });
 
-    const second = await book({ car: 'Patrol' });
-    expect(second.status).toBe(409);
-    expect(second.body.code).toBe('PPF_DAY_FULL');
+    expect(await dayOf()).toMatchObject({ state: 'FULL', fullCount: 1 });
+    expect((await book({ car: 'Patrol' })).status).toBe(201);
+    const third = await book({ car: 'Tahoe' });
+    expect(third.status).toBe(409);
+    expect(third.body.code).toBe('PPF_DAY_FULL');
 
     expect((await book({ type: 'LIGHT', car: 'Lexus LX', service: 'Tint' })).status).toBe(201);
     expect((await book({ type: 'LIGHT', car: 'Tesla Y', service: 'Tint' })).status).toBe(201);
-    expect(await dayOf()).toEqual({ date: DAY, state: 'FULL', reason: null, lightCount: 2 });
+    expect(await dayOf()).toEqual({ date: DAY, state: 'FULL', reason: null, fullCount: 2, lightCount: 2 });
     // the delivery day is information only
     expect((await dayOf('2031-03-13')).state).toBe('OPEN');
   });
@@ -71,8 +73,9 @@ describe('PPF bookings (e2e)', () => {
     expect(edit.body.code).toBe('BOOKING_CANCELLED');
   });
 
-  it('moving a full PPF onto an occupied day is refused; onto a free day it works', async () => {
+  it('moving a full PPF onto a day with two is refused; onto a free day it works', async () => {
     await book();
+    await book({ car: 'Tahoe' });
     const { body: other } = await book({ receiveDate: '2031-03-11', car: 'Patrol' });
     const clash = await t.http().patch(`/api/ppf/bookings/${other.id}`).set(bearer(amani)).send({ receiveDate: DAY });
     expect(clash.status).toBe(409);
@@ -87,20 +90,29 @@ describe('PPF bookings (e2e)', () => {
 
   it('turning a light job into a full PPF obeys the same rule', async () => {
     await book();
+    await book({ car: 'Tahoe' });
     const { body: light } = await book({ type: 'LIGHT', car: 'Lexus LX' });
     const res = await t.http().patch(`/api/ppf/bookings/${light.id}`).set(bearer(amani)).send({ type: 'FULL' });
     expect(res.body.code).toBe('PPF_DAY_FULL');
   });
 
-  it('two bookings for the same day at once: one wins', async () => {
-    const [a, b] = await Promise.all([book({ car: 'A-car' }), book({ car: 'B-car' })]);
-    expect([a.status, b.status].sort((x, y) => x - y)).toEqual([201, 409]);
+  it('a burst of full PPF bookings for one day: exactly two win', async () => {
+    const burst = await Promise.all(Array.from({ length: 6 }, (_, i) => book({ car: `Car ${i}` })));
+    expect(burst.map((r) => r.status).sort((x, y) => x - y)).toEqual([201, 201, 409, 409, 409, 409]);
+    expect((await dayOf()).fullCount).toBe(2);
+  });
+
+  it('editing a full PPF on a day that has two is still allowed', async () => {
+    await book();
+    const { body: second } = await book({ car: 'Tahoe' });
+    const res = await t.http().patch(`/api/ppf/bookings/${second.id}`).set(bearer(amani)).send({ note: 'bring the spare key' });
+    expect(res.status).toBe(200);
   });
 
   it('a day closed by hand takes no bookings until it is reopened', async () => {
     const closed = await t.http().put(`/api/ppf/closed-days/${DAY}`).set(bearer(amani)).send({ reason: 'National Day' });
     expect(closed.status).toBe(200);
-    expect(await dayOf()).toEqual({ date: DAY, state: 'CLOSED', reason: 'National Day', lightCount: 0 });
+    expect(await dayOf()).toEqual({ date: DAY, state: 'CLOSED', reason: 'National Day', fullCount: 0, lightCount: 0 });
     for (const type of ['FULL', 'LIGHT']) expect((await book({ type })).body.code).toBe('PPF_DAY_CLOSED');
 
     expect((await t.http().delete(`/api/ppf/closed-days/${DAY}`).set(bearer(amani))).status).toBe(204);
@@ -134,10 +146,10 @@ describe('PPF bookings (e2e)', () => {
     ]);
   });
 
-  describe('light-job requests', () => {
-    const pending = () =>
+  describe('sales requests', () => {
+    const pending = (over: Record<string, unknown> = {}) =>
       t.prisma.lightJobRequest.create({
-        data: { date: new Date(`${DAY}T00:00:00.000Z`), salesName: 'Yousef', car: 'Lexus LX', ownerName: 'Sara Al-Kuwari', phone: '55123456', note: 'Front windows tint' },
+        data: { date: new Date(`${DAY}T00:00:00.000Z`), salesName: 'Yousef', car: 'Lexus LX', ownerName: 'Sara Al-Kuwari', phone: '55123456', note: 'Front windows tint', ...over },
       });
 
     it('approving adds the light job to the day and names the salesperson on it', async () => {
@@ -154,6 +166,24 @@ describe('PPF bookings (e2e)', () => {
       const light = cal.body.bookings.find((b: { id: string }) => b.id === res.body.bookingId);
       expect(light).toMatchObject({ type: 'LIGHT', car: 'Lexus LX', ownerName: 'Sara Al-Kuwari', receiveDate: DAY, requestedBy: 'Yousef' });
       expect(cal.body.days[0]).toMatchObject({ state: 'FULL', lightCount: 1 });
+    });
+
+    it('approving a full PPF request books the car; a day that filled up meanwhile refuses it', async () => {
+      const first = await pending({ type: 'FULL', car: 'Patrol', note: null });
+      const second = await pending({ type: 'FULL', car: 'Tahoe', note: null });
+      const third = await pending({ type: 'FULL', car: 'Yukon', note: null });
+      const approve = (id: string) => t.http().post(`/api/ppf/requests/${id}/approve`).set(bearer(amani)).send({});
+
+      const ok = await approve(first.id);
+      expect(ok.status).toBe(200);
+      expect((await calendar()).body.bookings[0]).toMatchObject({ type: 'FULL', car: 'Patrol', requestedBy: 'Yousef', note: null });
+      expect((await approve(second.id)).status).toBe(200);
+      expect(await dayOf()).toMatchObject({ state: 'FULL', fullCount: 2 });
+
+      const refused = await approve(third.id);
+      expect(refused.status).toBe(409);
+      expect(refused.body.code).toBe('PPF_DAY_FULL');
+      expect((await t.prisma.lightJobRequest.findUniqueOrThrow({ where: { id: third.id } })).status).toBe('PENDING');
     });
 
     it('two answers at once: exactly one is accepted and at most one light job exists', async () => {

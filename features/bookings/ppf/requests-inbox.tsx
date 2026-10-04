@@ -22,7 +22,7 @@ import { fetchRequests, ppfKeys } from "./queries";
 
 const TONE: Record<RequestStatus, "warning" | "success" | "neutral"> = { PENDING: "warning", APPROVED: "success", REJECTED: "neutral" };
 
-/** Light-job requests from the sales page, newest first. */
+/** Requests from the sales page (a full PPF or a light job), newest first. */
 export function RequestsInbox({ canManage }: { canManage: boolean }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -72,7 +72,10 @@ export function RequestsInbox({ canManage }: { canManage: boolean }) {
           <li key={r.id}>
             <article aria-label={r.car} className="h-full rounded-[var(--radius-brand)] border border-line p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Pill tone={TONE[r.status]}>{t(`PpfBookings.requestStatus.${r.status}`)}</Pill>
+                <div className="flex flex-wrap gap-1.5">
+                  <Pill tone={TONE[r.status]}>{t(`PpfBookings.requestStatus.${r.status}`)}</Pill>
+                  <Pill tone={r.type === "FULL" ? "danger" : "warning"}>{t(`PpfBookings.types.${r.type}`)}</Pill>
+                </div>
                 <time dateTime={r.createdAt} className="text-[13px] text-muted">
                   {formatDateTime(r.createdAt, locale)}
                 </time>
@@ -92,9 +95,11 @@ export function RequestsInbox({ canManage }: { canManage: boolean }) {
                   </>
                 )}
               </p>
-              <p dir="auto" className="mt-1 text-[15px] whitespace-pre-line">
-                {r.note}
-              </p>
+              {r.note && (
+                <p dir="auto" className="mt-1 text-[15px] whitespace-pre-line">
+                  {r.note}
+                </p>
+              )}
               {r.decisionNote && (
                 <p dir="auto" className="mt-2 rounded-[8px] bg-sand px-2.5 py-1.5 text-[14px] text-ink-2">
                   {r.decisionNote}

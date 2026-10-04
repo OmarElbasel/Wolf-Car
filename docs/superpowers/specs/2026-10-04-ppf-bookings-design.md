@@ -321,3 +321,27 @@ app.
    Reservations) and gives her the one-time password.
 3. Amani sets the sales PIN and shares the link and the PIN with the Bin Omran
    sales team.
+
+## Amendment, 2026-10-04: second full PPF and sales requests
+
+Asked for by the owner after the first release. Where this section and the
+text above disagree, this section wins.
+
+- A day holds **up to two full PPF cars**. The first closes the day; the second
+  is an exception; a third is refused (`409 PPF_DAY_FULL`). Light jobs stay
+  unlimited. The calendar's day info carries `fullCount`.
+- The database no longer enforces one full PPF per day (the partial unique
+  index is dropped). Every path that puts a full PPF on a day (create, move,
+  light → full, approve) takes a per-day advisory lock and counts.
+- Sales still cannot book. They can **request**, for today or later, on any
+  day not closed by hand:
+  - a **full PPF** while the day has fewer than two (an open day, or the
+    exception on a day with one);
+  - a **light job**, always.
+  A request reserves nothing and shows as *waiting* on the sales page until the
+  call center approves or rejects it. `PPF_DAY_NOT_FULL` is gone.
+- A request carries its `type` (default `LIGHT`). The note is required for a
+  light job and optional for a full PPF.
+- Approving creates a booking of the request's type. A full PPF request for a
+  day that meanwhile reached two is refused and stays waiting.
+

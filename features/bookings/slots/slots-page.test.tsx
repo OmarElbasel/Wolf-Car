@@ -12,22 +12,26 @@ const cell = (date: string) => document.querySelector<HTMLButtonElement>(`button
 
 function view(over: Partial<SlotsView> = {}): SlotsView {
   const state: Record<string, Partial<DayInfo>> = {
-    "2031-03-12": { state: "FULL", lightCount: 1 },
+    "2031-03-12": { state: "FULL", fullCount: 1, lightCount: 1 },
+    "2031-03-13": { state: "FULL", fullCount: 2 },
     "2031-03-14": { state: "CLOSED", reason: "National Day" },
-    "2031-03-05": { state: "FULL" },
+    "2031-03-05": { state: "FULL", fullCount: 1 },
   };
   return {
     today: TODAY,
     days: Array.from({ length: 31 }, (_, i) => {
       const date = `2031-03-${String(i + 1).padStart(2, "0")}`;
-      return { date, state: "OPEN", reason: null, lightCount: 0, ...state[date] };
+      return { date, state: "OPEN", reason: null, fullCount: 0, lightCount: 0, ...state[date] };
     }),
     bookings: [
       { id: "b-1", type: "FULL", car: "Land Cruiser 2024", ownerName: "Khalid Al-Marri", phone: "55123456", receiveDate: "2031-03-12", deliveryDate: "2031-03-15" },
       { id: "b-2", type: "LIGHT", car: "Tesla Y", ownerName: "Noor", phone: null, receiveDate: "2031-03-12", deliveryDate: null },
+      { id: "b-3", type: "FULL", car: "Patrol", ownerName: null, phone: null, receiveDate: "2031-03-13", deliveryDate: null },
+      { id: "b-4", type: "FULL", car: "Tahoe", ownerName: null, phone: null, receiveDate: "2031-03-13", deliveryDate: null },
     ],
     requests: [
-      { id: "r-1", date: "2031-03-12", salesName: "Yousef", car: "Lexus LX", status: "REJECTED", decisionNote: "Workshop is full", createdAt: "2031-03-09T08:00:00.000Z" },
+      { id: "r-1", date: "2031-03-12", type: "LIGHT", salesName: "Yousef", car: "Lexus LX", status: "REJECTED", decisionNote: "Workshop is full", createdAt: "2031-03-09T08:00:00.000Z" },
+      { id: "r-0", date: "2031-03-11", type: "FULL", salesName: "Yousef", car: "GMC Yukon", status: "PENDING", decisionNote: null, createdAt: "2031-03-09T07:00:00.000Z" },
     ],
     ...over,
   };
@@ -106,16 +110,32 @@ describe("Sales slots page", () => {
     expect(screen.queryByLabelText("PIN")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous month" })).toBeDisabled();
 
+    // an open day: sales ask for it, and what they asked for shows as waiting, not as booked
     await user.click(cell("2031-03-11"));
     const day = screen.getByRole("region", { name: /11/ });
-    expect(within(day).getByText("This day is open. Call the call center to book it.")).toBeInTheDocument();
-    expect(within(day).queryByRole("button")).not.toBeInTheDocument();
+    expect(within(day).getByText("This day is open. Send a request to reserve it.")).toBeInTheDocument();
+    expect(within(day).getByRole("button", { name: "Request this day for a full PPF" })).toBeInTheDocument();
+    expect(within(day).getByRole("button", { name: "Request a light job" })).toBeInTheDocument();
+    const waiting = within(day).getByRole("list", { name: "Waiting for the call center" });
+    expect(within(waiting).getByText("GMC Yukon")).toBeInTheDocument();
+    expect(within(waiting).getByText("Full PPF")).toBeInTheDocument();
 
+    // one full PPF: a second may be asked for as an exception
     await user.click(cell("2031-03-12"));
     const full = screen.getByRole("region", { name: /12/ });
     expect(within(full).getByText("Closed: a full PPF car is booked.")).toBeInTheDocument();
     expect(within(full).getByText("Land Cruiser 2024")).toBeInTheDocument();
+    expect(within(full).getByRole("button", { name: "Request a second full PPF (exception)" })).toBeInTheDocument();
     expect(within(full).getByRole("button", { name: "Request a light job" })).toBeInTheDocument();
+    expect(within(full).queryByRole("list", { name: "Waiting for the call center" })).not.toBeInTheDocument();
+
+    // two full PPF: only light jobs
+    await user.click(cell("2031-03-13"));
+    const two = screen.getByRole("region", { name: /13/ });
+    expect(within(two).getByText("Closed: two full PPF cars are booked. Light jobs only.")).toBeInTheDocument();
+    expect(within(two).getByText("Patrol")).toBeInTheDocument();
+    expect(within(two).getByText("Tahoe")).toBeInTheDocument();
+    expect(within(two).getAllByRole("button").map((b) => b.textContent)).toEqual(["Request a light job"]);
 
     await user.click(cell("2031-03-14"));
     const closed = screen.getByRole("region", { name: /14/ });
@@ -128,6 +148,46 @@ describe("Sales slots page", () => {
     expect(within(screen.getByRole("region", { name: /5/ })).queryByRole("button")).not.toBeInTheDocument();
   });
 
+  it("asks the call center for an empty day: a request, not a booking", async () => {
+    unlockPhone();
+    const bodies: unknown[] = [];
+    server.use(
+      http.get("/api/slots", () => HttpResponse.json(view())),
+      http.post("/api/slots/requests", async ({ request }) => {
+        bodies.push(await request.json());
+        return HttpResponse.json({ id: "r-3", date: "2031-03-11", type: "FULL", salesName: "Yousef", car: "Lexus LX", status: "PENDING", decisionNote: null, createdAt: NOW.toISOString() }, { status: 201 });
+      }),
+    );
+    const { user } = renderWithApp(<SlotsPage />, { user: null });
+    await waitFor(() => expect(cell("2031-03-11")).toBeEnabled());
+    await user.click(cell("2031-03-11"));
+    await user.click(screen.getByRole("button", { name: "Request this day for a full PPF" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Request a full PPF" });
+    expect(within(dialog).getByText(/The day is reserved only when the call center accepts/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Send request" }));
+    // the note is optional for a full PPF
+    expect(await within(dialog).findAllByText("This field is required.")).toHaveLength(3);
+
+    await user.type(within(dialog).getByLabelText("Your name"), "Yousef");
+    await user.type(within(dialog).getByLabelText("Car"), "Lexus LX");
+    await user.type(within(dialog).getByLabelText("Owner name"), "Sara Al-Kuwari");
+    await user.click(within(dialog).getByRole("button", { name: "Send request" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(bodies).toEqual([{ date: "2031-03-11", type: "FULL", salesName: "Yousef", car: "Lexus LX", ownerName: "Sara Al-Kuwari", phone: "", note: "" }]);
+  });
+
+  it("says a second full PPF is an exception when asking for one", async () => {
+    unlockPhone();
+    server.use(http.get("/api/slots", () => HttpResponse.json(view())));
+    const { user } = renderWithApp(<SlotsPage />, { user: null });
+    await waitFor(() => expect(cell("2031-03-12")).toBeEnabled());
+    await user.click(cell("2031-03-12"));
+    await user.click(screen.getByRole("button", { name: "Request a second full PPF (exception)" }));
+    const dialog = await screen.findByRole("dialog", { name: "Request a full PPF" });
+    expect(within(dialog).getByText(/This day already has a full PPF car/)).toBeInTheDocument();
+  });
+
   it("sends a light-job request and remembers the salesperson's name", async () => {
     unlockPhone();
     const bodies: unknown[] = [];
@@ -136,7 +196,7 @@ describe("Sales slots page", () => {
       http.post("/api/slots/requests", async ({ request }) => {
         expect(request.headers.get("x-requested-with")).toBe("wolfcar");
         bodies.push(await request.json());
-        return HttpResponse.json({ id: "r-2", date: "2031-03-12", salesName: "Yousef", car: "Lexus LX", status: "PENDING", decisionNote: null, createdAt: NOW.toISOString() }, { status: 201 });
+        return HttpResponse.json({ id: "r-2", date: "2031-03-12", type: "LIGHT", salesName: "Yousef", car: "Lexus LX", status: "PENDING", decisionNote: null, createdAt: NOW.toISOString() }, { status: 201 });
       }),
     );
     const { user } = renderWithApp(<SlotsPage />, { user: null });
@@ -155,7 +215,7 @@ describe("Sales slots page", () => {
     await user.click(within(dialog).getByRole("button", { name: "Send request" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(bodies).toEqual([{ date: "2031-03-12", salesName: "Yousef", car: "Lexus LX", ownerName: "Sara Al-Kuwari", phone: "", note: "Front windows tint" }]);
+    expect(bodies).toEqual([{ date: "2031-03-12", type: "LIGHT", salesName: "Yousef", car: "Lexus LX", ownerName: "Sara Al-Kuwari", phone: "", note: "Front windows tint" }]);
 
     await user.click(screen.getByRole("button", { name: "Request a light job" }));
     expect(within(await screen.findByRole("dialog")).getByLabelText("Your name")).toHaveValue("Yousef");
@@ -165,7 +225,7 @@ describe("Sales slots page", () => {
     unlockPhone();
     server.use(
       http.get("/api/slots", () => HttpResponse.json(view())),
-      http.post("/api/slots/requests", () => HttpResponse.json({ statusCode: 409, code: "PPF_DAY_NOT_FULL", message: "x" }, { status: 409 })),
+      http.post("/api/slots/requests", () => HttpResponse.json({ statusCode: 409, code: "PPF_DAY_FULL", message: "x" }, { status: 409 })),
     );
     localStorage.setItem("wc_sales_name", "Yousef");
     const { user } = renderWithApp(<SlotsPage />, { user: null });
@@ -177,7 +237,7 @@ describe("Sales slots page", () => {
     await user.type(within(dialog).getByLabelText("Owner name"), "Sara");
     await user.type(within(dialog).getByLabelText("What is the job?"), "Tint");
     await user.click(within(dialog).getByRole("button", { name: "Send request" }));
-    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Requests are only for days closed by a full PPF.");
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("This day already has two full PPF cars.");
   });
 
   it("the side panel opens and closes, listing booked cars and requests", async () => {
@@ -200,6 +260,10 @@ describe("Sales slots page", () => {
     const request = screen.getByRole("article", { name: "Lexus LX" });
     expect(within(request).getByText("Rejected")).toBeInTheDocument();
     expect(within(request).getByText("Workshop is full")).toBeInTheDocument();
+    expect(within(request).getByText("Light job")).toBeInTheDocument();
+    const asked = screen.getByRole("article", { name: "GMC Yukon" });
+    expect(within(asked).getByText("Waiting")).toBeInTheDocument();
+    expect(within(asked).getByText("Full PPF")).toBeInTheDocument();
   });
 
   it("goes back to the PIN screen when the PIN was changed, leaving no customer data on screen", async () => {
