@@ -18,6 +18,7 @@
   "groups": {
     "product": "المنتجات",
     "order": "الطلبات",
+    "booking": "الحجوزات",
     "admin": "الإدارة",
     "account": "الحساب"
   },
@@ -34,6 +35,9 @@
     "order_cancel": "إلغاء الطلبات قيد الانتظار",
     "order_confirm": "تأكيد الطلبات",
     "order_receipt_download": "تنزيل الإيصالات",
+    "booking_ppf_read": "عرض حجوزات PPF",
+    "booking_ppf_manage": "إدارة حجوزات PPF",
+    "booking_general_manage": "إدارة الحجوزات العامة",
     "user_manage": "إدارة المستخدمين",
     "branch_manage": "إدارة الفروع",
     "permission_manage": "إدارة الصلاحيات",

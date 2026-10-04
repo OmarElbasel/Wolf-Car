@@ -28,7 +28,12 @@
     "User": "User",
     "Branch": "Branch",
     "Role": "Role",
-    "Session": "Session"
+    "Session": "Session",
+    "PpfBooking": "PPF booking",
+    "PpfClosedDay": "Closed day",
+    "LightJobRequest": "Light-job request",
+    "GeneralReservation": "General reservation",
+    "SalesAccess": "Sales page"
   },
   "actions": {
     "auth_login": "Sign in",
@@ -64,7 +69,20 @@
     "order_update": "Order edited",
     "order_confirm": "Order confirmed",
     "order_cancel": "Order cancelled",
-    "order_receipt_download": "Receipt downloaded"
+    "order_receipt_download": "Receipt downloaded",
+    "ppf_booking_create": "PPF booking added",
+    "ppf_booking_update": "PPF booking edited",
+    "ppf_booking_cancel": "PPF booking cancelled",
+    "ppf_day_close": "Day closed",
+    "ppf_day_reopen": "Day reopened",
+    "ppf_request_create": "Light job requested",
+    "ppf_request_approve": "Request approved",
+    "ppf_request_reject": "Request rejected",
+    "sales_access_pin_change": "Sales PIN changed",
+    "sales_access_unlock": "Sales page unlocked",
+    "reservation_create": "Reservation added",
+    "reservation_update": "Reservation edited",
+    "reservation_cancel": "Reservation cancelled"
   },
   "actionGroups": {
     "auth": "Sign-ins and sessions (all)",

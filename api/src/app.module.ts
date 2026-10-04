@@ -16,12 +16,15 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { type Env, validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
 import { OrdersModule } from './orders/orders.module';
+import { PpfModule } from './ppf/ppf.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
 import { PublicModule } from './public/public.module';
 import { PermissionsGuard } from './rbac/permissions.guard';
 import { RbacModule } from './rbac/rbac.module';
+import { SalesAccessModule } from './sales-access/sales-access.module';
 import { ReceiptsModule } from './receipts/receipts.module';
+import { ReservationsModule } from './reservations/reservations.module';
 import { ShowroomModule } from './showroom/showroom.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
@@ -88,6 +91,9 @@ type IdRequest = IncomingMessage & { id?: string };
     ProductsModule,
     ShowroomModule,
     OrdersModule,
+    PpfModule,
+    SalesAccessModule,
+    ReservationsModule,
     ReceiptsModule,
     PublicModule,
   ],

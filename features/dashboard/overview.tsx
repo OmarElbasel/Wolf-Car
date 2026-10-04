@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { OrderStatusBadge } from "@/components/app/badges";
 import { PageHeader } from "@/components/app/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePendingRequests } from "@/features/bookings/ppf/queries";
 import { useAuth } from "@/features/auth/auth-provider";
 import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api/client";
@@ -41,6 +42,8 @@ export function Overview() {
   const { user, can, canAny } = useAuth();
   const today = qatarDay(new Date());
   const readsOrders = canAny("order.read.branch", "order.read.all");
+  const seesPpf = can("booking.ppf.read");
+  const waitingRequests = usePendingRequests(seesPpf);
 
   const pending = useQuery({ queryKey: ["stats", "pending"], queryFn: () => count("/orders", { status: "PENDING" }), enabled: readsOrders });
   const ordersToday = useQuery({ queryKey: ["stats", "today", today], queryFn: () => count("/orders", { from: today, to: today }), enabled: readsOrders });
@@ -75,6 +78,7 @@ export function Overview() {
         {readsOrders && <Stat label={t("Dashboard.pendingOrders")} value={pending.data} href="/dashboard/orders?status=PENDING" />}
         {readsOrders && <Stat label={t("Dashboard.ordersToday")} value={ordersToday.data} href="/dashboard/orders" />}
         {readsOrders && <Stat label={t("Dashboard.confirmedToday")} value={confirmedToday.data} />}
+        {seesPpf && <Stat label={t("Dashboard.waitingRequests")} value={waitingRequests} href="/dashboard/ppf-bookings" />}
         {can("product.read") && <Stat label={t("Dashboard.unpricedProducts")} value={unpriced} href="/dashboard/products?price=unpriced" />}
         {can("product.read") && <Stat label={t("Dashboard.totalProducts")} value={products.data?.length} href="/dashboard/products" />}
         {can("user.manage") && <Stat label={t("Dashboard.activeUsers")} value={users.data} href="/dashboard/users" />}

@@ -58,7 +58,8 @@
     "SUPER_ADMIN": "المشرف العام",
     "FINANCE": "المالية",
     "BRANCH_MANAGER": "مدير الفرع",
-    "CASHIER": "الكاشير"
+    "CASHIER": "الكاشير",
+    "RESERVATIONS": "الحجوزات"
   },
   "orderStatus": {
     "PENDING": "قيد الانتظار",

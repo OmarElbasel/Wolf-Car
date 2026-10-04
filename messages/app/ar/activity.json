@@ -28,7 +28,12 @@
     "User": "مستخدم",
     "Branch": "فرع",
     "Role": "دور",
-    "Session": "جلسة"
+    "Session": "جلسة",
+    "PpfBooking": "حجز PPF",
+    "PpfClosedDay": "يوم مغلق",
+    "LightJobRequest": "طلب خدمة خفيفة",
+    "GeneralReservation": "حجز عام",
+    "SalesAccess": "صفحة المبيعات"
   },
   "actions": {
     "auth_login": "تسجيل دخول",
@@ -64,7 +69,20 @@
     "order_update": "تعديل طلب",
     "order_confirm": "تأكيد طلب",
     "order_cancel": "إلغاء طلب",
-    "order_receipt_download": "تنزيل إيصال"
+    "order_receipt_download": "تنزيل إيصال",
+    "ppf_booking_create": "إضافة حجز PPF",
+    "ppf_booking_update": "تعديل حجز PPF",
+    "ppf_booking_cancel": "إلغاء حجز PPF",
+    "ppf_day_close": "إغلاق يوم",
+    "ppf_day_reopen": "إعادة فتح يوم",
+    "ppf_request_create": "طلب خدمة خفيفة",
+    "ppf_request_approve": "الموافقة على طلب",
+    "ppf_request_reject": "رفض طلب",
+    "sales_access_pin_change": "تغيير رمز المبيعات",
+    "sales_access_unlock": "فتح صفحة المبيعات",
+    "reservation_create": "إضافة حجز عام",
+    "reservation_update": "تعديل حجز عام",
+    "reservation_cancel": "إلغاء حجز عام"
   },
   "actionGroups": {
     "auth": "الدخول والجلسات (الكل)",

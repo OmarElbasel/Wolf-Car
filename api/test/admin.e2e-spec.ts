@@ -188,7 +188,7 @@ describe('Administration: users, branches, permissions (e2e)', () => {
         expect.arrayContaining(['code', 'name', 'manager.displayName', 'cashier.displayName']),
       );
       expect(await t.prisma.branch.count()).toBe(2);
-      expect(await t.prisma.user.count()).toBe(6);
+      expect(await t.prisma.user.count()).toBe(7);
     });
 
     it('replaces the cashier atomically: old account retired, new one works', async () => {

@@ -10,6 +10,8 @@ export function homePath(role: RoleName): string {
       return "/dashboard/products";
     case "CASHIER":
       return "/dashboard/orders";
+    case "RESERVATIONS":
+      return "/dashboard/ppf-bookings";
   }
 }
 
@@ -26,13 +28,15 @@ export interface NavItem {
   label: string;
   /** shown when the user has ANY of these (empty = everyone signed in) */
   any: PermissionKey[];
-  icon: "home" | "products" | "orders" | "users" | "branches" | "permissions" | "activity" | "account" | "showroom";
+  icon: "home" | "products" | "orders" | "ppf" | "reservations" | "users" | "branches" | "permissions" | "activity" | "account" | "showroom";
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "overview", any: [], icon: "home" },
   { href: "/dashboard/products", label: "products", any: ["product.read"], icon: "products" },
   { href: "/dashboard/orders", label: "orders", any: ["order.read.branch", "order.read.all"], icon: "orders" },
+  { href: "/dashboard/ppf-bookings", label: "ppfBookings", any: ["booking.ppf.read"], icon: "ppf" },
+  { href: "/dashboard/reservations", label: "reservations", any: ["booking.general.manage"], icon: "reservations" },
   { href: "/dashboard/users", label: "users", any: ["user.manage"], icon: "users" },
   { href: "/dashboard/branches", label: "branches", any: ["branch.manage"], icon: "branches" },
   { href: "/dashboard/permissions", label: "permissions", any: ["permission.manage"], icon: "permissions" },

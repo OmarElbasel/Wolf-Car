@@ -14,5 +14,8 @@
   "passwordPolicy": "The password doesn't meet the requirements below.",
   "imageType": "Use a JPEG, PNG or WebP image.",
   "imageSize": "The image must be 5 MB or smaller.",
-  "imageRequired": "Add a product image."
+  "imageRequired": "Add a product image.",
+  "phone": "Digits only, with an optional + at the start (6–20).",
+  "pin": "Enter 6 digits.",
+  "deliveryBeforeReceive": "The delivery day can't be before the receive day."
 }

@@ -10,6 +10,7 @@ describe("role landing pages", () => {
     expect(homePath("FINANCE")).toBe("/dashboard/products");
     expect(homePath("BRANCH_MANAGER")).toBe("/dashboard/products");
     expect(homePath("CASHIER")).toBe("/dashboard/orders");
+    expect(homePath("RESERVATIONS")).toBe("/dashboard/ppf-bookings");
   });
 
   it("accepts only same-app dashboard paths after login (no open redirect)", () => {
@@ -30,6 +31,11 @@ describe("permission-gated navigation", () => {
 
   it("shows finance products and orders", () => {
     expect(labels(["product.read", "product.update.price", "order.read.all"])).toEqual(["overview", "products", "orders", "account"]);
+  });
+
+  it("shows the call center the two booking pages", () => {
+    expect(labels(["booking.ppf.read", "booking.ppf.manage", "booking.general.manage"])).toEqual(["overview", "ppfBookings", "reservations", "account"]);
+    expect(labels(["booking.ppf.read"])).toEqual(["overview", "ppfBookings", "account"]);
   });
 
   it("follows per-user grants (e.g. activity.read given to Finance)", () => {
