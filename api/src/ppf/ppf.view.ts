@@ -34,7 +34,7 @@ export function bookingView(b: BookingRow) {
     receiveDate: dayStr(b.receiveDate),
     deliveryDate: b.deliveryDate ? dayStr(b.deliveryDate) : null,
     note: b.note,
-    /** the salesperson whose approved request created this light job */
+    /** the salesperson whose approved request created this booking */
     requestedBy: b.request?.salesName ?? null,
     createdBy: b.createdBy,
     createdAt: b.createdAt,
@@ -52,6 +52,7 @@ export function bookingAuditView(b: PpfBookingView) {
 export const REQUEST_SELECT = {
   id: true,
   date: true,
+  type: true,
   salesName: true,
   car: true,
   ownerName: true,
@@ -73,8 +74,8 @@ export function requestView(r: RequestRow) {
 export type LightJobRequestView = ReturnType<typeof requestView>;
 
 /** What the sales page sees: no customer details beyond the car, no note. */
-export function salesRequestView(r: Pick<RequestRow, 'id' | 'date' | 'salesName' | 'car' | 'status' | 'decisionNote' | 'createdAt'>) {
-  return { id: r.id, date: dayStr(r.date), salesName: r.salesName, car: r.car, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt };
+export function salesRequestView(r: Pick<RequestRow, 'id' | 'date' | 'type' | 'salesName' | 'car' | 'status' | 'decisionNote' | 'createdAt'>) {
+  return { id: r.id, date: dayStr(r.date), type: r.type, salesName: r.salesName, car: r.car, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt };
 }
 export type SalesRequestView = ReturnType<typeof salesRequestView>;
 

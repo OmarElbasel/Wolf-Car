@@ -8,6 +8,7 @@ import { PpfService } from './ppf.service';
 const request = (over: Record<string, unknown> = {}) => ({
   id: 'r-1',
   date: new Date('2026-11-02T00:00:00.000Z'),
+  type: 'LIGHT',
   salesName: 'Yousef',
   car: 'Lexus LX',
   ownerName: 'Sara',
@@ -29,7 +30,7 @@ describe('PpfService: light-job requests', () => {
   const trail = mock<AuditTrail>();
   const service = new PpfService(prisma, trail);
   const amani = authUser({ id: 'u-1', role: 'RESERVATIONS', branchId: null }, ['booking.ppf.manage']);
-  const dto = { date: '2026-11-02', salesName: 'Yousef', car: 'Lexus LX', ownerName: 'Sara', note: 'Front windows tint' };
+  const dto = { type: 'LIGHT' as const, date: '2026-11-02', salesName: 'Yousef', car: 'Lexus LX', ownerName: 'Sara', note: 'Front windows tint' };
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -41,16 +42,28 @@ describe('PpfService: light-job requests', () => {
   });
 
   describe('createRequest', () => {
-    it('accepts a request for a day closed by a full PPF', async () => {
-      prisma.ppfBooking.count.mockResolvedValue(1);
+    it('accepts a light-job request on an open day and on a booked one', async () => {
       prisma.lightJobRequest.create.mockResolvedValue(request() as never);
-      const view = await service.createRequest(dto, NIGHT);
+      for (const full of [0, 1, 2]) {
+        prisma.ppfBooking.count.mockResolvedValue(full);
+        await expect(service.createRequest(dto, NIGHT)).resolves.toMatchObject({ status: 'PENDING' });
+      }
+      expect(prisma.lightJobRequest.create.mock.calls[0][0].data).toMatchObject({ type: 'LIGHT', note: 'Front windows tint' });
+    });
+
+    it('accepts a full PPF request for an empty day and for the one exception, not for a third car', async () => {
+      const full = { ...dto, type: 'FULL' as const, note: undefined };
+      prisma.lightJobRequest.create.mockResolvedValue(request({ type: 'FULL', note: null }) as never);
+      prisma.ppfBooking.count.mockResolvedValue(0);
+      const view = await service.createRequest(full, NIGHT);
       expect(prisma.ppfBooking.count).toHaveBeenCalledWith({
         where: { receiveDate: new Date('2026-11-02T00:00:00.000Z'), type: 'FULL', status: 'BOOKED' },
       });
+      expect(prisma.lightJobRequest.create.mock.calls[0][0].data).toMatchObject({ type: 'FULL', note: null });
       expect(view).toEqual({
         id: 'r-1',
         date: '2026-11-02',
+        type: 'FULL',
         salesName: 'Yousef',
         car: 'Lexus LX',
         status: 'PENDING',
@@ -58,18 +71,22 @@ describe('PpfService: light-job requests', () => {
         createdAt: new Date('2026-11-01T08:00:00.000Z'),
       });
       expect(trail.addMetadata).toHaveBeenCalledWith({ salesName: 'Yousef' });
+
+      prisma.ppfBooking.count.mockResolvedValue(1);
+      await expect(service.createRequest(full, NIGHT)).resolves.toMatchObject({ type: 'FULL' });
+      prisma.ppfBooking.count.mockResolvedValue(2);
+      await expect(service.createRequest(full, NIGHT)).rejects.toMatchObject(code('PPF_DAY_FULL'));
     });
 
     it('refuses a day that is already past in Qatar', async () => {
       await expect(service.createRequest({ ...dto, date: '2026-11-01' }, NIGHT)).rejects.toMatchObject(code('REQUEST_DAY_PAST'));
     });
 
-    it('refuses an open day and a day closed by hand', async () => {
+    it('refuses a day closed by hand', async () => {
       prisma.ppfBooking.count.mockResolvedValue(0);
-      await expect(service.createRequest(dto, NIGHT)).rejects.toMatchObject(code('PPF_DAY_NOT_FULL'));
-      prisma.ppfBooking.count.mockResolvedValue(1);
       prisma.ppfClosedDay.findUnique.mockResolvedValue({ date: new Date(), reason: null } as never);
-      await expect(service.createRequest(dto, NIGHT)).rejects.toMatchObject(code('PPF_DAY_NOT_FULL'));
+      await expect(service.createRequest(dto, NIGHT)).rejects.toMatchObject(code('PPF_DAY_CLOSED'));
+      expect(prisma.lightJobRequest.create).not.toHaveBeenCalled();
     });
   });
 
@@ -92,6 +109,24 @@ describe('PpfService: light-job requests', () => {
         createdById: 'u-1',
       });
       expect(view).toMatchObject({ status: 'APPROVED', bookingId: 'b-9' });
+    });
+
+    it('approving a full PPF request books the car as a full PPF', async () => {
+      prisma.lightJobRequest.updateMany.mockResolvedValue({ count: 1 });
+      prisma.lightJobRequest.findUniqueOrThrow.mockResolvedValue(request({ status: 'APPROVED', type: 'FULL', note: null }) as never);
+      prisma.ppfBooking.count.mockResolvedValue(1);
+      prisma.ppfBooking.create.mockResolvedValue({ id: 'b-9' } as never);
+      prisma.lightJobRequest.update.mockResolvedValue(request({ status: 'APPROVED', type: 'FULL', bookingId: 'b-9' }) as never);
+      await service.approveRequest(amani, 'r-1', {});
+      expect(prisma.ppfBooking.create.mock.calls[0][0].data).toMatchObject({ type: 'FULL', note: null });
+    });
+
+    it('a full PPF request cannot be approved once the day has two full cars', async () => {
+      prisma.lightJobRequest.updateMany.mockResolvedValue({ count: 1 });
+      prisma.lightJobRequest.findUniqueOrThrow.mockResolvedValue(request({ status: 'APPROVED', type: 'FULL' }) as never);
+      prisma.ppfBooking.count.mockResolvedValue(2);
+      await expect(service.approveRequest(amani, 'r-1', {})).rejects.toMatchObject(code('PPF_DAY_FULL'));
+      expect(prisma.ppfBooking.create).not.toHaveBeenCalled();
     });
 
     it('a request is decided once', async () => {
@@ -148,7 +183,7 @@ describe('PpfService: light-job requests', () => {
       expect(view.bookings).toEqual([
         { id: 'b-1', type: 'FULL', car: 'Land Cruiser', ownerName: 'Khalid', phone: null, receiveDate: '2026-11-02', deliveryDate: null },
       ]);
-      expect(Object.keys(view.requests[0]).sort()).toEqual(['car', 'createdAt', 'date', 'decisionNote', 'id', 'salesName', 'status']);
+      expect(Object.keys(view.requests[0]).sort()).toEqual(['car', 'createdAt', 'date', 'decisionNote', 'id', 'salesName', 'status', 'type']);
     });
   });
 });

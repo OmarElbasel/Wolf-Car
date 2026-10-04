@@ -34,6 +34,7 @@ export function calendarOf(bookings: PpfBooking[], closed: Record<string, string
       date,
       state: isClosed ? "CLOSED" : active.some((b) => b.type === "FULL") ? "FULL" : "OPEN",
       reason: isClosed ? closed[date] : null,
+      fullCount: active.filter((b) => b.type === "FULL").length,
       lightCount: active.filter((b) => b.type === "LIGHT").length,
     };
   });

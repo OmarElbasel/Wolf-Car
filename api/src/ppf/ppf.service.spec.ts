@@ -2,7 +2,6 @@ import { NotFoundException } from '@nestjs/common';
 import { mock, mockDeep } from 'jest-mock-extended';
 import { authUser } from '../../test/unit/helpers';
 import type { AuditTrail } from '../activity/audit-trail.service';
-import { Prisma } from '../generated/prisma/client';
 import type { PrismaService } from '../prisma/prisma.service';
 import { PpfService } from './ppf.service';
 
@@ -25,7 +24,6 @@ const row = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-const duplicate = () => new Prisma.PrismaClientKnownRequestError('dup', { code: 'P2002', clientVersion: 'test' });
 const code = (c: string) => ({ response: { code: c } });
 
 describe('PpfService: bookings and days', () => {
@@ -38,7 +36,11 @@ describe('PpfService: bookings and days', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     for (const m of ['setEntity', 'setChange', 'setBranch', 'addMetadata'] as const) trail[m].mockReturnValue(trail);
+    prisma.$transaction.mockImplementation((arg: unknown) =>
+      (typeof arg === 'function' ? (arg as (tx: unknown) => unknown)(prisma) : Promise.all(arg as unknown[])) as never,
+    );
     prisma.ppfClosedDay.findUnique.mockResolvedValue(null);
+    prisma.ppfBooking.count.mockResolvedValue(0);
   });
 
   it('creates a booking on an open day and records it for the audit log', async () => {
@@ -55,9 +57,25 @@ describe('PpfService: bookings and days', () => {
     expect(trail.setEntity).toHaveBeenCalledWith('PpfBooking', 'b-1');
   });
 
-  it('refuses a second full PPF on the day (the database index decides)', async () => {
-    prisma.ppfBooking.create.mockRejectedValue(duplicate());
+  it('a second full PPF fits in as the exception', async () => {
+    prisma.ppfBooking.count.mockResolvedValue(1);
+    prisma.ppfBooking.create.mockResolvedValue(row({ id: 'b-2' }) as never);
+    await expect(service.create(amani, dto)).resolves.toMatchObject({ id: 'b-2', type: 'FULL' });
+    expect(prisma.ppfBooking.count).toHaveBeenCalledWith({
+      where: { receiveDate: new Date('2026-11-02T00:00:00.000Z'), type: 'FULL', status: 'BOOKED' },
+    });
+  });
+
+  it('refuses a third full PPF on the day', async () => {
+    prisma.ppfBooking.count.mockResolvedValue(2);
     await expect(service.create(amani, dto)).rejects.toMatchObject(code('PPF_DAY_FULL'));
+    expect(prisma.ppfBooking.create).not.toHaveBeenCalled();
+  });
+
+  it('light jobs are never counted against the day', async () => {
+    prisma.ppfBooking.count.mockResolvedValue(2);
+    prisma.ppfBooking.create.mockResolvedValue(row({ type: 'LIGHT' }) as never);
+    await expect(service.create(amani, { ...dto, type: 'LIGHT' })).resolves.toMatchObject({ type: 'LIGHT' });
   });
 
   it('refuses any booking on a day closed by hand, without touching the table', async () => {
@@ -93,10 +111,14 @@ describe('PpfService: bookings and days', () => {
     await expect(service.update(amani, 'b-1', { note: 'bring the spare key' })).resolves.toBeDefined();
   });
 
-  it('moving onto an occupied day is refused', async () => {
+  it('moving a full PPF onto a day that already has two is refused; the booking itself is not counted', async () => {
     prisma.ppfBooking.findUnique.mockResolvedValue(row() as never);
-    prisma.ppfBooking.updateMany.mockRejectedValue(duplicate());
+    prisma.ppfBooking.count.mockResolvedValue(2);
     await expect(service.update(amani, 'b-1', { receiveDate: '2026-11-04' })).rejects.toMatchObject(code('PPF_DAY_FULL'));
+    expect(prisma.ppfBooking.count).toHaveBeenCalledWith({
+      where: { receiveDate: new Date('2026-11-04T00:00:00.000Z'), type: 'FULL', status: 'BOOKED', id: { not: 'b-1' } },
+    });
+    expect(prisma.ppfBooking.updateMany).not.toHaveBeenCalled();
   });
 
   it('a cancelled booking cannot be edited or cancelled again', async () => {
