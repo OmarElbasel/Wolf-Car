@@ -86,6 +86,9 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'POST /api/ppf/bookings/:id/cancel': ['admin', 'reservations'],
   'PUT /api/ppf/closed-days/:date': ['admin', 'reservations'],
   'DELETE /api/ppf/closed-days/:date': ['admin', 'reservations'],
+  'GET /api/ppf/requests': ['admin', 'reservations'],
+  'POST /api/ppf/requests/:id/approve': ['admin', 'reservations'],
+  'POST /api/ppf/requests/:id/reject': ['admin', 'reservations'],
 
   'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },

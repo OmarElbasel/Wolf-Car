@@ -133,4 +133,48 @@ describe('PPF bookings (e2e)', () => {
       ['ppf_booking.cancel', 'SUCCESS', 'reservations'],
     ]);
   });
+
+  describe('light-job requests', () => {
+    const pending = () =>
+      t.prisma.lightJobRequest.create({
+        data: { date: new Date(`${DAY}T00:00:00.000Z`), salesName: 'Yousef', car: 'Lexus LX', ownerName: 'Sara Al-Kuwari', phone: '55123456', note: 'Front windows tint' },
+      });
+
+    it('approving adds the light job to the day and names the salesperson on it', async () => {
+      await book();
+      const req = await pending();
+      const list = await t.http().get('/api/ppf/requests').query({ status: 'PENDING' }).set(bearer(amani));
+      expect(list.body.total).toBe(1);
+      expect(list.body.items[0]).toMatchObject({ id: req.id, date: DAY, note: 'Front windows tint', phone: '55123456' });
+
+      const res = await t.http().post(`/api/ppf/requests/${req.id}/approve`).set(bearer(amani)).send({});
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('APPROVED');
+      const cal = await calendar();
+      const light = cal.body.bookings.find((b: { id: string }) => b.id === res.body.bookingId);
+      expect(light).toMatchObject({ type: 'LIGHT', car: 'Lexus LX', ownerName: 'Sara Al-Kuwari', receiveDate: DAY, requestedBy: 'Yousef' });
+      expect(cal.body.days[0]).toMatchObject({ state: 'FULL', lightCount: 1 });
+    });
+
+    it('two answers at once: exactly one is accepted and at most one light job exists', async () => {
+      await book();
+      const req = await pending();
+      const [a, b] = await Promise.all([
+        t.http().post(`/api/ppf/requests/${req.id}/approve`).set(bearer(amani)).send({}),
+        t.http().post(`/api/ppf/requests/${req.id}/reject`).set(bearer(amani)).send({ decisionNote: 'Full' }),
+      ]);
+      expect([a.status, b.status].sort((x, y) => x - y)).toEqual([200, 409]);
+      const lights = await t.prisma.ppfBooking.count({ where: { type: 'LIGHT' } });
+      expect(lights).toBe(a.status === 200 ? 1 : 0);
+    });
+
+    it('approval is rolled back when the day was closed by hand', async () => {
+      await book();
+      const req = await pending();
+      await t.http().put(`/api/ppf/closed-days/${DAY}`).set(bearer(amani)).send({});
+      const res = await t.http().post(`/api/ppf/requests/${req.id}/approve`).set(bearer(amani)).send({});
+      expect(res.body.code).toBe('PPF_DAY_CLOSED');
+      expect((await t.prisma.lightJobRequest.findUniqueOrThrow({ where: { id: req.id } })).status).toBe('PENDING');
+    });
+  });
 });

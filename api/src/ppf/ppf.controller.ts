@@ -5,7 +5,15 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import { ParseDayPipe } from '../common/day';
 import type { AuthUser } from '../common/types';
-import { CalendarQueryDto, CloseDayDto, CreatePpfBookingDto, ListPpfBookingsQueryDto, UpdatePpfBookingDto } from './dto/ppf.dto';
+import {
+  CalendarQueryDto,
+  CloseDayDto,
+  CreatePpfBookingDto,
+  DecideRequestDto,
+  ListPpfBookingsQueryDto,
+  ListRequestsQueryDto,
+  UpdatePpfBookingDto,
+} from './dto/ppf.dto';
 import { PpfService } from './ppf.service';
 
 /** The call center's PPF calendar (Bin Omran). Reading and managing are separate permissions. */
@@ -63,5 +71,28 @@ export class PpfController {
   @HttpCode(204)
   reopenDay(@Param('date', ParseDayPipe) date: string) {
     return this.ppf.reopenDay(date);
+  }
+
+  @RequirePermissions('booking.ppf.read')
+  @Get('requests')
+  requests(@Query() query: ListRequestsQueryDto) {
+    return this.ppf.listRequests(query);
+  }
+
+  /** Adds the light job to the requested day. */
+  @RequirePermissions('booking.ppf.manage')
+  @Audit('ppf_request.approve', { entity: 'LightJobRequest', idParam: 'id' })
+  @Post('requests/:id/approve')
+  @HttpCode(200)
+  approve(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: DecideRequestDto) {
+    return this.ppf.approveRequest(user, id, dto);
+  }
+
+  @RequirePermissions('booking.ppf.manage')
+  @Audit('ppf_request.reject', { entity: 'LightJobRequest', idParam: 'id' })
+  @Post('requests/:id/reject')
+  @HttpCode(200)
+  reject(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: DecideRequestDto) {
+    return this.ppf.rejectRequest(user, id, dto);
   }
 }

@@ -1,14 +1,35 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CALENDAR_MAX_DAYS } from '../../../shared/validation';
 import { AuditTrail } from '../activity/audit-trail.service';
-import { dayStr, daysBetween, qatarToday, toDate } from '../common/day';
+import { addDays, dayStr, daysBetween, qatarToday, toDate } from '../common/day';
 import { type Page, skipTake } from '../common/pagination';
 import type { AuthUser } from '../common/types';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { type DayInfo, dayStates } from './day-state';
-import type { CloseDayDto, CreatePpfBookingDto, ListPpfBookingsQueryDto, UpdatePpfBookingDto } from './dto/ppf.dto';
-import { bookingAuditView, bookingView, PPF_BOOKING_SELECT, type PpfBookingView } from './ppf.view';
+import type {
+  CloseDayDto,
+  CreateLightJobRequestDto,
+  CreatePpfBookingDto,
+  DecideRequestDto,
+  ListPpfBookingsQueryDto,
+  ListRequestsQueryDto,
+  UpdatePpfBookingDto,
+} from './dto/ppf.dto';
+import {
+  bookingAuditView,
+  bookingView,
+  type LightJobRequestView,
+  PPF_BOOKING_SELECT,
+  type PpfBookingView,
+  REQUEST_SELECT,
+  requestView,
+  SALES_BOOKING_SELECT,
+  type SalesBookingView,
+  salesBookingView,
+  type SalesRequestView,
+  salesRequestView,
+} from './ppf.view';
 
 export const conflict = (code: string, message: string) => new ConflictException({ statusCode: 409, error: 'Conflict', code, message });
 export const bad = (code: string, message: string) => new BadRequestException({ statusCode: 400, error: 'Bad Request', code, message });
@@ -16,6 +37,10 @@ export const bad = (code: string, message: string) => new BadRequestException({ 
 /** ppf_bookings has one unique index besides its primary key: one active full PPF per day. */
 const isDayTaken = (err: unknown) => err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 const dayFull = () => conflict('PPF_DAY_FULL', 'A full PPF is already booked on this day.');
+const alreadyDecided = () => conflict('REQUEST_ALREADY_DECIDED', 'This request has already been answered.');
+/** How far ahead the sales page may look, and how long a request stays listed. */
+const SALES_HORIZON_DAYS = 400;
+const REQUEST_LISTED_MS = 14 * 86_400_000;
 
 type Db = Pick<Prisma.TransactionClient, 'ppfClosedDay'>;
 
@@ -163,6 +188,127 @@ export class PpfService {
     const result = await this.prisma.ppfClosedDay.deleteMany({ where: { date: toDate(date) } });
     if (result.count === 0) throw new NotFoundException('This day is not closed.');
     this.trail.setEntity('PpfClosedDay', date).setChange({ date }, null);
+  }
+
+  async listRequests(q: ListRequestsQueryDto): Promise<Page<LightJobRequestView>> {
+    const where: Prisma.LightJobRequestWhereInput = q.status ? { status: q.status } : {};
+    const [rows, total] = await Promise.all([
+      this.prisma.lightJobRequest.findMany({ where, select: REQUEST_SELECT, orderBy: { createdAt: 'desc' }, ...skipTake(q) }),
+      this.prisma.lightJobRequest.count({ where }),
+    ]);
+    return { items: rows.map(requestView), page: q.page, pageSize: q.pageSize, total };
+  }
+
+  /**
+   * Claims the request (PENDING → APPROVED) and adds the light job in one
+   * transaction: a second approval, or an approval racing a rejection, finds
+   * nothing to claim. A day closed by hand since then rolls everything back.
+   */
+  async approveRequest(user: AuthUser, id: string, dto: DecideRequestDto): Promise<LightJobRequestView> {
+    const view = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.lightJobRequest.updateMany({
+        where: { id, status: 'PENDING' },
+        data: { status: 'APPROVED', decidedById: user.id, decidedAt: new Date(), decisionNote: dto.decisionNote ?? null },
+      });
+      if (claimed.count === 0) await this.throwDecided(id, tx);
+      const request = await tx.lightJobRequest.findUniqueOrThrow({ where: { id }, select: REQUEST_SELECT });
+      await this.assertNotClosed(dayStr(request.date), tx);
+      const booking = await tx.ppfBooking.create({
+        data: {
+          type: 'LIGHT',
+          car: request.car,
+          ownerName: request.ownerName,
+          phone: request.phone,
+          note: request.note,
+          receiveDate: request.date,
+          createdById: user.id,
+        },
+        select: { id: true },
+      });
+      return requestView(await tx.lightJobRequest.update({ where: { id }, data: { bookingId: booking.id }, select: REQUEST_SELECT }));
+    });
+    this.trail.setEntity('LightJobRequest', id).setChange({ status: 'PENDING' }, { status: 'APPROVED', bookingId: view.bookingId });
+    return view;
+  }
+
+  async rejectRequest(user: AuthUser, id: string, dto: DecideRequestDto): Promise<LightJobRequestView> {
+    const decisionNote = dto.decisionNote ?? null;
+    const claimed = await this.prisma.lightJobRequest.updateMany({
+      where: { id, status: 'PENDING' },
+      data: { status: 'REJECTED', decidedById: user.id, decidedAt: new Date(), decisionNote },
+    });
+    if (claimed.count === 0) await this.throwDecided(id, this.prisma);
+    this.trail.setEntity('LightJobRequest', id).setChange({ status: 'PENDING' }, { status: 'REJECTED', decisionNote });
+    return requestView(await this.prisma.lightJobRequest.findUniqueOrThrow({ where: { id }, select: REQUEST_SELECT }));
+  }
+
+  /**
+   * A salesperson asks for a light job. Only for today or later (Qatar), and
+   * only on a day that a full PPF closed — open days are booked through the
+   * call center, and days closed by hand take nothing.
+   */
+  async createRequest(dto: CreateLightJobRequestDto, now: Date = new Date()): Promise<SalesRequestView> {
+    if (dto.date < qatarToday(now)) throw bad('REQUEST_DAY_PAST', 'This day has already passed.');
+    const date = toDate(dto.date);
+    const [full, closed] = await Promise.all([
+      this.prisma.ppfBooking.count({ where: { receiveDate: date, type: 'FULL', status: 'BOOKED' } }),
+      this.prisma.ppfClosedDay.findUnique({ where: { date } }),
+    ]);
+    if (closed || full === 0) throw conflict('PPF_DAY_NOT_FULL', 'A light-job request is only for a day closed by a full PPF.');
+    const row = await this.prisma.lightJobRequest.create({
+      data: { date, salesName: dto.salesName, car: dto.car, ownerName: dto.ownerName, phone: dto.phone ?? null, note: dto.note },
+      select: REQUEST_SELECT,
+    });
+    // sales have no account: the typed name is the only "who"
+    this.trail.setEntity('LightJobRequest', row.id).addMetadata({ salesName: dto.salesName });
+    return salesRequestView(row);
+  }
+
+  /** Everything the sales page shows, and nothing else. */
+  async salesView(
+    q: { from: string; to: string },
+    now: Date = new Date(),
+  ): Promise<{ today: string; days: DayInfo[]; bookings: SalesBookingView[]; requests: SalesRequestView[] }> {
+    const today = qatarToday(now);
+    this.assertRange(q.from, q.to);
+    if (q.from < `${today.slice(0, 7)}-01` || q.to > addDays(today, SALES_HORIZON_DAYS)) {
+      throw bad('BAD_RANGE', 'The slots page shows the current month and about a year ahead.');
+    }
+    const between = { gte: toDate(q.from), lte: toDate(q.to) };
+    const from = toDate(today);
+    const [inRange, upcoming, closed, requests] = await Promise.all([
+      this.prisma.ppfBooking.findMany({ where: { status: 'BOOKED', receiveDate: between }, select: { type: true, receiveDate: true } }),
+      this.prisma.ppfBooking.findMany({
+        where: { status: 'BOOKED', OR: [{ receiveDate: { gte: from } }, { deliveryDate: { gte: from } }] },
+        select: SALES_BOOKING_SELECT,
+        orderBy: [{ receiveDate: 'asc' }, { type: 'asc' }, { createdAt: 'asc' }],
+        take: 200,
+      }),
+      this.prisma.ppfClosedDay.findMany({ where: { date: between }, select: { date: true, reason: true } }),
+      this.prisma.lightJobRequest.findMany({
+        where: { OR: [{ createdAt: { gte: new Date(now.getTime() - REQUEST_LISTED_MS) } }, { date: { gte: from } }] },
+        select: REQUEST_SELECT,
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      }),
+    ]);
+    return {
+      today,
+      days: dayStates(
+        q.from,
+        q.to,
+        inRange.map((b) => ({ type: b.type, receiveDate: dayStr(b.receiveDate) })),
+        closed.map((c) => ({ date: dayStr(c.date), reason: c.reason })),
+      ),
+      bookings: upcoming.map(salesBookingView),
+      requests: requests.map(salesRequestView),
+    };
+  }
+
+  private async throwDecided(id: string, db: Pick<Prisma.TransactionClient, 'lightJobRequest'>): Promise<never> {
+    const exists = await db.lightJobRequest.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) throw new NotFoundException('Request not found.');
+    throw alreadyDecided();
   }
 
   private async get(id: string): Promise<PpfBookingView> {

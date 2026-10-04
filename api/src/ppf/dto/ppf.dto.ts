@@ -1,5 +1,5 @@
 import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
-import { BOOKING_NOTE_MAX, BOOKING_SERVICE_MAX, CLOSE_REASON_MAX } from '../../../../shared/validation';
+import { BOOKING_NOTE_MAX, BOOKING_SERVICE_MAX, CLOSE_REASON_MAX, DECISION_NOTE_MAX } from '../../../../shared/validation';
 import { NameField, PhoneField, TextField } from '../../common/booking-fields';
 import { IsDay } from '../../common/day';
 import { PageQueryDto } from '../../common/pagination';
@@ -116,4 +116,43 @@ export class CloseDayDto {
   @EmptyToUndefined()
   @TextField(CLOSE_REASON_MAX)
   reason?: string | null;
+}
+export const REQUEST_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+
+export class ListRequestsQueryDto extends PageQueryDto {
+  @IsOptional()
+  @IsIn(REQUEST_STATUSES)
+  status?: (typeof REQUEST_STATUSES)[number];
+}
+
+export class DecideRequestDto {
+  /** Shown to sales, e.g. why the request was rejected. */
+  @IsOptional()
+  @EmptyToUndefined()
+  @TextField(DECISION_NOTE_MAX)
+  decisionNote?: string | null;
+}
+
+/** Sent from the sales page; sales have no accounts, so the name is typed. */
+export class CreateLightJobRequestDto {
+  @IsDay()
+  date: string;
+
+  @NameField()
+  salesName: string;
+
+  @NameField()
+  car: string;
+
+  @NameField()
+  ownerName: string;
+
+  @IsOptional()
+  @EmptyToUndefined()
+  @PhoneField()
+  phone?: string | null;
+
+  /** What the light job is. */
+  @TextField(BOOKING_NOTE_MAX)
+  note: string;
 }
