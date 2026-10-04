@@ -89,7 +89,7 @@ async function main(): Promise<void> {
   try {
     console.log('Wiping existing data…');
     await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE activity_logs, order_items, orders, price_history, branch_products, products, categories, ' +
+      'TRUNCATE TABLE activity_logs, light_job_requests, ppf_bookings, ppf_closed_days, general_reservations, sales_access, order_items, orders, price_history, branch_products, products, categories, ' +
         'refresh_tokens, sessions, recovery_codes, user_permission_overrides, role_permissions, permissions, users, branches ' +
         'RESTART IDENTITY CASCADE',
     );
