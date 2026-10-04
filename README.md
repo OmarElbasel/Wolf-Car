@@ -123,6 +123,8 @@ Every change and skip is printed as a warning at the end of the run.
 
 The seed creates no products: the catalogue comes from `npm run db:import-legacy` (`npm run db:reset` runs both). Only the Playwright suite sets `SEED_DEMO_CATALOG=1`, which adds 13 made-up products (2 without a price, to show Finance's queue), a different showroom order per branch and a few orders. **Never run the seed in production** — it empties the database first (it refuses to run when `NODE_ENV=production`).
 
+The seed creates no Reservations account: the Super Admin adds it on *Dashboard → Users* (role Reservations; the username is `reservations`).
+
 There is no public registration: the Super Admin creates every account. New accounts get an auto-generated username (e.g. `wk.cashier`) and generated passwords that are shown **once** in a copyable dialog.
 
 ## 5. Environment variables
@@ -184,13 +186,13 @@ Landing snapshots live in `e2e/landing.spec.ts-snapshots/`. They were checked pi
 What they cover:
 
 - **API unit** — every service, guard, interceptor and filter (auth, tokens, lockout, 2FA, RBAC, users, branches, products, pricing, orders, showroom, receipts, activity log).
-- **API e2e** — the test database's default time zone is set to Asia/Qatar, so the suite also proves timestamps are stored as true UTC instants. Every endpoint for every role: a table-driven **RBAC matrix** checks all routes × {anonymous, Super Admin, Finance, Manager, Cashier, showroom session}. Plus the forbidden paths: Finance editing name/image/barcode/description (403 on the route, 400 for smuggled fields), managers setting prices, cashiers editing confirmed orders (409), cross-branch reads/writes/receipts (404), public catalogue field leakage, 2FA (setup, login, replay, recovery codes, admin reset), rate limiting (429) and lockout (423), refresh-token reuse, upload spoofing/oversize, database constraints (second manager, branch without cashier, append-only log), and an **audit-coverage** test that fails if any state-changing route is not audited.
+- **API e2e** — the test database's default time zone is set to Asia/Qatar, so the suite also proves timestamps are stored as true UTC instants. Every endpoint for every role: a table-driven **RBAC matrix** checks all routes × {anonymous, Super Admin, Finance, Manager, Cashier, showroom session}. Plus the forbidden paths: Finance editing name/image/barcode/description (403 on the route, 400 for smuggled fields), managers setting prices, cashiers editing confirmed orders (409), cross-branch reads/writes/receipts (404), public catalogue field leakage, 2FA (setup, login, replay, recovery codes, admin reset), rate limiting (429) and lockout (423), refresh-token reuse, upload spoofing/oversize, database constraints (second manager, branch without cashier, append-only log), PPF bookings (one full PPF per day, also under concurrent requests; closed days; light-job requests), the PIN-protected sales page (cookie scope, PIN change signs phones out, lockout, no internal fields), general reservations, and an **audit-coverage** test that fails if any state-changing route is not audited.
 - **Web** — forms (login/2FA, products, prices, passwords with strength meter, users, branches), permission-gated UI, the showroom cart and checkout, drag-and-drop reordering.
-- **Playwright** — the complete story (admin creates a branch and its staff → manager adds a product → finance prices it → showroom places an order → cashier confirms and downloads the receipt → admin sees it all in the activity log), role landing pages, the public catalogue (no prices in DOM or network), and **visual snapshots of the landing page**.
+- **Playwright** — the complete story (admin creates a branch and its staff → manager adds a product → finance prices it → showroom places an order → cashier confirms and downloads the receipt → admin sees it all in the activity log), the bookings story (admin creates the call-center account → she books a full PPF → sales asks for a light job → she approves it), role landing pages, the public catalogue (no prices in DOM or network), and **visual snapshots of the landing page**.
 
 ## 7. Permission model
 
-**Roles** (`SUPER_ADMIN`, `FINANCE`, `BRANCH_MANAGER`, `CASHIER`) map to **granular permissions stored in the database**. The Super Admin edits them on *Dashboard → Permissions*:
+**Roles** (`SUPER_ADMIN`, `FINANCE`, `BRANCH_MANAGER`, `CASHIER`, `RESERVATIONS`) map to **granular permissions stored in the database**. The Super Admin edits them on *Dashboard → Permissions*:
 
 - **By role** — the default set for everyone with that role.
 - **By user** — per-user exceptions: *Grant* or *Revoke* on top of the role.
@@ -211,6 +213,9 @@ Effective permissions = role permissions + user grants − user revokes, **resol
 | `order.cancel` | Cancel pending orders | Cashier |
 | `order.confirm` | Confirm orders (then immutable except for Super Admin) | Cashier |
 | `order.receipt.download` | Download PDF receipts | Cashier |
+| `booking.ppf.read` | View the PPF calendar, bookings and light-job requests | Reservations |
+| `booking.ppf.manage` | Add, edit and cancel PPF bookings; close and reopen days; answer requests; set the sales PIN | Reservations |
+| `booking.general.manage` | View and manage general reservations | Reservations |
 | `user.manage` | Create/manage accounts, reset passwords and 2FA | — |
 | `branch.manage` | Create/manage branches, replace staff | — |
 | `permission.manage` | Edit role and user permissions | — |
@@ -223,10 +228,18 @@ Effective permissions = role permissions + user grants − user revokes, **resol
 
 **Branch staffing is enforced by the database**: partial unique indexes allow at most one (non-deleted) manager and one cashier per branch, and a deferred constraint trigger requires at least one of each at commit. That's why a branch is created together with its two accounts, and staff are *replaced* (old account retired and new one created in one transaction) rather than added.
 
+### PPF bookings and the sales page
+
+PPF and tinting are booked for **Bin Omran only**, by the call center (role *Reservations*) on *Dashboard → PPF bookings*. One **full PPF** closes its receive day — a partial unique index (`ppf_bookings_one_full_per_day`) guarantees it. **Light jobs** never close a day. The delivery day is information only. The call center can also close a day by hand.
+
+Salespeople have no accounts. They open **`/ar/slots`** (or `/en/slots`) and type a shared 6-digit PIN once per phone; the phone is remembered for 90 days. The page is read-only except for one thing: on a day closed by a full PPF they can send a light-job request, which the call center approves or rejects in the dashboard. Changing the PIN signs every phone out. Five wrong PINs lock PIN entry for `LOGIN_LOCK_MINUTES`.
+
+*Dashboard → General reservations* is the call center's private list of every other reservation; nothing in it reaches the sales page.
+
 ## 8. Security notes
 
 - **Passwords**: argon2id (19 MiB, t=2, p=1); never stored or returned in plain text. Policy (shared by API and web): ≥ 12 characters, upper, lower, number, symbol, not containing the username; live strength meter in the UI.
-- **Sessions**: 15-minute JWT access token kept in memory only; opaque refresh token (stored hashed) in an `httpOnly; Secure; SameSite=Strict` cookie scoped to `/api/auth`, rotated on every use, with reuse detection that revokes the session. Logout, password change, admin reset and deactivation revoke sessions immediately. The showroom uses a separate cookie, password and session type that cannot reach dashboard routes.
+- **Sessions**: 15-minute JWT access token kept in memory only; opaque refresh token (stored hashed) in an `httpOnly; Secure; SameSite=Strict` cookie scoped to `/api/auth`, rotated on every use, with reuse detection that revokes the session. Logout, password change, admin reset and deactivation revoke sessions immediately. The showroom uses a separate cookie, password and session type that cannot reach dashboard routes. The sales slots page uses neither: a PIN is exchanged for a signed 90-day cookie (`httpOnly; SameSite=Strict`, scoped to `/api/slots`) that carries the PIN's version and is rejected everywhere else.
 - **2FA**: TOTP (QR setup, verified before activation), secrets AES-256-GCM encrypted, replayed codes rejected, 10 single-use recovery codes shown once; the Super Admin can reset a user's 2FA.
 - **Brute force**: per-IP rate limits (strict on sign-in/security endpoints) and account lockout after 5 failures for 15 minutes — unknown usernames are locked the same way, so lockouts don't reveal which usernames exist.
 - **HTTP**: Helmet (CSP, nosniff, frame-ancestors none…), strict CORS allowlist, CSRF header on cookie-authenticated endpoints, request ids on every response and log line, global validation with `whitelist` + `forbidNonWhitelisted`, error responses that never include stack traces or driver messages.
@@ -247,15 +260,16 @@ Effective permissions = role permissions + user grants − user revokes, **resol
 app/[locale]/page.tsx              landing page (unchanged)
 app/[locale]/products/             public catalogue
 app/[locale]/(app)/(staff)/login   staff sign-in
-app/[locale]/(app)/(staff)/dashboard/…   overview, products, orders, users, branches, permissions, activity, account
+app/[locale]/(app)/(staff)/dashboard/…   overview, products, orders, ppf-bookings, reservations, users, branches, permissions, activity, account
 app/[locale]/(app)/showroom/…      showroom sign-in + kiosk
+app/[locale]/(app)/slots/           sales slots page (PIN)
 components/                        landing page components (+ ui/ = shadcn/ui re-themed, app/ = shared app components)
 features/                          dashboard/showroom feature code (one folder per area)
 lib/                               API client, formatting, i18n helpers, motion presets
 messages/{ar,en}.json              website texts · messages/app/{ar,en}/ = dashboard & showroom texts
 shared/                            permissions + validation rules (web and API)
 api/src/                           NestJS modules: auth, account, rbac, users, branches, products, uploads,
-                                   showroom, orders, receipts, activity, public
+                                   showroom, orders, ppf, reservations, sales-access, receipts, activity, public
 api/test/                          API end-to-end tests · e2e/ = Playwright tests
 ```
 
