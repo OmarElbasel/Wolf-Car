@@ -1,6 +1,6 @@
 # PPF bookings and general reservations — design
 
-Date: 2026-10-04 · Status: waiting for review
+Date: 2026-10-04 · Status: approved, implemented
 
 ## Goal
 

@@ -162,4 +162,20 @@ describe('Sales slots page (e2e)', () => {
     const request = log.find((l) => l.action === 'ppf_request.create');
     expect(request).toMatchObject({ actorId: null, entityType: 'LightJobRequest', metadata: { salesName: 'Yousef' } });
   });
+
+  it('a burst of wrong PINs cannot out-run the lock', async () => {
+    await setPin();
+    const burst = await Promise.all(Array.from({ length: 20 }, () => unlock('000000')));
+    const statuses = burst.map((r) => r.status);
+    // at most LOGIN_MAX_ATTEMPTS guesses are ever evaluated; the rest are refused unseen
+    expect(statuses.filter((s) => s === 401).length).toBeLessThanOrEqual(5);
+    expect(statuses.filter((s) => s === 423).length).toBeGreaterThanOrEqual(15);
+    expect((await unlock()).status).toBe(423);
+  });
+
+  it('a right PIN hidden in a burst of wrong ones gets no extra chances', async () => {
+    await setPin();
+    const burst = await Promise.all([...Array.from({ length: 19 }, () => unlock('000000')), unlock()]);
+    expect(burst.filter((r) => r.status !== 423).length).toBeLessThanOrEqual(5);
+  });
 });

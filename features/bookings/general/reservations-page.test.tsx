@@ -136,4 +136,10 @@ describe("General reservations page", () => {
     await user.click(screen.getByRole("checkbox", { name: "Show cancelled" }));
     await waitFor(() => expect(calls.at(-1)?.has("status")).toBe(false));
   });
+
+  it("says when the list is cut short", async () => {
+    server.use(http.get("/api/reservations", () => HttpResponse.json({ items: [reservation()], page: 1, pageSize: 100, total: 140 })));
+    renderWithApp(<ReservationsPage />, { user: amani });
+    expect(await screen.findByText("Showing the first 1 of 140. Narrow the dates or search to see the rest.")).toHaveAttribute("role", "status");
+  });
 });

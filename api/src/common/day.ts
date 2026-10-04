@@ -18,7 +18,8 @@ export const dayStr = (date: Date): string => date.toISOString().slice(0, 10);
 export function isDay(value: unknown): value is string {
   if (typeof value !== 'string' || !DAY_PATTERN.test(value)) return false;
   const date = toDate(value);
-  return !Number.isNaN(date.getTime()) && dayStr(date) === value;
+  // PostgreSQL has no year 0, and nothing here is booked before 1900
+  return !Number.isNaN(date.getTime()) && dayStr(date) === value && value >= '1900-01-01';
 }
 
 export const qatarToday = (now: Date = new Date()): string => dayStr(new Date(now.getTime() + QATAR_OFFSET_MS));

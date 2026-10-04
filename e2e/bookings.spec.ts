@@ -83,7 +83,9 @@ test("admin → call center → sales → call center → sales", async ({ page,
   const sales = await phone.newPage();
 
   await test.step("A salesperson unlocks the slots page and asks for a light job", async () => {
-    await sales.goto("/en/slots");
+    const response = await sales.goto("/en/slots");
+    // customer data lives here: the page must not be framed by another site
+    expect(response?.headers()["x-frame-options"]).toBe("DENY");
     await sales.getByLabel("PIN").fill("000000");
     await sales.getByRole("button", { name: "Open" }).click();
     await expect(sales.getByText("Wrong PIN.")).toBeVisible();

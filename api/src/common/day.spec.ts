@@ -20,6 +20,8 @@ describe('Qatar day helpers', () => {
     expect(isDay('2026-02-29')).toBe(false);
     expect(isDay('2026-02-30')).toBe(false);
     expect(isDay('2026-13-01')).toBe(false);
+    expect(isDay('0000-01-01')).toBe(false); // PostgreSQL has no year 0
+    expect(isDay('1899-12-31')).toBe(false);
     expect(isDay('2026-1-5')).toBe(false);
     expect(isDay('2026-11-02T00:00:00Z')).toBe(false);
     expect(isDay(20261102)).toBe(false);

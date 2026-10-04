@@ -64,8 +64,10 @@ function Slots({ onLocked }: { onLocked: () => void }) {
   const locale = useLocale();
   const queryClient = useQueryClient();
   const wide = useWideLayout("(min-width: 1024px)");
-  const [thisMonth] = useState(() => monthOf(qatarDay(new Date())));
-  const [month, setMonth] = useState(thisMonth);
+  // read on every render: a page left open over the end of a month moves on by itself
+  const thisMonth = monthOf(qatarDay(new Date()));
+  const [picked, setMonth] = useState(thisMonth);
+  const month = picked < thisMonth ? thisMonth : picked;
   const [selected, setSelected] = useState<string | null>(null);
   /** null = not chosen yet: open on wide screens, closed on phones */
   const [panel, setPanel] = useState<boolean | null>(null);
@@ -84,6 +86,7 @@ function Slots({ onLocked }: { onLocked: () => void }) {
       }
     },
     refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
     retry: false,
   });
 
@@ -119,6 +122,11 @@ function Slots({ onLocked }: { onLocked: () => void }) {
       <div className={wide && panelOpen ? "grid grid-cols-[minmax(0,1fr)_380px]" : undefined}>
         <main className="mx-auto w-full max-w-3xl px-4 py-5 lg:px-6">
           <h1 className="sr-only">{`${t("Slots.title")} · ${t("Slots.branch")}`}</h1>
+          {view.isError && data && (
+            <p role="alert" className="mb-3 rounded-[var(--radius-brand)] bg-warning-soft px-3 py-2.5 text-[15px] font-semibold text-warning">
+              {t("Slots.stale")}
+            </p>
+          )}
           {view.isError && !data ? (
             <ErrorState error={view.error} onRetry={() => void view.refetch()} />
           ) : (

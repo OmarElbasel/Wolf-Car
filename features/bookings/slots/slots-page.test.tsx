@@ -232,4 +232,41 @@ describe("Sales slots page", () => {
     await user.click(cell("2031-03-12"));
     expect(screen.getByRole("button", { name: "طلب خدمة خفيفة" })).toBeInTheDocument();
   });
+
+  it("says so when it cannot refresh, instead of showing old availability as current", async () => {
+    unlockPhone();
+    let ok = true;
+    server.use(http.get("/api/slots", () => (ok ? HttpResponse.json(view()) : HttpResponse.json({ statusCode: 500, message: "x" }, { status: 500 }))));
+    const { queryClient } = renderWithApp(<SlotsPage />, { user: null });
+    await waitFor(() => expect(cell(TODAY)).toBeEnabled());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    ok = false;
+    await queryClient.invalidateQueries({ queryKey: ["slots"] });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't refresh. This may be out of date.");
+    expect(cell(TODAY)).toBeInTheDocument();
+  });
+
+  it("moves on by itself when the month rolls over on a page left open", async () => {
+    unlockPhone();
+    const calls: string[] = [];
+    let firstOpenMonth = "2031-03-01";
+    server.use(
+      http.get("/api/slots", ({ request }) => {
+        const from = new URL(request.url).searchParams.get("from") ?? "";
+        calls.push(from);
+        // the API serves the current month onwards only
+        if (from < firstOpenMonth) return HttpResponse.json({ statusCode: 400, code: "BAD_RANGE", message: "x" }, { status: 400 });
+        return HttpResponse.json(view());
+      }),
+    );
+    const { queryClient } = renderWithApp(<SlotsPage />, { user: null });
+    await waitFor(() => expect(cell(TODAY)).toBeEnabled());
+
+    vi.setSystemTime(new Date("2031-04-01T09:00:00.000Z"));
+    firstOpenMonth = "2031-04-01";
+    await queryClient.invalidateQueries({ queryKey: ["slots"] });
+    await waitFor(() => expect(calls.at(-1)).toBe("2031-04-01"));
+    expect(screen.getByRole("heading", { name: "April 2031" })).toBeInTheDocument();
+  });
 });

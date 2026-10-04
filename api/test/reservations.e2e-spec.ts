@@ -64,4 +64,13 @@ describe('General reservations (e2e)', () => {
     expect(res.status).toBe(200);
     expect(JSON.stringify(res.body)).not.toContain('Hidden Customer');
   });
+
+  it('answers malformed input with 400, never 500', async () => {
+    const { body } = await add({});
+    for (const patch of [{ date: null }, { service: null }]) {
+      const res = await t.http().patch(`/api/reservations/${body.id}`).set(bearer(amani)).send(patch);
+      expect([patch, res.status]).toEqual([patch, 400]);
+    }
+    expect((await list({ q: 'a\u0000b' })).status).toBe(400);
+  });
 });

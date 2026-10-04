@@ -113,6 +113,11 @@ function ReservationsManager() {
         <EmptyState title={t("Reservations.empty")} />
       ) : (
         <div className="grid gap-6">
+          {list.data.total > list.data.items.length && (
+            <p role="status" className="rounded-[var(--radius-brand)] bg-warning-soft px-3 py-2.5 text-[15px] font-semibold text-warning">
+              {t("Reservations.truncated", { shown: list.data.items.length, total: list.data.total })}
+            </p>
+          )}
           {groups.map((group) => (
             <section key={group.date}>
               <h2 className="mb-2 text-[17px] font-extrabold">{formatDay(group.date, locale)}</h2>

@@ -177,4 +177,19 @@ describe('PPF bookings (e2e)', () => {
       expect((await t.prisma.lightJobRequest.findUniqueOrThrow({ where: { id: req.id } })).status).toBe('PENDING');
     });
   });
+
+  it('answers malformed input with 400, never 500', async () => {
+    const { body } = await book();
+    for (const patch of [{ receiveDate: null }, { type: null }, { car: null }, { ownerName: null }]) {
+      const res = await t.http().patch(`/api/ppf/bookings/${body.id}`).set(bearer(amani)).send(patch);
+      expect([patch, res.status]).toEqual([patch, 400]);
+    }
+    expect((await book({ receiveDate: '0000-01-01' })).status).toBe(400);
+    expect((await calendar('0000-01-01', '0000-01-02')).status).toBe(400);
+    expect((await t.http().put('/api/ppf/closed-days/0000-01-01').set(bearer(amani)).send({})).status).toBe(400);
+    const nul = await book({ receiveDate: '2031-03-20', car: 'Pat\u0000rol' });
+    expect(nul.status).toBe(201);
+    expect(nul.body.car).toBe('Patrol');
+    expect((await t.http().get('/api/ppf/bookings').query({ q: 'a\u0000b' }).set(bearer(amani))).status).toBe(400);
+  });
 });

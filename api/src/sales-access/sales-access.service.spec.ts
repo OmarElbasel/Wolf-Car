@@ -49,38 +49,29 @@ describe('SalesAccessService', () => {
     expect(JSON.stringify([call, trail.setChange.mock.calls, trail.addMetadata.mock.calls])).not.toContain('123456');
   });
 
-  it('the right PIN yields a token for the current version', async () => {
+  it('the right PIN yields a token for the current version and clears the counter', async () => {
+    prisma.salesAccess.updateMany.mockResolvedValue({ count: 1 });
     passwords.verify.mockResolvedValue(true);
     tokens.signSlots.mockResolvedValue({ token: 't', expiresAt: new Date() });
     await service.unlock('123456');
     expect(tokens.signSlots).toHaveBeenCalledWith(3);
-    expect(prisma.salesAccess.update).not.toHaveBeenCalled();
+    expect(prisma.salesAccess.updateMany.mock.calls.at(-1)?.[0]).toEqual({ where: { id: 1, lockedUntil: null }, data: { failedCount: 0 } });
   });
 
-  it('a right PIN after failures resets the counter', async () => {
-    prisma.salesAccess.upsert.mockResolvedValue(access({ failedCount: 2 }) as never);
-    passwords.verify.mockResolvedValue(true);
-    tokens.signSlots.mockResolvedValue({ token: 't', expiresAt: new Date() });
-    await service.unlock('123456');
-    expect(prisma.salesAccess.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { failedCount: 0, lockedUntil: null } });
-  });
-
-  it('a wrong PIN is counted; the fifth one locks unlocking for 15 minutes', async () => {
+  it('every guess first claims one of the five attempts in a single conditional update', async () => {
+    prisma.salesAccess.updateMany.mockResolvedValue({ count: 1 });
     passwords.verify.mockResolvedValue(false);
-    prisma.salesAccess.update.mockResolvedValueOnce({ failedCount: 4 } as never);
     await expect(service.unlock('000000')).rejects.toMatchObject(code('SALES_PIN_INVALID'));
-    expect(prisma.salesAccess.update).toHaveBeenCalledTimes(1);
-
-    prisma.salesAccess.update.mockResolvedValueOnce({ failedCount: 5 } as never);
-    const before = Date.now();
-    await expect(service.unlock('000000')).rejects.toMatchObject(code('SALES_PIN_INVALID'));
-    const lock = prisma.salesAccess.update.mock.calls.at(-1)?.[0].data as { failedCount: number; lockedUntil: Date };
-    expect(lock.failedCount).toBe(0);
-    expect(lock.lockedUntil.getTime() - before).toBeGreaterThanOrEqual(15 * 60_000 - 50);
+    const [expire, claim, lock] = prisma.salesAccess.updateMany.mock.calls.map((c) => c[0]);
+    expect(expire.data).toEqual({ lockedUntil: null, failedCount: 0 });
+    expect(claim).toEqual({ where: { id: 1, lockedUntil: null, failedCount: { lt: 5 } }, data: { failedCount: { increment: 1 } } });
+    expect(lock.where).toEqual({ id: 1, lockedUntil: null, failedCount: { gte: 5 } });
+    expect((lock.data as { lockedUntil: Date }).lockedUntil.getTime() - Date.now()).toBeGreaterThan(15 * 60_000 - 1000);
   });
 
-  it('while locked, even the right PIN is refused and not checked', async () => {
-    prisma.salesAccess.upsert.mockResolvedValue(access({ lockedUntil: new Date(Date.now() + 60_000) }) as never);
+  it('with no attempt left, even the right PIN is refused and not checked', async () => {
+    prisma.salesAccess.updateMany.mockResolvedValueOnce({ count: 0 }).mockResolvedValueOnce({ count: 0 });
+    prisma.salesAccess.findUnique.mockResolvedValue({ lockedUntil: new Date(Date.now() + 60_000) } as never);
     await expect(service.unlock('123456')).rejects.toMatchObject({ response: { code: 'SALES_PIN_LOCKED', retryAfterSeconds: 60 } });
     expect(passwords.verify).not.toHaveBeenCalled();
   });

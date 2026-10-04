@@ -1,9 +1,9 @@
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional } from 'class-validator';
 import { BOOKING_NOTE_MAX, BOOKING_SERVICE_MAX, CLOSE_REASON_MAX, DECISION_NOTE_MAX } from '../../../../shared/validation';
-import { NameField, PhoneField, TextField } from '../../common/booking-fields';
+import { IfSent, NameField, PhoneField, SearchField, TextField } from '../../common/booking-fields';
 import { IsDay } from '../../common/day';
 import { PageQueryDto } from '../../common/pagination';
-import { EmptyToNull, EmptyToUndefined, Trim } from '../../common/validators';
+import { EmptyToNull, EmptyToUndefined } from '../../common/validators';
 
 export const PPF_BOOKING_TYPES = ['FULL', 'LIGHT'] as const;
 export const BOOKING_STATUSES = ['BOOKED', 'CANCELLED'] as const;
@@ -53,15 +53,15 @@ export class CreatePpfBookingDto {
 
 /** Every field is optional; send "" or null to clear phone, service, delivery day or note. */
 export class UpdatePpfBookingDto {
-  @IsOptional()
+  @IfSent()
   @IsIn(PPF_BOOKING_TYPES)
   type?: (typeof PPF_BOOKING_TYPES)[number];
 
-  @IsOptional()
+  @IfSent()
   @NameField()
   car?: string;
 
-  @IsOptional()
+  @IfSent()
   @NameField()
   ownerName?: string;
 
@@ -75,7 +75,7 @@ export class UpdatePpfBookingDto {
   @TextField(BOOKING_SERVICE_MAX)
   service?: string | null;
 
-  @IsOptional()
+  @IfSent()
   @IsDay()
   receiveDate?: string;
 
@@ -105,9 +105,7 @@ export class ListPpfBookingsQueryDto extends PageQueryDto {
 
   /** matches car, owner name, phone or service */
   @IsOptional()
-  @Trim()
-  @IsString()
-  @MaxLength(80)
+  @SearchField()
   q?: string;
 }
 

@@ -167,4 +167,19 @@ describe("Sales page card", () => {
     const card = await screen.findByRole("region", { name: "Sales page" });
     expect(within(card).queryByRole("button")).not.toBeInTheDocument();
   });
+
+describe("PPF requests inbox: long lists", () => {
+  it("says when older requests are not shown", async () => {
+    server.use(
+      http.get("/api/ppf/requests", ({ request: req }) =>
+        new URL(req.url).searchParams.get("status")
+          ? HttpResponse.json({ items: [], page: 1, pageSize: 1, total: 0 })
+          : HttpResponse.json({ items: [request()], page: 1, pageSize: 50, total: 73 }),
+      ),
+    );
+    const { user } = renderWithApp(<PpfBookingsPage />, { user: amani });
+    await openRequests(user);
+    expect(await screen.findByText("Showing the newest 1 of 73 requests.")).toBeInTheDocument();
+  });
+});
 });

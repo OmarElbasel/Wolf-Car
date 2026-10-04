@@ -62,6 +62,11 @@ export function RequestsInbox({ canManage }: { canManage: boolean }) {
           {error}
         </p>
       )}
+      {requests.data.total > requests.data.items.length && (
+        <p role="status" className="mb-3 text-[14px] font-semibold text-ink-2">
+          {t("PpfBookings.requestsTruncated", { shown: requests.data.items.length, total: requests.data.total })}
+        </p>
+      )}
       <ul className="grid gap-3 lg:grid-cols-2">
         {requests.data.items.map((r) => (
           <li key={r.id}>

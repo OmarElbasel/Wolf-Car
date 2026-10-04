@@ -2,7 +2,11 @@
   "Calendar": {
     "previous": "Previous month",
     "next": "Next month",
-    "states": { "OPEN": "Open", "FULL": "Booked", "CLOSED": "Closed" },
+    "states": {
+      "OPEN": "Open",
+      "FULL": "Booked",
+      "CLOSED": "Closed"
+    },
     "light": "{count, plural, one {# light job} other {# light jobs}}",
     "today": "Today"
   },
@@ -16,8 +20,14 @@
     "addTitle": "New booking",
     "editTitle": "Edit booking",
     "type": "Type",
-    "types": { "FULL": "Full PPF", "LIGHT": "Light job" },
-    "typeHints": { "FULL": "Closes the day.", "LIGHT": "Tint or a small PPF job. Never closes the day." },
+    "types": {
+      "FULL": "Full PPF",
+      "LIGHT": "Light job"
+    },
+    "typeHints": {
+      "FULL": "Closes the day.",
+      "LIGHT": "Tint or a small PPF job. Never closes the day."
+    },
     "car": "Car",
     "carHint": "Make and model",
     "ownerName": "Owner name",
@@ -52,7 +62,11 @@
     "rejectTitle": "Reject this request?",
     "rejectReason": "Reason (sales will see it)",
     "rejected": "Request rejected",
-    "requestStatus": { "PENDING": "Waiting", "APPROVED": "Approved", "REJECTED": "Rejected" },
+    "requestStatus": {
+      "PENDING": "Waiting",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
     "salesTitle": "Sales page",
     "salesHint": "Salespeople open this link on their phone and type the PIN once.",
     "pinSet": "A PIN is set.",
@@ -63,7 +77,8 @@
     "pinBody": "Six digits. Changing the PIN signs every phone out.",
     "pin": "PIN",
     "generate": "Generate",
-    "pinSaved": "PIN saved. Share it with the sales team."
+    "pinSaved": "PIN saved. Share it with the sales team.",
+    "requestsTruncated": "Showing the newest {shown} of {total} requests."
   },
   "Reservations": {
     "title": "General reservations",
@@ -86,7 +101,8 @@
     "cancelTitle": "Cancel this reservation?",
     "cancelBody": "It stays in the list, marked cancelled.",
     "cancelled": "Reservation cancelled",
-    "cancelledBadge": "Cancelled"
+    "cancelledBadge": "Cancelled",
+    "truncated": "Showing the first {shown} of {total}. Narrow the dates or search to see the rest."
   },
   "Slots": {
     "title": "PPF slots",
@@ -117,6 +133,7 @@
     "phone": "Phone",
     "note": "What is the job?",
     "send": "Send request",
-    "sent": "Request sent to the call center"
+    "sent": "Request sent to the call center",
+    "stale": "Couldn't refresh. This may be out of date."
   }
 }

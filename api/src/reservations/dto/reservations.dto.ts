@@ -1,9 +1,9 @@
-import { IsIn, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
 import { BOOKING_NOTE_MAX, BOOKING_SERVICE_MAX, TIME_PATTERN } from '../../../../shared/validation';
-import { NameField, PhoneField, TextField } from '../../common/booking-fields';
+import { IfSent, NameField, PhoneField, SearchField, TextField } from '../../common/booking-fields';
 import { IsDay } from '../../common/day';
 import { PageQueryDto } from '../../common/pagination';
-import { EmptyToNull, EmptyToUndefined, Trim } from '../../common/validators';
+import { EmptyToNull, EmptyToUndefined } from '../../common/validators';
 import { BOOKING_STATUSES } from '../../ppf/dto/ppf.dto';
 
 const TIME_MESSAGE = { message: 'time must be HH:mm (24-hour)' };
@@ -45,7 +45,7 @@ export class CreateReservationDto {
 
 /** Every field is optional; send "" or null to clear anything but the day and the service. */
 export class UpdateReservationDto {
-  @IsOptional()
+  @IfSent()
   @IsDay()
   date?: string;
 
@@ -55,7 +55,7 @@ export class UpdateReservationDto {
   @Matches(TIME_PATTERN, TIME_MESSAGE)
   time?: string | null;
 
-  @IsOptional()
+  @IfSent()
   @TextField(BOOKING_SERVICE_MAX)
   service?: string;
 
@@ -95,8 +95,6 @@ export class ListReservationsQueryDto extends PageQueryDto {
 
   /** matches owner name, phone, car or service */
   @IsOptional()
-  @Trim()
-  @IsString()
-  @MaxLength(80)
+  @SearchField()
   q?: string;
 }

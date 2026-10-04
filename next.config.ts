@@ -47,6 +47,7 @@ const nextConfig: NextConfig = {
       { source: "/:locale(ar|en)/dashboard", headers: APP_HEADERS },
       { source: "/:locale(ar|en)/showroom/:path*", headers: APP_HEADERS },
       { source: "/:locale(ar|en)/showroom", headers: APP_HEADERS },
+      { source: "/:locale(ar|en)/slots", headers: APP_HEADERS },
     ];
   },
 };
