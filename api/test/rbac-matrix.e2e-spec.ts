@@ -4,8 +4,8 @@ import { bearer, csrf, login, showroomLogin } from './utils/auth';
 import { PW, seedWorld } from './utils/fixtures';
 import { appRoutes } from './utils/routes';
 
-type Caller = 'anon' | 'admin' | 'finance' | 'manager' | 'cashier' | 'kiosk';
-const DASHBOARD: Caller[] = ['admin', 'finance', 'manager', 'cashier'];
+type Caller = 'anon' | 'admin' | 'finance' | 'manager' | 'cashier' | 'reservations' | 'kiosk';
+const DASHBOARD: Caller[] = ['admin', 'finance', 'manager', 'cashier', 'reservations'];
 const ALL: Caller[] = ['anon', ...DASHBOARD, 'kiosk'];
 
 /**
@@ -79,6 +79,7 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'POST /api/orders/:id/cancel': ['admin', 'cashier'],
   'GET /api/orders/:id/receipt': ['admin', 'cashier'],
 
+  'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },
 
   'GET /api/activity': ['admin'],
@@ -103,6 +104,7 @@ describe('RBAC matrix: every route × every caller', () => {
     tokens.finance = (await login(t, 'finance', PW.finance)).token;
     tokens.manager = (await login(t, 'gh.manager', PW.manager)).token;
     tokens.cashier = (await login(t, 'gh.cashier', PW.cashier)).token;
+    tokens.reservations = (await login(t, 'reservations', PW.reservations)).token;
     tokens.kiosk = (await showroomLogin(t, 'gh.manager', PW.showroom)).token;
   });
   afterAll(async () => {

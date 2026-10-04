@@ -19,6 +19,7 @@ enum Role {
   FINANCE
   BRANCH_MANAGER
   CASHIER
+  RESERVATIONS
 }
 
 enum OrderStatus {

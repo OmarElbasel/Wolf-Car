@@ -10,6 +10,7 @@ describe("role landing pages", () => {
     expect(homePath("FINANCE")).toBe("/dashboard/products");
     expect(homePath("BRANCH_MANAGER")).toBe("/dashboard/products");
     expect(homePath("CASHIER")).toBe("/dashboard/orders");
+    expect(homePath("RESERVATIONS")).toBe("/dashboard/ppf-bookings");
   });
 
   it("accepts only same-app dashboard paths after login (no open redirect)", () => {

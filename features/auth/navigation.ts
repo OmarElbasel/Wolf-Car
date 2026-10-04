@@ -10,6 +10,8 @@ export function homePath(role: RoleName): string {
       return "/dashboard/products";
     case "CASHIER":
       return "/dashboard/orders";
+    case "RESERVATIONS":
+      return "/dashboard/ppf-bookings";
   }
 }
 

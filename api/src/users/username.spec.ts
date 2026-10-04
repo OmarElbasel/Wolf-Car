@@ -11,6 +11,10 @@ describe('usernames', () => {
     expect(baseUsername('CASHIER', 'BO')).toBe('bo.cashier');
   });
 
+  it('names the reservations account "reservations"', () => {
+    expect(baseUsername('RESERVATIONS')).toBe('reservations');
+  });
+
   it('adds a random suffix when the base is taken, always matching the DB format', async () => {
     const prisma = mockDeep<PrismaService>();
     prisma.user.findUnique.mockResolvedValueOnce({ id: 'taken' } as never).mockResolvedValueOnce(null);

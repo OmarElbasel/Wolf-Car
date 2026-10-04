@@ -58,7 +58,8 @@
     "SUPER_ADMIN": "Super Admin",
     "FINANCE": "Finance",
     "BRANCH_MANAGER": "Branch Manager",
-    "CASHIER": "Cashier"
+    "CASHIER": "Cashier",
+    "RESERVATIONS": "Reservations"
   },
   "orderStatus": {
     "PENDING": "Pending",

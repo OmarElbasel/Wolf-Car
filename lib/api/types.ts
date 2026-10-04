@@ -1,4 +1,4 @@
-import type { OrderStatusName, PermissionKey, RoleName } from "@/shared/permissions";
+import type { OrderStatusName, PermissionGroup, PermissionKey, RoleName } from "@/shared/permissions";
 
 export type { OrderStatusName, PermissionKey, RoleName };
 
@@ -173,7 +173,7 @@ export interface BranchView {
 
 export interface PermissionInfo {
   key: PermissionKey;
-  group: "product" | "order" | "admin" | "account";
+  group: PermissionGroup;
   description: string;
 }
 
