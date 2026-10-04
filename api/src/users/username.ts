@@ -3,7 +3,7 @@ import type { Prisma, Role } from '../generated/prisma/client';
 
 const SUFFIX = 'abcdefghjkmnpqrstuvwxyz23456789';
 
-/** Readable base username: "admin", "finance", "gh.manager", "gh.cashier". */
+/** Readable base username: "admin", "finance", "reservations", "gh.manager", "gh.cashier". */
 export function baseUsername(role: Role, branchCode?: string | null): string {
   switch (role) {
     case 'SUPER_ADMIN':
@@ -14,6 +14,8 @@ export function baseUsername(role: Role, branchCode?: string | null): string {
       return `${(branchCode ?? 'branch').toLowerCase()}.manager`;
     case 'CASHIER':
       return `${(branchCode ?? 'branch').toLowerCase()}.cashier`;
+    case 'RESERVATIONS':
+      return 'reservations';
   }
 }
 

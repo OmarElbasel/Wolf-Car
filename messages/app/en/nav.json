@@ -9,5 +9,7 @@
   "account": "My account",
   "showroom": "Open showroom",
   "website": "Website",
-  "signedInAs": "Signed in as"
+  "signedInAs": "Signed in as",
+  "ppfBookings": "PPF bookings",
+  "reservations": "General reservations"
 }

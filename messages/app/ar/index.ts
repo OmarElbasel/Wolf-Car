@@ -1,6 +1,7 @@
 import account from "./account.json";
 import activity from "./activity.json";
 import auth from "./auth.json";
+import bookings from "./bookings.json";
 import branches from "./branches.json";
 import common from "./common.json";
 import dashboard from "./dashboard.json";
@@ -28,6 +29,7 @@ const messages = {
   Showroom: showroom,
   Users: users,
   Validation: validation,
+  ...bookings,
 };
 
 export default messages;

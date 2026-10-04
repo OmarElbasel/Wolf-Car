@@ -25,9 +25,14 @@ import { applyFieldErrors, displayName, EMAIL_MAX, optionalEmail } from "../shar
 import { isolate, useFieldError } from "../shared/ui";
 
 /** Roles that can be created or switched to here; branch staff come with their branch. */
-export const ACCOUNT_ROLES = ["SUPER_ADMIN", "FINANCE"] as const satisfies readonly RoleName[];
+export const ACCOUNT_ROLES = ["SUPER_ADMIN", "FINANCE", "RESERVATIONS"] as const satisfies readonly RoleName[];
 type AccountRole = (typeof ACCOUNT_ROLES)[number];
 const isAccountRole = (role: RoleName): role is AccountRole => (ACCOUNT_ROLES as readonly RoleName[]).includes(role);
+const ROLE_HINT: Record<AccountRole, string> = {
+  SUPER_ADMIN: "Users.roleSuperAdminHint",
+  FINANCE: "Users.roleFinanceHint",
+  RESERVATIONS: "Users.roleReservationsHint",
+};
 
 const createSchema = z.object({ displayName, email: optionalEmail, role: z.enum(ACCOUNT_ROLES) });
 type CreateValues = z.infer<typeof createSchema>;
@@ -97,7 +102,7 @@ function CreateUserForm({ onCancel, onCreated }: { onCancel: () => void; onCreat
                 key={role}
                 name={field.name}
                 role={role}
-                hint={t(role === "SUPER_ADMIN" ? "Users.roleSuperAdminHint" : "Users.roleFinanceHint")}
+                hint={t(ROLE_HINT[role])}
                 checked={field.value === role}
                 onChange={() => field.onChange(role)}
               />

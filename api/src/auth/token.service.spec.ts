@@ -101,4 +101,21 @@ describe('TokenService', () => {
       data: expect.objectContaining({ sessionId: 's-1', tokenHash: sha256Hex(rotated.refreshToken) }),
     });
   });
+
+  describe('sales slots token', () => {
+    it('carries the PIN version and lasts 90 days', async () => {
+      const before = Date.now();
+      const { token, expiresAt } = await service.signSlots(7);
+      expect(await service.verifySlots(token)).toBe(7);
+      expect(expiresAt.getTime() - before).toBeGreaterThanOrEqual(90 * 86_400_000 - 1000);
+    });
+
+    it('is not an access token, and an access token is not a slots token', async () => {
+      const { token } = await service.signSlots(1);
+      await expect(service.verifyAccess(token)).rejects.toThrow();
+      const { accessToken } = await service.signAccess({ id: 'u-1', role: 'SUPER_ADMIN', branchId: null }, 's-1', 'DASHBOARD');
+      expect(await service.verifySlots(accessToken)).toBeNull();
+      expect(await service.verifySlots('not-a-token')).toBeNull();
+    });
+  });
 });

@@ -4,8 +4,8 @@ import { bearer, csrf, login, showroomLogin } from './utils/auth';
 import { PW, seedWorld } from './utils/fixtures';
 import { appRoutes } from './utils/routes';
 
-type Caller = 'anon' | 'admin' | 'finance' | 'manager' | 'cashier' | 'kiosk';
-const DASHBOARD: Caller[] = ['admin', 'finance', 'manager', 'cashier'];
+type Caller = 'anon' | 'admin' | 'finance' | 'manager' | 'cashier' | 'reservations' | 'kiosk';
+const DASHBOARD: Caller[] = ['admin', 'finance', 'manager', 'cashier', 'reservations'];
 const ALL: Caller[] = ['anon', ...DASHBOARD, 'kiosk'];
 
 /**
@@ -79,6 +79,29 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'POST /api/orders/:id/cancel': ['admin', 'cashier'],
   'GET /api/orders/:id/receipt': ['admin', 'cashier'],
 
+  'GET /api/ppf/calendar': ['admin', 'reservations'],
+  'GET /api/ppf/bookings': ['admin', 'reservations'],
+  'POST /api/ppf/bookings': ['admin', 'reservations'],
+  'PATCH /api/ppf/bookings/:id': ['admin', 'reservations'],
+  'POST /api/ppf/bookings/:id/cancel': ['admin', 'reservations'],
+  'PUT /api/ppf/closed-days/:date': ['admin', 'reservations'],
+  'DELETE /api/ppf/closed-days/:date': ['admin', 'reservations'],
+  'GET /api/ppf/requests': ['admin', 'reservations'],
+  'POST /api/ppf/requests/:id/approve': ['admin', 'reservations'],
+  'POST /api/ppf/requests/:id/reject': ['admin', 'reservations'],
+  'GET /api/ppf/sales-access': ['admin', 'reservations'],
+  'PUT /api/ppf/sales-access/pin': ['admin', 'reservations'],
+  // the sales page: no bearer token of any kind opens these, only the PIN cookie
+  'POST /api/slots/unlock': { public: 400 }, // empty body
+  'GET /api/slots': { public: 401 },
+  'POST /api/slots/requests': { public: 401 },
+
+  'GET /api/reservations': ['admin', 'reservations'],
+  'POST /api/reservations': ['admin', 'reservations'],
+  'PATCH /api/reservations/:id': ['admin', 'reservations'],
+  'POST /api/reservations/:id/cancel': ['admin', 'reservations'],
+
+  'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },
 
   'GET /api/activity': ['admin'],
@@ -90,6 +113,7 @@ const fillPath = (path: string) =>
     .replace(':role/permissions', 'CASHIER/permissions')
     .replace('staff/:role', 'staff/manager')
     .replace(':file', 'missing.webp')
+    .replace(':date', '2031-01-05')
     .replace(/:id/g, randomUUID());
 
 describe('RBAC matrix: every route × every caller', () => {
@@ -103,6 +127,7 @@ describe('RBAC matrix: every route × every caller', () => {
     tokens.finance = (await login(t, 'finance', PW.finance)).token;
     tokens.manager = (await login(t, 'gh.manager', PW.manager)).token;
     tokens.cashier = (await login(t, 'gh.cashier', PW.cashier)).token;
+    tokens.reservations = (await login(t, 'reservations', PW.reservations)).token;
     tokens.kiosk = (await showroomLogin(t, 'gh.manager', PW.showroom)).token;
   });
   afterAll(async () => {

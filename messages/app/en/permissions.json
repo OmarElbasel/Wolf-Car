@@ -18,6 +18,7 @@
   "groups": {
     "product": "Products",
     "order": "Orders",
+    "booking": "Bookings",
     "admin": "Administration",
     "account": "Account"
   },
@@ -34,6 +35,9 @@
     "order_cancel": "Cancel pending orders",
     "order_confirm": "Confirm orders",
     "order_receipt_download": "Download receipts",
+    "booking_ppf_read": "View PPF bookings",
+    "booking_ppf_manage": "Manage PPF bookings",
+    "booking_general_manage": "Manage general reservations",
     "user_manage": "Manage users",
     "branch_manage": "Manage branches",
     "permission_manage": "Manage permissions",

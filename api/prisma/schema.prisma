@@ -19,6 +19,7 @@ enum Role {
   FINANCE
   BRANCH_MANAGER
   CASHIER
+  RESERVATIONS
 }
 
 enum OrderStatus {
@@ -40,6 +41,22 @@ enum SessionAudience {
 enum AuditOutcome {
   SUCCESS
   FAILURE
+}
+
+enum PpfBookingType {
+  FULL
+  LIGHT
+}
+
+enum BookingStatus {
+  BOOKED
+  CANCELLED
+}
+
+enum LightJobRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model Branch {
@@ -86,19 +103,28 @@ model User {
   createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  branch              Branch?                  @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  createdBy           User?                    @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  createdUsers        User[]                   @relation("UserCreatedBy")
-  sessions            Session[]
-  recoveryCodes       RecoveryCode[]
-  permissionOverrides UserPermissionOverride[] @relation("OverrideUser")
-  grantedOverrides    UserPermissionOverride[] @relation("OverrideGrantedBy")
-  productsCreated     Product[]                @relation("ProductCreatedBy")
-  productsUpdated     Product[]                @relation("ProductUpdatedBy")
-  priceChanges        PriceHistory[]
-  ordersCreated       Order[]                  @relation("OrderCreatedBy")
-  ordersConfirmed     Order[]                  @relation("OrderConfirmedBy")
-  ordersCancelled     Order[]                  @relation("OrderCancelledBy")
+  branch                Branch?                  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  createdBy             User?                    @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers          User[]                   @relation("UserCreatedBy")
+  sessions              Session[]
+  recoveryCodes         RecoveryCode[]
+  permissionOverrides   UserPermissionOverride[] @relation("OverrideUser")
+  grantedOverrides      UserPermissionOverride[] @relation("OverrideGrantedBy")
+  productsCreated       Product[]                @relation("ProductCreatedBy")
+  productsUpdated       Product[]                @relation("ProductUpdatedBy")
+  priceChanges          PriceHistory[]
+  ordersCreated         Order[]                  @relation("OrderCreatedBy")
+  ordersConfirmed       Order[]                  @relation("OrderConfirmedBy")
+  ordersCancelled       Order[]                  @relation("OrderCancelledBy")
+  ppfBookingsCreated    PpfBooking[]             @relation("PpfBookingCreatedBy")
+  ppfBookingsUpdated    PpfBooking[]             @relation("PpfBookingUpdatedBy")
+  ppfBookingsCancelled  PpfBooking[]             @relation("PpfBookingCancelledBy")
+  ppfDaysClosed         PpfClosedDay[]
+  lightRequestsDecided  LightJobRequest[]
+  reservationsCreated   GeneralReservation[]     @relation("ReservationCreatedBy")
+  reservationsUpdated   GeneralReservation[]     @relation("ReservationUpdatedBy")
+  reservationsCancelled GeneralReservation[]     @relation("ReservationCancelledBy")
+  salesAccessUpdates    SalesAccess[]
 
   @@index([branchId])
   @@index([role])
@@ -143,17 +169,17 @@ model UserPermissionOverride {
 }
 
 model Session {
-  id         String          @id @default(uuid()) @db.Uuid
-  userId     String          @map("user_id") @db.Uuid
-  audience   SessionAudience
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @map("user_id") @db.Uuid
+  audience     SessionAudience
   /// Absolute expiry; refresh rotation never extends past it.
-  expiresAt  DateTime        @map("expires_at") @db.Timestamptz(3)
-  revokedAt  DateTime?       @map("revoked_at") @db.Timestamptz(3)
-  revokeReason String?       @map("revoke_reason") @db.VarChar(40)
-  lastUsedAt DateTime        @default(now()) @map("last_used_at") @db.Timestamptz(3)
-  ip         String?         @db.VarChar(64)
-  userAgent  String?         @map("user_agent") @db.VarChar(512)
-  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt    DateTime        @map("expires_at") @db.Timestamptz(3)
+  revokedAt    DateTime?       @map("revoked_at") @db.Timestamptz(3)
+  revokeReason String?         @map("revoke_reason") @db.VarChar(40)
+  lastUsedAt   DateTime        @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  ip           String?         @db.VarChar(64)
+  userAgent    String?         @map("user_agent") @db.VarChar(512)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   refreshTokens RefreshToken[]
@@ -194,16 +220,16 @@ model RecoveryCode {
 /// Catalogue grouping shown as the showroom tabs — usually a car model
 /// ("ﻟﻴﻮﺑﺎرد 5"), sometimes an accessory line ("اكسسوارات تسلا").
 model Category {
-  id     String  @id @default(uuid()) @db.Uuid
-  name   String  @db.VarChar(120)
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(120)
   /// English name for the public website's /en pages; `name` (Arabic) when null.
-  nameEn String? @map("name_en") @db.VarChar(120)
+  nameEn    String?  @map("name_en") @db.VarChar(120)
   /// The car this grouping is for, as printed on the showroom header.
-  carModel String? @map("car_model") @db.VarChar(120)
+  carModel  String?  @map("car_model") @db.VarChar(120)
   /// UUID of the processed hero image in UPLOAD_DIR, as for Product.imageKey.
-  imageKey String? @map("image_key") @db.Uuid
-  position Int     @default(0)
-  isActive Boolean @default(true) @map("is_active")
+  imageKey  String?  @map("image_key") @db.Uuid
+  position  Int      @default(0)
+  isActive  Boolean  @default(true) @map("is_active")
   /// Primary key from the legacy Supabase catalogue ("cat-1787146025137"), so
   /// re-running the import updates rows instead of duplicating them.
   legacyId  String?  @unique @map("legacy_id") @db.VarChar(64)
@@ -328,6 +354,117 @@ model OrderItem {
 
   @@unique([orderId, productId])
   @@map("order_items")
+}
+
+/// A car booked for PPF or tinting at Bin Omran (the only branch that does it).
+/// One active FULL booking per receive_date — a partial unique index in SQL.
+model PpfBooking {
+  id            String         @id @default(uuid()) @db.Uuid
+  type          PpfBookingType
+  status        BookingStatus  @default(BOOKED)
+  car           String         @db.VarChar(80)
+  ownerName     String?        @map("owner_name") @db.VarChar(80)
+  phone         String?        @db.VarChar(20)
+  service       String?        @db.VarChar(200)
+  /// The day the car arrives. This is the day a FULL booking closes.
+  receiveDate   DateTime       @map("receive_date") @db.Date
+  /// Information only; closes nothing.
+  deliveryDate  DateTime?      @map("delivery_date") @db.Date
+  note          String?        @db.VarChar(1000)
+  createdById   String         @map("created_by_id") @db.Uuid
+  updatedById   String?        @map("updated_by_id") @db.Uuid
+  cancelledById String?        @map("cancelled_by_id") @db.Uuid
+  cancelledAt   DateTime?      @map("cancelled_at") @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  createdBy   User             @relation("PpfBookingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy   User?            @relation("PpfBookingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  cancelledBy User?            @relation("PpfBookingCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  request     LightJobRequest?
+
+  @@index([receiveDate])
+  @@map("ppf_bookings")
+}
+
+/// A day the call center closed by hand (holiday, workshop full).
+model PpfClosedDay {
+  date        DateTime @id @db.Date
+  reason      String?  @db.VarChar(200)
+  createdById String   @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@map("ppf_closed_days")
+}
+
+/// A salesperson asking the call center to fit a light job into a day closed by a full PPF.
+model LightJobRequest {
+  id           String                @id @default(uuid()) @db.Uuid
+  date         DateTime              @db.Date
+  /// Typed by the salesperson; sales have no accounts.
+  salesName    String                @map("sales_name") @db.VarChar(80)
+  car          String                @db.VarChar(80)
+  ownerName    String                @map("owner_name") @db.VarChar(80)
+  phone        String?               @db.VarChar(20)
+  note         String                @db.VarChar(1000)
+  status       LightJobRequestStatus @default(PENDING)
+  decidedById  String?               @map("decided_by_id") @db.Uuid
+  decidedAt    DateTime?             @map("decided_at") @db.Timestamptz(3)
+  decisionNote String?               @map("decision_note") @db.VarChar(500)
+  /// The light job created when the request was approved.
+  bookingId    String?               @unique @map("booking_id") @db.Uuid
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  decidedBy User?       @relation(fields: [decidedById], references: [id], onDelete: SetNull)
+  booking   PpfBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("light_job_requests")
+}
+
+/// The call center's private list of every other reservation. No slots.
+model GeneralReservation {
+  id            String        @id @default(uuid()) @db.Uuid
+  date          DateTime      @db.Date
+  /// "HH:mm" in Qatar time, when an hour was agreed.
+  time          String?       @db.VarChar(5)
+  service       String        @db.VarChar(200)
+  ownerName     String?       @map("owner_name") @db.VarChar(80)
+  phone         String?       @db.VarChar(20)
+  car           String?       @db.VarChar(80)
+  note          String?       @db.VarChar(1000)
+  status        BookingStatus @default(BOOKED)
+  createdById   String        @map("created_by_id") @db.Uuid
+  updatedById   String?       @map("updated_by_id") @db.Uuid
+  cancelledById String?       @map("cancelled_by_id") @db.Uuid
+  cancelledAt   DateTime?     @map("cancelled_at") @db.Timestamptz(3)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  createdBy   User  @relation("ReservationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy   User? @relation("ReservationUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  cancelledBy User? @relation("ReservationCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@map("general_reservations")
+}
+
+/// One row (id = 1): the shared PIN of the sales slots page.
+model SalesAccess {
+  id          Int       @id @default(1)
+  pinHash     String?   @map("pin_hash")
+  /// Bumped on every PIN change; cookies carrying an older version stop working.
+  version     Int       @default(1)
+  failedCount Int       @default(0) @map("failed_count")
+  lockedUntil DateTime? @map("locked_until") @db.Timestamptz(3)
+  updatedById String?   @map("updated_by_id") @db.Uuid
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  updatedBy User? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("sales_access")
 }
 
 /// Append-only audit trail (UPDATE/DELETE are blocked by a trigger).

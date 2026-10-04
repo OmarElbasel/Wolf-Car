@@ -5,7 +5,7 @@ import { EmptyToNull, EmptyToUndefined, Trim, TrimLower } from '../../common/val
 import { Role } from '../../generated/prisma/enums';
 
 /** Roles that are not tied to a branch. Branch staff are created with their branch. */
-export const NON_BRANCH_ROLES = ['SUPER_ADMIN', 'FINANCE'] as const;
+export const NON_BRANCH_ROLES = ['SUPER_ADMIN', 'FINANCE', 'RESERVATIONS'] as const;
 
 export class CreateUserDto {
   @Trim()

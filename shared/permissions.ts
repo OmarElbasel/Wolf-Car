@@ -4,13 +4,13 @@
  * actual grants; this file only defines what exists and the seeded defaults.
  */
 
-export const ROLES = ['SUPER_ADMIN', 'FINANCE', 'BRANCH_MANAGER', 'CASHIER'] as const;
+export const ROLES = ['SUPER_ADMIN', 'FINANCE', 'BRANCH_MANAGER', 'CASHIER', 'RESERVATIONS'] as const;
 export type RoleName = (typeof ROLES)[number];
 
 /** Roles that must belong to exactly one branch (and each branch has exactly one of each). */
 export const BRANCH_ROLES: readonly RoleName[] = ['BRANCH_MANAGER', 'CASHIER'];
 
-export const PERMISSION_GROUPS = ['product', 'order', 'admin', 'account'] as const;
+export const PERMISSION_GROUPS = ['product', 'order', 'booking', 'admin', 'account'] as const;
 export type PermissionGroup = (typeof PERMISSION_GROUPS)[number];
 
 export const PERMISSIONS = {
@@ -26,6 +26,12 @@ export const PERMISSIONS = {
   'order.cancel': { group: 'order', description: 'Cancel pending orders' },
   'order.confirm': { group: 'order', description: 'Confirm pending orders (makes them immutable)' },
   'order.receipt.download': { group: 'order', description: 'Download order receipts as PDF' },
+  'booking.ppf.read': { group: 'booking', description: 'View the PPF calendar, bookings and light-job requests' },
+  'booking.ppf.manage': {
+    group: 'booking',
+    description: 'Add, edit and cancel PPF bookings; close and reopen days; answer requests; set the sales PIN',
+  },
+  'booking.general.manage': { group: 'booking', description: 'View and manage general reservations' },
   'user.manage': { group: 'admin', description: 'Create and manage user accounts' },
   'branch.manage': { group: 'admin', description: 'Create and manage branches' },
   'permission.manage': { group: 'admin', description: 'Grant or revoke permissions per role and per user' },
@@ -67,6 +73,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<RoleName, 'SUPER_ADMIN'>, 
     'order.receipt.download',
     'showroom.password.view_or_change',
   ],
+  RESERVATIONS: ['booking.ppf.read', 'booking.ppf.manage', 'booking.general.manage'],
 };
 
 export const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'CANCELLED'] as const;

@@ -46,7 +46,7 @@ export function onSessionExpired(listener: (audience: Audience) => void): () => 
   return () => listeners.delete(listener);
 }
 
-async function toApiError(res: Response): Promise<ApiError> {
+export async function toApiError(res: Response): Promise<ApiError> {
   let body: Record<string, unknown> = {};
   try {
     body = (await res.json()) as Record<string, unknown>;

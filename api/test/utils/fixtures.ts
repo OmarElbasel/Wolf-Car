@@ -9,6 +9,7 @@ export const PW = {
   manager: 'Manager#Wolf2026!',
   cashier: 'Cashier#Wolf2026!',
   showroom: 'Showroom#2026!',
+  reservations: 'Booking#Wolf2026!',
 } as const;
 
 export interface BranchFixture {
@@ -23,6 +24,7 @@ export interface BranchFixture {
 export interface World {
   adminId: string;
   financeId: string;
+  reservationsId: string;
   bo: BranchFixture;
   gh: BranchFixture;
   products: { id: string; name: string; price: string | null }[];
@@ -49,6 +51,11 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.$executeRawUnsafe('TRUNCATE TABLE activity_logs');
   await prisma.$transaction(async (tx) => {
     for (const table of [
+      'light_job_requests',
+      'ppf_bookings',
+      'ppf_closed_days',
+      'general_reservations',
+      'sales_access',
       'order_items',
       'orders',
       'price_history',
@@ -83,6 +90,9 @@ export async function seedWorld(prisma: PrismaService): Promise<World> {
   });
   const finance = await prisma.user.create({
     data: { username: 'finance', displayName: 'Finance', role: 'FINANCE', passwordHash: h.finance },
+  });
+  const reservations = await prisma.user.create({
+    data: { username: 'reservations', displayName: 'Reservations', role: 'RESERVATIONS', passwordHash: h.reservations },
   });
 
   const branch = async (code: string, slug: string): Promise<BranchFixture> =>
@@ -137,5 +147,5 @@ export async function seedWorld(prisma: PrismaService): Promise<World> {
       data: products.map((p, position) => ({ branchId: b.id, productId: p.id, position })),
     });
   }
-  return { adminId: admin.id, financeId: finance.id, bo, gh, products };
+  return { adminId: admin.id, financeId: finance.id, reservationsId: reservations.id, bo, gh, products };
 }
