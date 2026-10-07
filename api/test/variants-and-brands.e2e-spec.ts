@@ -56,10 +56,10 @@ describe('Colour variants and brand-level products (e2e)', () => {
       expect(names(b.body)).toEqual(['Dash Cam']);
     });
 
-    it('offers the models as tabs, not the brand, and counts the common products in each', async () => {
+    it('offers the models as tabs, not the brand, counting the common products and each set of colours once', async () => {
       const res = await t.http().get('/api/public/categories');
       const mine = (res.body as { id: string; count: number }[]).filter((c) => [brand, modelA, modelB].includes(c.id));
-      expect(Object.fromEntries(mine.map((c) => [c.id, c.count]))).toEqual({ [modelA]: 3, [modelB]: 1 });
+      expect(Object.fromEntries(mine.map((c) => [c.id, c.count]))).toEqual({ [modelA]: 2, [modelB]: 1 });
     });
 
     it('says which products are colours of the same product', async () => {
@@ -83,7 +83,7 @@ describe('Colour variants and brand-level products (e2e)', () => {
       expect(by.get('Floor Mats')).toMatchObject({ groupId: '77', variantLabel: 'أسود', variantColor: '#060505' });
 
       const tabs = (res.body.categories as { id: string; count: number }[]).filter((c) => [brand, modelA, modelB].includes(c.id));
-      expect(Object.fromEntries(tabs.map((c) => [c.id, c.count]))).toEqual({ [modelA]: 3, [modelB]: 1 });
+      expect(Object.fromEntries(tabs.map((c) => [c.id, c.count]))).toEqual({ [modelA]: 2, [modelB]: 1 });
     });
   });
 });

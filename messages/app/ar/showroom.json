@@ -3,6 +3,7 @@
   "branchLabel": "{branch}",
   "add": "إضافة",
   "addNamed": "إضافة {name}",
+  "variant": "اللون",
   "added": "أُضيف",
   "inCart": "{count} في السلة",
   "cart": "السلة",

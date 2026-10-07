@@ -5,7 +5,7 @@ import type { AuthUser } from '../common/types';
 import { Prisma } from '../generated/prisma/client';
 import { ORDER_DETAIL_SELECT, orderAuditView, orderDetail, type OrderDetail } from '../orders/order.view';
 import { PrismaService } from '../prisma/prisma.service';
-import { VARIANT_SELECT, variantView } from '../products/variant.view';
+import { countCards, VARIANT_SELECT, variantView } from '../products/variant.view';
 import { imageUrl } from '../uploads/image-processing';
 import type { CreateShowroomOrderDto } from '../orders/dto/orders.dto';
 
@@ -63,8 +63,12 @@ export class ShowroomService {
       ...variantView(p),
     }));
 
-    const count = new Map<string, number>();
-    for (const p of products) for (const id of p.categoryIds) count.set(id, (count.get(id) ?? 0) + 1);
+    const listed = new Map<string, (typeof rows)[number]['product'][]>();
+    for (const { product: p } of rows) {
+      for (const id of p.categoryId ? [p.categoryId, ...(models.get(p.categoryId) ?? [])] : []) listed.set(id, [...(listed.get(id) ?? []), p]);
+    }
+    // the colours of one product share a card, so they count once
+    const count = new Map([...listed].map(([id, items]) => [id, countCards(items)]));
     // a brand with models is not a tab of its own
     const categories = active.filter((c) => count.has(c.id) && !models.has(c.id));
 

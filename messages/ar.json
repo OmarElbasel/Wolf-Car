@@ -170,6 +170,7 @@
     "priceOnRequest": "السعر عند الطلب",
     "addToCart": "أضف إلى السلة",
     "qtyFor": "كمية {name}",
+    "variant": "اللون",
     "decrease": "إنقاص الكمية",
     "increase": "زيادة الكمية",
     "perkOrderTitle": "اطلب عبر واتساب",

@@ -25,7 +25,8 @@ import { type CartEntry, CartPanel } from "./cart-panel";
 import { ALL_CATEGORIES, CategoryTabs } from "./category-tabs";
 import { CheckoutDialog } from "./checkout-dialog";
 import { newIdempotencyKey } from "./idempotency";
-import { ProductCard } from "./product-card";
+import { groupVariants } from "@/lib/variants";
+import { ProductGroupCard } from "./product-card";
 import { SuccessOverlay } from "./success-overlay";
 import { clearStoredCart, useCart } from "./use-cart";
 import { IDLE_TIMEOUT_MS, useIdleTimeout } from "./use-idle-timeout";
@@ -105,7 +106,11 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   const products = catalog.data?.products ?? [];
   const categories = catalog.data?.categories ?? [];
   // the cart still resolves against every product, not just the visible tab
-  const visible = category === ALL_CATEGORIES ? products : products.filter((p) => p.categoryId === category);
+  // a product common to a brand carries every model of that brand in categoryIds
+  const visible =
+    category === ALL_CATEGORIES ? products : products.filter((p) => (p.categoryIds ?? [p.categoryId]).includes(category));
+  // the colours of one product share a card
+  const groups = groupVariants(visible);
   const byId = new Map(products.map((p) => [p.id, p]));
   const entries: CartEntry[] = cart.lines.flatMap((line) => {
     const product = byId.get(line.productId);
@@ -207,13 +212,13 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
           ) : (
             <>
               <CategoryTabs categories={categories} selected={category} total={products.length} onSelect={setCategory} />
-              {visible.length === 0 ? (
+              {groups.length === 0 ? (
                 <EmptyState title={t("noProducts")} />
               ) : (
                 <ul className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-label={t("title")}>
-                  {visible.map((product) => (
-                    <li key={product.id} className="grid">
-                      <ProductCard product={product} quantity={quantityOf(cart, product.id)} onAdd={() => handleAdd(product)} />
+                  {groups.map((group) => (
+                    <li key={group.key} className="grid">
+                      <ProductGroupCard group={group} quantityOf={(id) => quantityOf(cart, id)} onAdd={handleAdd} />
                     </li>
                   ))}
                 </ul>

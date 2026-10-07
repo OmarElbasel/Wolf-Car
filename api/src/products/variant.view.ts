@@ -7,6 +7,11 @@ interface VariantRow {
   variantColor: string | null;
 }
 
+/** How many cards a list of products makes: the colours of one product count once. */
+export function countCards(products: readonly ({ id: string } & VariantRow)[]): number {
+  return new Set(products.map((p) => variantView(p).groupId ?? p.id)).size;
+}
+
 /**
  * What a screen needs to draw one card with a colour picker: products sharing
  * a groupId are the same product. Null for a product that comes in one form.

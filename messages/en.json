@@ -170,6 +170,7 @@
     "priceOnRequest": "Price on request",
     "addToCart": "Add to cart",
     "qtyFor": "Quantity of {name}",
+    "variant": "Colour",
     "decrease": "Decrease quantity",
     "increase": "Increase quantity",
     "perkOrderTitle": "Order on WhatsApp",

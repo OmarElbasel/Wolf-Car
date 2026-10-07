@@ -127,6 +127,41 @@ describe("showroom kiosk", () => {
     expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
   });
 
+  it("shows a product common to a brand inside each of that brand's models", async () => {
+    // filed under the brand; the API lists the brand's models in categoryIds
+    const common: ShowroomProduct = { ...CLIP, categoryId: "brand", categoryIds: ["brand", "cat-1", "cat-2"] };
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog([BRAKES, common]))));
+    const { user } = renderKiosk();
+
+    await screen.findByRole("heading", { name: "Brake pads" });
+    await user.click(screen.getByRole("tab", { name: /Leopard 5/ }));
+    expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Tank 500/ }));
+    expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Brake pads" })).not.toBeInTheDocument();
+  });
+
+  it("offers the colours of one product on one card and adds the picked one", async () => {
+    const colour = (n: number, label: string): ShowroomProduct => ({
+      ...BRAKES,
+      id: `7c1f1f7e-0000-4000-8000-00000000010${n}`,
+      name: `Arm rest (${label})`,
+      groupId: "2406",
+      variantLabel: label,
+      variantColor: "#060505",
+    });
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog([colour(1, "Black"), colour(2, "Beige")]))));
+    const { user } = renderKiosk();
+
+    expect(await screen.findAllByRole("heading", { name: "Arm rest" })).toHaveLength(1);
+    const picker = screen.getByRole("radiogroup", { name: "Colour" });
+    expect(within(picker).getByRole("radio", { name: "Black" })).toBeChecked();
+    await user.click(within(picker).getByRole("radio", { name: "Beige" }));
+    await user.click(screen.getByRole("button", { name: "Add Arm rest (Beige)" }));
+    expect(within(panel()).getByText("Arm rest (Beige)")).toBeInTheDocument();
+    expect(within(panel()).queryByText("Arm rest (Black)")).not.toBeInTheDocument();
+  });
+
   it("keeps a filtered-out product in the cart", async () => {
     server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
     const { user } = renderKiosk();

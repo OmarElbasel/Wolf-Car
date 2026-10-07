@@ -1,3 +1,4 @@
+import type { VariantInfo } from "@/lib/variants";
 import type { OrderStatusName, PermissionGroup, PermissionKey, RoleName } from "@/shared/permissions";
 
 export type { OrderStatusName, PermissionKey, RoleName };
@@ -70,12 +71,14 @@ export interface PriceChange {
   changedBy: PersonRef & { role: RoleName };
 }
 
-export interface ShowroomProduct {
+export interface ShowroomProduct extends VariantInfo {
   id: string;
   name: string;
   description: string | null;
   barcode: string | null;
   categoryId: string | null;
+  /** its own category plus, for a product common to a brand, each of that brand's models */
+  categoryIds?: string[];
   price: string;
   imageUrl: string;
   thumbUrl: string;
@@ -208,7 +211,7 @@ export interface ActivityEntry {
   requestId: string | null;
 }
 
-export interface PublicProduct {
+export interface PublicProduct extends VariantInfo {
   id: string;
   name: string;
   description: string | null;

@@ -70,9 +70,20 @@ describe('PublicCatalogService', () => {
   });
 
   it('lists categories largest first with their product count', async () => {
+    const plain = (n: number, prefix: string) =>
+      Array.from({ length: n }, (_, i) => ({ id: `${prefix}${i}`, odooTemplateId: null, variantLabel: null, variantColor: null }));
     prisma.category.findMany.mockResolvedValue([
-      { id: 'a', name: 'الروكس', nameEn: 'Rox', carModel: 'Rox', imageKey: null, position: 0, _count: { products: 5 } },
-      { id: 'b', name: 'T2', nameEn: null, carModel: 'T2', imageKey: '11111111-1111-4111-8111-111111111111', position: 0, _count: { products: 9 } },
+      { id: 'a', name: 'الروكس', nameEn: 'Rox', carModel: 'Rox', imageKey: null, position: 0, parentId: null, products: plain(5, 'a') },
+      {
+        id: 'b',
+        name: 'T2',
+        nameEn: null,
+        carModel: 'T2',
+        imageKey: '11111111-1111-4111-8111-111111111111',
+        position: 0,
+        parentId: null,
+        products: plain(9, 'b'),
+      },
     ] as never);
     const cats = await service.categories();
     expect(cats.map((c) => [c.id, c.count])).toEqual([

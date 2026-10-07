@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { VARIANT_SELECT, variantView } from '../products/variant.view';
+import { countCards, VARIANT_SELECT, variantView } from '../products/variant.view';
 import { imageUrl } from '../uploads/image-processing';
 
 /**
@@ -82,14 +82,14 @@ export class PublicCatalogService {
         imageKey: true,
         position: true,
         parentId: true,
-        _count: { select: { products: { where: { isActive: true } } } },
+        products: { where: { isActive: true }, select: { id: true, ...VARIANT_SELECT } },
       },
     });
-    const own = new Map(rows.map((c) => [c.id, c._count.products]));
+    const own = new Map(rows.map((c) => [c.id, c.products]));
     const brands = new Set(rows.map((c) => c.parentId).filter((id): id is string => id !== null));
     return rows
       .filter((c) => !brands.has(c.id))
-      .map((c) => ({ ...c, _count: { products: c._count.products + ((c.parentId && own.get(c.parentId)) || 0) } }))
+      .map((c) => ({ ...c, _count: { products: countCards([...c.products, ...((c.parentId && own.get(c.parentId)) || [])]) } }))
       .filter((c) => c._count.products > 0)
       .sort((a, b) => b._count.products - a._count.products || a.position - b.position || a.name.localeCompare(b.name))
       .map((c) => ({
