@@ -14,6 +14,7 @@ const product = (o: Record<string, unknown> = {}) => ({
   barcode: null,
   imageKey: '11111111-1111-4111-8111-111111111111',
   price: null,
+  odooId: null,
   priceUpdatedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),

@@ -270,6 +270,9 @@ model Product {
   /// False hides the product from the showroom, the website and the dashboard
   /// list. Rows are never deleted: past orders still point at them.
   isActive       Boolean   @default(true) @map("is_active")
+  /// What Odoo's "last changed" dates were when this row was last synced. The
+  /// sync skips a row whose stamp has not moved.
+  odooStamp      String?   @map("odoo_stamp") @db.VarChar(80)
   /// Id of the Odoo product (product.template). Rows that share it are the
   /// colours or sizes of one product and are shown as one card with a picker.
   odooTemplateId Int?      @map("odoo_template_id")
@@ -521,4 +524,21 @@ model ActivityLog {
   @@index([action, occurredAt])
   @@index([entityType, entityId])
   @@map("activity_logs")
+}
+
+/// One run of the Odoo catalogue sync, so the dashboard can say when the
+/// catalogue was last brought up to date and whether that worked.
+model OdooSyncRun {
+  id         String    @id @default(uuid()) @db.Uuid
+  startedAt  DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
+  /// "schedule", or the id of the user who pressed "Sync now".
+  trigger    String    @db.VarChar(40)
+  ok         Boolean?
+  /// SyncSummary on success.
+  summary    Json?
+  error      String?   @db.VarChar(600)
+
+  @@index([startedAt])
+  @@map("odoo_sync_runs")
 }

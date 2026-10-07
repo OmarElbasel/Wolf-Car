@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditTrail } from '../activity/audit-trail.service';
 import { decimal, money } from '../common/money';
 import type { AuthUser } from '../common/types';
@@ -95,6 +95,8 @@ export class ProductsService {
     user: AuthUser,
   ): Promise<ProductView> {
     const before = await this.get(id);
+    // Odoo owns these three; the next sync would put its own values back anyway
+    if (before.fromOdoo && (dto.name !== undefined || dto.barcode !== undefined || image)) throw odooManaged();
     const oldKey = (await this.prisma.product.findUniqueOrThrow({ where: { id }, select: { imageKey: true } })).imageKey;
     const newKey = image ? await this.images.store(image) : undefined;
     const data: Prisma.ProductUncheckedUpdateInput = {
@@ -122,9 +124,10 @@ export class ProductsService {
   async updatePrice(id: string, dto: UpdatePriceDto, user: AuthUser): Promise<ProductView> {
     const newPrice = decimal(dto.price);
     const oldPrice = await this.prisma.$transaction(async (tx) => {
-      const [row] = await tx.$queryRaw<{ price: Prisma.Decimal | null }[]>`
-        SELECT price FROM products WHERE id = ${id}::uuid FOR UPDATE`;
+      const [row] = await tx.$queryRaw<{ price: Prisma.Decimal | null; odoo_id: number | null }[]>`
+        SELECT price, odoo_id FROM products WHERE id = ${id}::uuid FOR UPDATE`;
       if (!row) throw new NotFoundException('Product not found.');
+      if (typeof row.odoo_id === 'number') throw odooManaged();
       const current = row.price === null ? null : decimal(row.price.toString());
       if (current !== null && current.equals(newPrice)) return current;
       await tx.product.update({
@@ -216,6 +219,14 @@ export class ProductsService {
     await tx.$queryRaw`SELECT id FROM branches ORDER BY id FOR UPDATE`;
   }
 }
+
+const odooManaged = () =>
+  new ConflictException({
+    statusCode: 409,
+    error: 'Conflict',
+    code: 'ODOO_MANAGED',
+    message: 'This product comes from Odoo. Change its name, barcode, photo or price in Odoo.',
+  });
 
 function detailsOf(p: ProductView) {
   return { name: p.name, description: p.description, barcode: p.barcode, imageUrl: p.imageUrl };

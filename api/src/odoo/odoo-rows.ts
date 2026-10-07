@@ -21,6 +21,8 @@ export interface OdooVariant {
   sale_ok: boolean;
   type: string;
   categ_id: [number, string] | false;
+  /** "2026-08-12 07:27:15" — when the variant was last changed in Odoo */
+  write_date: string;
 }
 
 export const VARIANT_FIELDS = [
@@ -28,7 +30,13 @@ export const VARIANT_FIELDS = [
   'arabic_name',
   'product_template_variant_value_ids',
   'product_tmpl_id',
-  'barcode', 'lst_price', 'active', 'sale_ok', 'type', 'categ_id',
+  'barcode',
+  'lst_price',
+  'active',
+  'sale_ok',
+  'type',
+  'categ_id',
+  'write_date',
 ] as const;
 
 /** A product.template.attribute.value row: the "Black" of a colour variant. */

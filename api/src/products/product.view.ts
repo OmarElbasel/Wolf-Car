@@ -8,6 +8,7 @@ export const PRODUCT_SELECT = {
   description: true,
   barcode: true,
   isActive: true,
+  odooId: true,
   imageKey: true,
   price: true,
   priceUpdatedAt: true,
@@ -22,6 +23,7 @@ type ProductRow = {
   description: string | null;
   barcode: string | null;
   isActive: boolean;
+  odooId: number | null;
   imageKey: string;
   price: Prisma.Decimal | null;
   priceUpdatedAt: Date | null;
@@ -38,6 +40,8 @@ export function productView(p: ProductRow, position?: number) {
     description: p.description,
     barcode: p.barcode,
     isActive: p.isActive,
+    /** its name, barcode, photo and price are kept up to date from Odoo and cannot be edited here */
+    fromOdoo: p.odooId !== null,
     price: money(p.price),
     priceUpdatedAt: p.priceUpdatedAt,
     imageUrl: imageUrl(p.imageKey),

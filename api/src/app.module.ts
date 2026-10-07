@@ -15,6 +15,7 @@ import { AUTH_THROTTLE_KEY } from './common/decorators/auth-throttle.decorator';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { type Env, validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
+import { OdooModule } from './odoo/odoo.module';
 import { OrdersModule } from './orders/orders.module';
 import { PpfModule } from './ppf/ppf.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -89,6 +90,7 @@ type IdRequest = IncomingMessage & { id?: string };
     BranchesModule,
     UploadsModule,
     ProductsModule,
+    OdooModule,
     ShowroomModule,
     OrdersModule,
     PpfModule,

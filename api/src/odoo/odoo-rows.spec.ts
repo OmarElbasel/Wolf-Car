@@ -22,6 +22,7 @@ const variant = (over: Partial<OdooVariant> = {}): OdooVariant => ({
   sale_ok: true,
   type: 'consu',
   categ_id: [29, 'Car / CAR ACCESSORIES'],
+  write_date: '2026-08-12 07:27:15',
   ...over,
 });
 
