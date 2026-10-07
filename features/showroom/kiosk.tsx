@@ -25,6 +25,7 @@ import { type CartEntry, CartPanel } from "./cart-panel";
 import { ALL_CATEGORIES, CategoryTabs } from "./category-tabs";
 import { CheckoutDialog } from "./checkout-dialog";
 import { newIdempotencyKey } from "./idempotency";
+import { cn } from "@/lib/utils";
 import { groupVariants } from "@/lib/variants";
 import { ProductGroupCard } from "./product-card";
 import { SuccessOverlay } from "./success-overlay";
@@ -120,6 +121,8 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   const count = itemCount({ lines });
   const total = cartTotal({ lines }, new Map(products.map((p) => [p.id, p.price])));
   const branch = catalog.data?.branch ?? user.branch;
+  // the cashier scans barcodes off this screen: show them, and keep the basket out of the way
+  const scan = catalog.data?.branch.scanFromScreen ?? false;
   const branchName = branch ? (locale === "ar" ? branch.nameAr : branch.name) : null;
 
   const reset = () => {
@@ -165,6 +168,7 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
     total,
     onClear: () => setClearOpen(true),
     onCheckout: openCheckout,
+    scan,
     ...handlers,
   };
 
@@ -200,8 +204,8 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
         </div>
       </header>
 
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
-        <main className="min-w-0 px-4 pt-5 pb-36 lg:px-6 lg:pb-8">
+      <div className={cn(!scan && "lg:grid lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]")}>
+        <main className={cn("min-w-0 px-4 pt-5 pb-36 lg:px-6", !scan && "lg:pb-8")}>
           <h1 className="sr-only">{branchName ? `${t("title")} · ${branchName}` : t("title")}</h1>
           {catalog.isPending ? (
             <ProductGridSkeleton />
@@ -218,7 +222,7 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
                 <ul className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-label={t("title")}>
                   {groups.map((group) => (
                     <li key={group.key} className="grid">
-                      <ProductGroupCard group={group} quantityOf={(id) => quantityOf(cart, id)} onAdd={handleAdd} />
+                      <ProductGroupCard group={group} scan={scan} quantityOf={(id) => quantityOf(cart, id)} onAdd={handleAdd} />
                     </li>
                   ))}
                 </ul>
@@ -227,15 +231,23 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
           )}
         </main>
 
-        <aside className="hidden border-s border-line bg-surface lg:block">
-          <div className="sticky" style={{ top: HEADER_H, height: `calc(100dvh - ${HEADER_H})` }}>
-            <CartPanel heading={<h2 className="text-xl leading-tight font-extrabold">{t("cart")}</h2>} {...panelProps} />
-          </div>
-        </aside>
+        {!scan && (
+          <aside className="hidden border-s border-line bg-surface lg:block">
+            <div className="sticky" style={{ top: HEADER_H, height: `calc(100dvh - ${HEADER_H})` }}>
+              <CartPanel heading={<h2 className="text-xl leading-tight font-extrabold">{t("cart")}</h2>} {...panelProps} />
+            </div>
+          </aside>
+        )}
       </div>
 
-      {/* tablets in portrait: a bottom bar that opens the cart as a sheet */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] lg:hidden">
+      {/* tablets in portrait, and every screen where the basket is not docked:
+          a bottom bar that opens the cart as a sheet */}
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]",
+          !scan && "lg:hidden",
+        )}
+      >
         <div className="mx-auto flex max-w-3xl items-center gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-ink-2">{t("items", { count })}</p>

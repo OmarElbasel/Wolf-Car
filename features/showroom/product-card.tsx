@@ -11,6 +11,7 @@ import { fast, spring } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { ProductGroup } from "@/lib/variants";
 import { VariantPicker } from "@/components/variant-picker";
+import { ScanBarcode } from "./scan-barcode";
 
 /** Card grid column widths → which image the browser should pick (480px thumb vs 1200px). */
 export const PRODUCT_IMAGE_SIZES = "(min-width: 1536px) 22vw, (min-width: 1024px) 26vw, (min-width: 560px) 50vw, 100vw";
@@ -41,6 +42,7 @@ export function ProductCard({
   product,
   title = product.name,
   picker,
+  barcode,
   quantity,
   onAdd,
 }: {
@@ -48,6 +50,8 @@ export function ProductCard({
   /** the name without the colour, when the card offers a colour picker */
   title?: string;
   picker?: ReactNode;
+  /** only at a branch whose cashier scans off the screen */
+  barcode?: ReactNode;
   quantity: number;
   /** returns false when the cart limits stopped the add */
   onAdd: () => boolean;
@@ -100,8 +104,9 @@ export function ProductCard({
             {product.description}
           </p>
         )}
-        {/* the barcode is deliberately not shown to customers — it is for the
-            cashier, who scans it from the order sheet into the till system */}
+        {/* by default the barcode is not shown to customers: the cashier scans it
+            from the order sheet. A branch that scans off this screen passes it in. */}
+        {barcode && <div className="mt-3">{barcode}</div>}
         <div className="mt-auto pt-3">
           <p className="text-[22px] leading-tight font-extrabold tabular-nums">
             <span dir="ltr">{formatMoney(product.price, locale)}</span>
@@ -134,10 +139,13 @@ export function ProductCard({
 /** One card for a product and all its colours; the picked colour is what gets added. */
 export function ProductGroupCard({
   group,
+  scan = false,
   quantityOf,
   onAdd,
 }: {
   group: ProductGroup<ShowroomProduct>;
+  /** show the picked product's barcode for scanning off the screen */
+  scan?: boolean;
   quantityOf: (productId: string) => number;
   /** returns false when the cart limits stopped the add */
   onAdd: (product: ShowroomProduct) => boolean;
@@ -151,6 +159,7 @@ export function ProductGroupCard({
       title={group.title}
       quantity={quantityOf(product.id)}
       onAdd={() => onAdd(product)}
+      barcode={scan && product.barcode ? <ScanBarcode key={product.id} product={product} /> : undefined}
       picker={
         group.variants.length > 1 ? (
           <VariantPicker variants={group.variants} selected={product.id} onSelect={setPicked} label={t("variant")} touch />

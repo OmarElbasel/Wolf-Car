@@ -8,6 +8,8 @@ export interface BranchSummary {
   code: string;
   name: string;
   nameAr: string;
+  /** the cashier scans barcodes off the showroom screen (sent by the showroom catalogue only) */
+  scanFromScreen?: boolean;
 }
 
 export interface Profile {

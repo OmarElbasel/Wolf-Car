@@ -4,6 +4,7 @@
   "add": "إضافة",
   "addNamed": "إضافة {name}",
   "variant": "اللون",
+  "showBarcode": "عرض باركود {name}",
   "added": "أُضيف",
   "inCart": "{count} في السلة",
   "cart": "السلة",

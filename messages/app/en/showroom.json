@@ -4,6 +4,7 @@
   "add": "Add",
   "addNamed": "Add {name}",
   "variant": "Colour",
+  "showBarcode": "Show the barcode of {name}",
   "added": "Added",
   "inCart": "{count} in cart",
   "cart": "Cart",

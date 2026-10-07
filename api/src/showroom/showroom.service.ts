@@ -73,7 +73,7 @@ export class ShowroomService {
     const categories = active.filter((c) => count.has(c.id) && !models.has(c.id));
 
     return {
-      branch: { id: branch.id, code: branch.code, name: branch.name, nameAr: branch.nameAr },
+      branch: { id: branch.id, code: branch.code, name: branch.name, nameAr: branch.nameAr, scanFromScreen: branch.scanFromScreen },
       categories: categories.map((c) => ({
         id: c.id,
         name: c.name,
@@ -190,7 +190,7 @@ export class ShowroomService {
 
   private async activeBranch(user: AuthUser) {
     const branch = user.branchId
-      ? await this.prisma.branch.findUnique({ where: { id: user.branchId }, select: { id: true, code: true, name: true, nameAr: true, isActive: true } })
+      ? await this.prisma.branch.findUnique({ where: { id: user.branchId }, select: { id: true, code: true, name: true, nameAr: true, isActive: true, scanFromScreen: true } })
       : null;
     if (!branch?.isActive) {
       throw new ForbiddenException({ statusCode: 403, error: 'Forbidden', code: 'NO_SHOWROOM_ACCESS', message: 'This account cannot use the showroom.' });

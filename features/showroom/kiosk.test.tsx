@@ -162,6 +162,33 @@ describe("showroom kiosk", () => {
     expect(within(panel()).queryByText("Arm rest (Black)")).not.toBeInTheDocument();
   });
 
+  describe("at a branch whose cashier scans from the screen", () => {
+    const scanCatalog = (): ShowroomCatalog => ({ ...catalog(), branch: { ...catalog().branch, scanFromScreen: true } });
+
+    it("shows each product's barcode and opens it large for the scanner", async () => {
+      server.use(http.get("/api/showroom/products", () => HttpResponse.json(scanCatalog())));
+      const { user } = renderKiosk();
+
+      await screen.findByRole("heading", { name: "Brake pads" });
+      await user.click(screen.getByRole("button", { name: "Show the barcode of Brake pads" }));
+      const dialog = await screen.findByRole("dialog", { name: "Brake pads" });
+      expect(within(dialog).getByText("BP-100")).toBeInTheDocument();
+      // a product without a barcode has nothing to scan
+      expect(screen.queryByRole("button", { name: "Show the barcode of Trim clip" })).not.toBeInTheDocument();
+    });
+
+    it("keeps the basket closed until it is asked for, and lists the barcodes in it", async () => {
+      server.use(http.get("/api/showroom/products", () => HttpResponse.json(scanCatalog())));
+      const { user } = renderKiosk();
+
+      await user.click(await screen.findByRole("button", { name: "Add Brake pads" }));
+      expect(screen.queryByTestId("cart-panel")).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /View cart/ }));
+      expect(within(panel()).getByText("Brake pads")).toBeInTheDocument();
+      expect(within(panel()).getByText("BP-100")).toBeInTheDocument();
+    });
+  });
+
   it("keeps a filtered-out product in the cart", async () => {
     server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
     const { user } = renderKiosk();

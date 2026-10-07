@@ -60,16 +60,19 @@ enum LightJobRequestStatus {
 }
 
 model Branch {
-  id        String   @id @default(uuid()) @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
   /// Short uppercase code used as the order-number prefix, e.g. "GH".
-  code      String   @unique @db.VarChar(4)
-  name      String   @db.VarChar(120)
-  nameAr    String   @map("name_ar") @db.VarChar(120)
-  isActive  Boolean  @default(true) @map("is_active")
+  code           String   @unique @db.VarChar(4)
+  name           String   @db.VarChar(120)
+  nameAr         String   @map("name_ar") @db.VarChar(120)
+  isActive       Boolean  @default(true) @map("is_active")
+  /// The cashier enters sales in Odoo by scanning barcodes off the showroom
+  /// screen: the kiosk shows each product's barcode and keeps the basket closed.
+  scanFromScreen Boolean  @default(false) @map("scan_from_screen")
   /// Per-branch order counter, incremented inside the order transaction.
-  orderSeq  Int      @default(0) @map("order_seq")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  orderSeq       Int      @default(0) @map("order_seq")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   users    User[]
   products BranchProduct[]
