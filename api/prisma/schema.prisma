@@ -233,6 +233,8 @@ model Category {
   /// Primary key from the legacy Supabase catalogue ("cat-1787146025137"), so
   /// re-running the import updates rows instead of duplicating them.
   legacyId  String?  @unique @map("legacy_id") @db.VarChar(64)
+  /// Id of the Odoo product category (product.category) this row was imported from.
+  odooId    Int?     @unique @map("odoo_id")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -253,6 +255,12 @@ model Product {
   categoryId     String?   @map("category_id") @db.Uuid
   /// Primary key from the legacy Supabase catalogue ("prod-1787146069197").
   legacyId       String?   @unique @map("legacy_id") @db.VarChar(64)
+  /// Id of the Odoo variant (product.product) this row was imported from, so
+  /// re-running the Odoo import updates rows instead of duplicating them.
+  odooId         Int?      @unique @map("odoo_id")
+  /// False hides the product from the showroom, the website and the dashboard
+  /// list. Rows are never deleted: past orders still point at them.
+  isActive       Boolean   @default(true) @map("is_active")
   /// UUID of the processed image files in UPLOAD_DIR (<key>.webp and <key>-sm.webp).
   imageKey       String    @map("image_key") @db.Uuid
   /// Null until Finance sets it. Unpriced products are hidden from the showroom.
