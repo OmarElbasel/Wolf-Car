@@ -4,7 +4,7 @@ import { Audit } from '../common/decorators/audit.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import type { AuthUser } from '../common/types';
-import { CreateUserDto, ListUsersQueryDto, UpdateUserDto } from './dto/users.dto';
+import { CreateUserDto, ListUsersQueryDto, ResetPasswordDto, UpdateUserDto } from './dto/users.dto';
 import { UsersService } from './users.service';
 
 /**
@@ -51,15 +51,15 @@ export class UsersController {
   @Audit('user.password.reset', { entity: 'User', idParam: 'id' })
   @Post(':id/reset-password')
   @HttpCode(200)
-  resetPassword(@Param('id', ParseUUIDPipe) id: string) {
-    return this.users.resetPassword(id);
+  resetPassword(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ResetPasswordDto) {
+    return this.users.resetPassword(id, dto.password);
   }
 
   @Audit('user.showroom_password.reset', { entity: 'User', idParam: 'id' })
   @Post(':id/reset-showroom-password')
   @HttpCode(200)
-  resetShowroomPassword(@Param('id', ParseUUIDPipe) id: string) {
-    return this.users.resetShowroomPassword(id);
+  resetShowroomPassword(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ResetPasswordDto) {
+    return this.users.resetShowroomPassword(id, dto.password);
   }
 
   @Audit('user.2fa.reset', { entity: 'User', idParam: 'id' })
