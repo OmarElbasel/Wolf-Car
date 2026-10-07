@@ -47,7 +47,6 @@ One migration on `Product` and `Category`:
 |---|---|
 | `Product.isActive Boolean @default(true)` | The "hidden" switch. Same name as `Category.isActive`. |
 | `Product.odooId Int? @unique` | The Odoo variant id (`product.product`). Re-running the import updates rows instead of duplicating them. |
-| `Product.imageKey` becomes optional | Odoo has no image for many products. |
 | `Category.odooId Int? @unique` | The Odoo category id (`product.category`). |
 
 The migration only adds columns. It hides nothing; hiding is done by the import
@@ -70,10 +69,10 @@ Field mapping:
 | App | Odoo |
 |---|---|
 | `odooId` | `id` |
-| `name` | `display_name` in Arabic (`ar_001`) when it differs from English, otherwise English. Cut to 120 characters. |
+| `name` | `display_name` read in Arabic (`ar_001`) without the internal reference, so a variant reads `ARM REST COVER (Black)`. Odoo returns English where no Arabic exists. Cut to 120 characters. |
 | `barcode` | `barcode` |
 | `price` | `lst_price` |
-| `imageKey` | `image_1920`, passed through the existing `processAndStoreImage`. Empty when Odoo has none. |
+| `imageKey` | `image_1920`, passed through the existing `processAndStoreImage`. A generated placeholder when Odoo has none. |
 | `categoryId` | the variant's `categ_id` |
 
 Categories: each Odoo category that has at least one imported product becomes
@@ -87,7 +86,7 @@ branch's showroom order.
 
 ## The command
 
-`npm run db:import-odoo -- [--hide-legacy] [--dry-run]`
+`npm run db:import-odoo -- [--hide-legacy] [--dry-run] [--force-images]`
 
 - Reads `ODOO_URL`, `ODOO_DB`, `ODOO_LOGIN`, `ODOO_API_KEY` from `api/.env`.
 - `--dry-run` prints what would be created, updated and skipped, and writes nothing.
@@ -96,7 +95,9 @@ branch's showroom order.
 - A product that came from Odoo earlier but no longer qualifies (archived, or
   repriced to 0 or 1) is set inactive. Nothing is ever deleted.
 - A price change is written to `PriceHistory`, as a dashboard edit would be.
-- Images are downloaded only for products that do not have one yet.
+- Images are fetched only when a product is first created. `--force-images`
+  fetches them again for every product, which is how a product that started
+  with a placeholder picks up an image added in Odoo later.
 - Ends with a summary: created, updated, hidden, skipped with the reason.
 
 Undo: `UPDATE products SET is_active = true WHERE odoo_id IS NULL` brings the
@@ -109,25 +110,30 @@ old catalogue back.
 | `api/src/odoo/odoo-client.ts` | Authenticates and calls `search_read`. The only file that knows the Odoo wire format. |
 | `api/src/odoo/odoo-rows.ts` | Pure functions: which variants qualify, and Odoo row → app product. Mirrors `legacy-import/legacy-rows.ts`. |
 | `api/prisma/import-odoo.ts` | The command. Mirrors `prisma/import-legacy.ts`. |
-| `api/src/config/env.ts` | The four `ODOO_*` variables, optional. |
+| `api/.env.example` | Documents the four `ODOO_*` variables. The command reads them itself, as the legacy import reads `DATABASE_URL`; the API server does not need them. |
 
 ## Where the hidden switch applies
 
 - **Showroom** (`showroom.service.ts`): listing and order placement require `isActive`.
 - **Public website** (`public-catalog.service.ts`): products and the "category has products" check require `isActive`.
-- **Dashboard** (`products.service.ts`): the list shows active products by
-  default, with a filter to show hidden ones. A hidden product can still be opened.
+- **Dashboard** (`products.service.ts`): the list shows active products only.
+  The API accepts `visibility=hidden` or `visibility=all`; a dashboard control
+  for it is not part of this change. A hidden product can still be opened by id.
+- **Reordering a branch's showroom**: the list sent by the dashboard holds the
+  active products; hidden ones keep their place after them.
 - **Orders and receipts**: unchanged. They read the name and price stored on the order.
 
 ## Missing images
 
-`imageUrl` and `thumbUrl` become `null` for a product without an image, and the
-showroom, website and dashboard cards show a neutral placeholder.
+The app keeps requiring an image for every product. A product whose Odoo
+record has none gets a generated neutral placeholder file of its own, so no
+screen needs to change and replacing it later in the dashboard works as for
+any other product.
 
 ## Errors
 
 - Odoo unreachable or the key rejected: the command stops before writing anything.
-- One image fails to process: the product is imported without an image and listed in the summary.
+- One image fails to process: the product is imported with the placeholder and listed in the summary.
 - All database writes for products run after the Odoo read has fully succeeded,
   so a failure halfway through reading leaves the catalogue as it was.
 
@@ -138,7 +144,7 @@ showroom, website and dashboard cards show a neutral placeholder.
 - Unit test for `odoo-client.ts` against a stubbed `fetch`.
 - e2e: a hidden product is absent from the showroom and public catalogue,
   cannot be ordered, and is still shown on an existing order.
-- e2e: a product without an image is returned with `imageUrl: null`.
+- e2e: reordering with a hidden product in the branch succeeds.
 
 ## Not in this change
 
@@ -146,3 +152,4 @@ showroom, website and dashboard cards show a neutral placeholder.
 - Automatic or scheduled sync.
 - Making dashboard price editing read-only.
 - Linking old products to Odoo products.
+- A dashboard control to list or un-hide hidden products.
