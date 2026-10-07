@@ -13,9 +13,10 @@
  *   --force-images  fetch every image again, not only for new products
  */
 import { randomUUID } from 'node:crypto';
-import { copyFile } from 'node:fs/promises';
+import { copyFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { categoryTile } from '../src/odoo/category-image';
 import { OdooClient, odooConfigFromEnv } from '../src/odoo/odoo-client';
 import {
   arabicCategoryName,
@@ -187,12 +188,19 @@ async function main(): Promise<void> {
       categoryIdByOdoo.set(odooId, saved.id);
     }
     // brand links, Arabic names for the categories the old catalogue never had,
-    // and the brand's photo for a model that has none of its own
+    // and an image for every tab: the brand's photo for a model without its
+    // own, else a logo from prisma/category-images/<key>.png, else a name tile
     let models = 0;
-    for (const [odooId, id] of categoryIdByOdoo) {
+    const parentOf = (odooId: number): string | null => {
       const source = odooCategories.get(odooId);
       const parentOdooId = source ? parentCategoryOdooId(source, odooCategories) : null;
-      const parentId = parentOdooId === null ? null : (categoryIdByOdoo.get(parentOdooId) ?? null);
+      return parentOdooId === null ? null : (categoryIdByOdoo.get(parentOdooId) ?? null);
+    };
+    // a brand with models is never a tab, so it gets no tile: a model must
+    // only ever inherit a real photo from it, not a tile with the brand's name
+    const brands = new Set([...categoryIdByOdoo.keys()].map(parentOf).filter((id): id is string => id !== null));
+    for (const [odooId, id] of categoryIdByOdoo) {
+      const parentId = parentOf(odooId);
       const row = await prisma.category.findUniqueOrThrow({ where: { id }, select: { name: true, imageKey: true } });
       const odooName = categoryName(paths.get(odooId) as string);
       // only while the name is still Odoo's: one changed by hand is kept
@@ -206,7 +214,11 @@ async function main(): Promise<void> {
         data: {
           parentId,
           ...(arabic ? { name: arabic, carModel: arabic } : {}),
-          ...(parentImage ? { imageKey: await copyImage(parentImage, uploadDir) } : {}),
+          ...(parentImage
+            ? { imageKey: await copyImage(parentImage, uploadDir) }
+            : !row.imageKey && !brands.has(id)
+              ? { imageKey: await processAndStoreImage(await categoryTile({ label: odooName, logo: await categoryLogo(odooName) }), uploadDir) }
+              : {}),
         },
       });
       if (parentId) models++;
@@ -305,6 +317,15 @@ async function main(): Promise<void> {
     }
   } finally {
     await prisma.$disconnect();
+  }
+}
+
+/** A logo kept in the repository for a category, e.g. prisma/category-images/thabt.png. */
+async function categoryLogo(name: string): Promise<Buffer | undefined> {
+  try {
+    return await readFile(path.resolve('prisma/category-images', `${legacyCategoryKey(name)}.png`));
+  } catch {
+    return undefined; // no logo for this one: it gets a name tile
   }
 }
 
