@@ -7,6 +7,7 @@ export const PRODUCT_SELECT = {
   name: true,
   description: true,
   barcode: true,
+  isActive: true,
   imageKey: true,
   price: true,
   priceUpdatedAt: true,
@@ -20,6 +21,7 @@ type ProductRow = {
   name: string;
   description: string | null;
   barcode: string | null;
+  isActive: boolean;
   imageKey: string;
   price: Prisma.Decimal | null;
   priceUpdatedAt: Date | null;
@@ -35,6 +37,7 @@ export function productView(p: ProductRow, position?: number) {
     name: p.name,
     description: p.description,
     barcode: p.barcode,
+    isActive: p.isActive,
     price: money(p.price),
     priceUpdatedAt: p.priceUpdatedAt,
     imageUrl: imageUrl(p.imageKey),

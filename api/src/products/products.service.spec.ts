@@ -100,7 +100,7 @@ describe('ProductsService', () => {
     beforeEach(() => {
       prisma.$queryRaw.mockResolvedValue([{ id: 'b-1' }] as never);
       prisma.branchProduct.findMany
-        .mockResolvedValueOnce([{ productId: 'a' }, { productId: 'b' }, { productId: 'c' }] as never)
+        .mockResolvedValueOnce(['a', 'b', 'c'].map((productId) => ({ productId, product: { isActive: true } })) as never)
         .mockResolvedValue([] as never);
     });
 

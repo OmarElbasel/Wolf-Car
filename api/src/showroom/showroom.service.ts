@@ -23,7 +23,7 @@ export class ShowroomService {
   async products(user: AuthUser) {
     const branch = await this.activeBranch(user);
     const rows = await this.prisma.branchProduct.findMany({
-      where: { branchId: branch.id, product: { price: { not: null } } },
+      where: { branchId: branch.id, product: { price: { not: null }, isActive: true } },
       orderBy: { position: 'asc' },
       select: {
         product: {
@@ -105,6 +105,7 @@ export class ShowroomService {
           where: {
             id: { in: dto.items.map((i) => i.productId) },
             price: { not: null },
+            isActive: true,
             branchPositions: { some: { branchId: branch.id } },
           },
           select: { id: true, name: true, price: true },

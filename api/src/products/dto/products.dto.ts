@@ -85,6 +85,11 @@ export class ListProductsQueryDto {
   @IsIn(['all', 'priced', 'unpriced'])
   price: 'all' | 'priced' | 'unpriced' = 'all';
 
+  /** Hidden products are kept for past orders; the list leaves them out unless asked. */
+  @IsOptional()
+  @IsIn(['active', 'hidden', 'all'])
+  visibility: 'active' | 'hidden' | 'all' = 'active';
+
   /** For users without a branch: show this branch's display order. */
   @IsOptional()
   @IsUUID()

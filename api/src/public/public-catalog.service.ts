@@ -37,7 +37,7 @@ export class PublicCatalogService {
   async list(categoryId?: string): Promise<PublicProduct[]> {
     // explicit select: the barcode is never read, so it cannot leak
     const rows = await this.prisma.product.findMany({
-      where: categoryId ? { categoryId, category: { isActive: true } } : undefined,
+      where: { isActive: true, ...(categoryId ? { categoryId, category: { isActive: true } } : {}) },
       select: { id: true, name: true, description: true, categoryId: true, price: true, imageKey: true },
       orderBy: { name: 'asc' },
       take: 5000,
@@ -56,7 +56,7 @@ export class PublicCatalogService {
   /** Active categories that hold at least one product, largest first. */
   async categories(): Promise<PublicCategory[]> {
     const rows = await this.prisma.category.findMany({
-      where: { isActive: true, products: { some: {} } },
+      where: { isActive: true, products: { some: { isActive: true } } },
       select: {
         id: true,
         name: true,
@@ -64,7 +64,7 @@ export class PublicCatalogService {
         carModel: true,
         imageKey: true,
         position: true,
-        _count: { select: { products: true } },
+        _count: { select: { products: { where: { isActive: true } } } },
       },
     });
     return rows
