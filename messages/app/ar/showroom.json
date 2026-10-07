@@ -41,5 +41,19 @@
   "lockBody": "ستُفرَّغ السلة وسيطلب الجهاز كلمة مرور المعرض مجددًا.",
   "idleReset": "أُفرغت السلة بعد دقائق من عدم الاستخدام.",
   "categories": "أقسام السيارات",
-  "allCategories": "الكل"
+  "allCategories": "الكل",
+  "search": "ابحث عن منتج",
+  "clearSearch": "مسح البحث",
+  "filters": "الترتيب والسعر",
+  "sortPriceAsc": "الأقل سعرًا",
+  "sortPriceDesc": "الأعلى سعرًا",
+  "priceLabel": "السعر (ر.ق)",
+  "priceUnder": "أقل من {amount}",
+  "priceOver": "أكثر من {amount}",
+  "results": "{count, plural, zero {لا منتجات} one {منتج واحد} two {منتجان} few {# منتجات} many {# منتجًا} other {# منتج}}",
+  "noMatch": "لا توجد منتجات مطابقة.",
+  "noMatchHint": "جرّب كلمة أخرى أو امسح الفلاتر.",
+  "clearFilters": "مسح الفلاتر",
+  "searchAll": "ابحث في كل السيارات",
+  "showMore": "عرض المزيد ({count})"
 }

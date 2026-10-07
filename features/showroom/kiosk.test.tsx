@@ -127,6 +127,56 @@ describe("showroom kiosk", () => {
     expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
   });
 
+  it("searches the selected car, and offers every car when that one has no match", async () => {
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
+    const { user } = renderKiosk();
+    await screen.findByRole("heading", { name: "Brake pads" });
+
+    await user.type(screen.getByRole("searchbox", { name: "Search products" }), "ceramic");
+    expect(await screen.findByText("1 product")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Brake pads" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Trim clip" })).not.toBeInTheDocument();
+
+    // the brake pads are a Leopard 5 product: nothing in Tank 500 matches
+    await user.click(screen.getByRole("tab", { name: /Tank 500/ }));
+    expect(screen.getByText("No products match.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Search all cars (1)" }));
+    expect(screen.getByRole("heading", { name: "Brake pads" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(screen.getByRole("heading", { name: "Trim clip" })).toBeInTheDocument();
+  });
+
+  it("narrows by price band and sorts by price", async () => {
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
+    const { user } = renderKiosk();
+    await screen.findByRole("heading", { name: "Brake pads" });
+    const names = () => screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(names()).toEqual(["Brake pads", "Trim clip"]);
+
+    await user.click(screen.getByRole("button", { name: "Lowest price" }));
+    expect(names()).toEqual(["Trim clip", "Brake pads"]);
+
+    await user.click(screen.getByRole("button", { name: "100 – 500" }));
+    expect(names()).toEqual(["Brake pads"]);
+
+    await user.click(screen.getByRole("button", { name: "Over 1,000" }));
+    expect(screen.getByText("No products match.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(names()).toEqual(["Brake pads", "Trim clip"]);
+  });
+
+  it("shows a long catalogue a page at a time", async () => {
+    const many = Array.from({ length: 30 }, (_, i): ShowroomProduct => ({ ...CLIP, id: `p-${i}`, name: `Clip ${i}` }));
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog(many))));
+    const { user } = renderKiosk();
+
+    await screen.findByRole("heading", { name: "Clip 0" });
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(24);
+    await user.click(screen.getByRole("button", { name: "Show more (6)" }));
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(30);
+  });
+
   it("shows a product common to a brand inside each of that brand's models", async () => {
     // filed under the brand; the API lists the brand's models in categoryIds
     const common: ShowroomProduct = { ...CLIP, categoryId: "brand", categoryIds: ["brand", "cat-1", "cat-2"] };
@@ -342,6 +392,27 @@ describe("showroom kiosk timers", () => {
     act(() => vi.advanceTimersByTime(10_000));
     expect(within(panel()).getByText("Your cart is empty")).toBeInTheDocument();
     expect(await screen.findByText("The cart was cleared after a few minutes without activity.")).toBeInTheDocument();
+  });
+
+  it("forgets a visitor's search and car after 3 minutes without activity", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
+    const { user } = renderKiosk();
+
+    await screen.findByRole("heading", { name: "Brake pads" });
+    await user.click(screen.getByRole("tab", { name: /Tank 500/ }));
+    await user.type(screen.getByRole("searchbox", { name: "Search products" }), "clip");
+    expect(screen.queryByRole("heading", { name: "Brake pads" })).not.toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(IDLE_TIMEOUT_MS));
+    expect(await screen.findByRole("heading", { name: "Brake pads" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search products" })).toHaveValue("");
+    expect(screen.getByRole("tab", { name: /All/ })).toHaveAttribute("aria-selected", "true");
+    // nothing was in the cart, so there is nothing to announce
+    expect(screen.queryByText("The cart was cleared after a few minutes without activity.")).not.toBeInTheDocument();
+    // the cards that came back are still animating in: let them finish on the
+    // fake clock, or the frames they scheduled are lost with it and the next test's animations never run
+    act(() => vi.advanceTimersByTime(1_000));
   });
 
   it("returns to the product grid on its own after an order", async () => {

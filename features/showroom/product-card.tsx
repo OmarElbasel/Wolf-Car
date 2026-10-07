@@ -14,7 +14,7 @@ import { VariantPicker } from "@/components/variant-picker";
 import { ScanBarcode } from "./scan-barcode";
 
 /** Card grid column widths → which image the browser should pick (480px thumb vs 1200px). */
-export const PRODUCT_IMAGE_SIZES = "(min-width: 1536px) 22vw, (min-width: 1024px) 26vw, (min-width: 560px) 50vw, 100vw";
+export const PRODUCT_IMAGE_SIZES = "(min-width: 2000px) 20vw, (min-width: 1536px) 25vw, (min-width: 1024px) 33vw, (min-width: 560px) 50vw, 100vw";
 
 export function ProductImage({ product, sizes, className }: { product: ShowroomProduct; sizes: string; className?: string }) {
   return (

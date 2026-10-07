@@ -41,5 +41,19 @@
   "lockBody": "The cart will be cleared and the tablet will ask for the showroom password again.",
   "idleReset": "The cart was cleared after a few minutes without activity.",
   "categories": "Car categories",
-  "allCategories": "All"
+  "allCategories": "All",
+  "search": "Search products",
+  "clearSearch": "Clear search",
+  "filters": "Sort and price",
+  "sortPriceAsc": "Lowest price",
+  "sortPriceDesc": "Highest price",
+  "priceLabel": "Price (QAR)",
+  "priceUnder": "Under {amount}",
+  "priceOver": "Over {amount}",
+  "results": "{count, plural, one {# product} other {# products}}",
+  "noMatch": "No products match.",
+  "noMatchHint": "Try another word, or clear the filters.",
+  "clearFilters": "Clear filters",
+  "searchAll": "Search all cars",
+  "showMore": "Show more ({count})"
 }
