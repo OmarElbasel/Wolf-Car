@@ -10,6 +10,10 @@ import { normaliseText } from '../legacy-import/legacy-rows';
 export interface OdooVariant {
   id: number;
   display_name: string;
+  /** The company's own "Arabic Product Name" field; the same for every variant of a product. */
+  arabic_name: string | false;
+  /** Empty for a product without variants. */
+  product_template_variant_value_ids: number[];
   barcode: string | false;
   lst_price: number;
   active: boolean;
@@ -18,7 +22,12 @@ export interface OdooVariant {
   categ_id: [number, string] | false;
 }
 
-export const VARIANT_FIELDS = ['display_name', 'barcode', 'lst_price', 'active', 'sale_ok', 'type', 'categ_id'] as const;
+export const VARIANT_FIELDS = [
+  'display_name',
+  'arabic_name',
+  'product_template_variant_value_ids',
+  'barcode', 'lst_price', 'active', 'sale_ok', 'type', 'categ_id',
+] as const;
 
 export interface OdooProduct {
   odooId: number;
@@ -52,11 +61,23 @@ export function skipReason(v: OdooVariant): string | null {
   return null;
 }
 
+/**
+ * The Arabic name, with the variant's own "(Black)" taken from Odoo's display
+ * name: the Arabic field belongs to the product, so variants would otherwise
+ * be indistinguishable. Null when Odoo has no Arabic name.
+ */
+function arabicName(v: OdooVariant): string | null {
+  const arabic = normaliseText(v.arabic_name || '');
+  if (!arabic) return null;
+  const variant = v.product_template_variant_value_ids.length ? /\(([^()]+)\)$/.exec(normaliseText(v.display_name)) : null;
+  return variant ? `${arabic} (${variant[1]})` : arabic;
+}
+
 /** Maps a variant that passed skipReason. */
 export function toProduct(v: OdooVariant): OdooProduct {
   const warnings: string[] = [];
 
-  let name = normaliseText(v.display_name);
+  let name = arabicName(v) ?? normaliseText(v.display_name);
   if (name.length > PRODUCT_NAME_MAX) {
     warnings.push(`name truncated to ${PRODUCT_NAME_MAX} characters`);
     name = name.slice(0, PRODUCT_NAME_MAX);
@@ -83,4 +104,26 @@ export function toProduct(v: OdooVariant): OdooProduct {
 export function categoryName(path: string): string {
   const parts = pathParts(path);
   return (parts.at(-1) ?? normaliseText(path)).slice(0, 120);
+}
+
+/** Cars that Odoo names differently from the old catalogue, as legacyCategoryKey output. */
+const LEGACY_ALIASES: Readonly<Record<string, string>> = {
+  jetour1: 'jetourt1',
+  jetour2: 'jetourt2',
+  lynk900: 'lyk900',
+  v27: 'icar',
+  tesla: 'teslaaccessories',
+  yu7: 'xiaomiaccessories',
+};
+
+/**
+ * A comparison key for a category name, so an Odoo category ("LEOPARD 5") can
+ * take over the Arabic name and car photo of the old category for the same
+ * car ("Leopard 5"). Call it on the Odoo name and on the old English name.
+ */
+export function legacyCategoryKey(name: string): string {
+  const key = normaliseText(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  return LEGACY_ALIASES[key] ?? key;
 }

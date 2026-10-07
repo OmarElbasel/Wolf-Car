@@ -12,10 +12,12 @@
  *   --hide-legacy   switch off every product that did not come from Odoo
  *   --force-images  fetch every image again, not only for new products
  */
+import { randomUUID } from 'node:crypto';
+import { copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { OdooClient, odooConfigFromEnv } from '../src/odoo/odoo-client';
-import { categoryName, skipReason, toProduct, VARIANT_FIELDS, type OdooProduct, type OdooVariant } from '../src/odoo/odoo-rows';
+import { categoryName, legacyCategoryKey, skipReason, toProduct, VARIANT_FIELDS, type OdooProduct, type OdooVariant } from '../src/odoo/odoo-rows';
 import { placeInBranch } from '../src/odoo/place-in-branch';
 import { placeholderImage } from '../src/odoo/placeholder-image';
 import { createPgAdapter } from '../src/prisma/pg-adapter';
@@ -124,14 +126,39 @@ async function main(): Promise<void> {
       select: { id: true },
     });
 
-    // categories: created once, then left alone so a name or image set in the dashboard survives
+    // categories: created once, then left alone so a name or image set in the dashboard survives.
+    // One for a car the old catalogue already had takes over that car's Arabic name and photo.
+    const legacyByKey = new Map(
+      (
+        await prisma.category.findMany({
+          where: { odooId: null, imageKey: { not: null } },
+          select: { name: true, nameEn: true, carModel: true, imageKey: true },
+        })
+      ).map((c) => [legacyCategoryKey(c.nameEn ?? c.name), c]),
+    );
+    let adopted = 0;
     const categoryIdByOdoo = new Map<number, string>();
     const paths = new Map<number, string>();
     for (const p of products) if (p.categoryOdooId !== null && p.categoryPath) paths.set(p.categoryOdooId, p.categoryPath);
     let position = ((await prisma.category.aggregate({ _max: { position: true } }))._max.position ?? -1) + 1;
     for (const [odooId, categoryPath] of [...paths].sort((a, b) => a[1].localeCompare(b[1]))) {
-      const found = await prisma.category.findUnique({ where: { odooId }, select: { id: true } });
+      const found = await prisma.category.findUnique({ where: { odooId }, select: { id: true, imageKey: true } });
       const name = categoryName(categoryPath);
+      const legacy = legacyByKey.get(legacyCategoryKey(name));
+      if (legacy?.imageKey && !found?.imageKey) {
+        // its own copy of the files, so neither category can remove the other's photo
+        const imageKey = randomUUID();
+        for (const suffix of ['', '-sm']) {
+          await copyFile(path.join(uploadDir, `${legacy.imageKey}${suffix}.webp`), path.join(uploadDir, `${imageKey}${suffix}.webp`));
+        }
+        const data = { name: legacy.name, nameEn: legacy.nameEn ?? name, carModel: legacy.carModel, imageKey };
+        const saved = found
+          ? await prisma.category.update({ where: { id: found.id }, data, select: { id: true } })
+          : await prisma.category.create({ data: { ...data, odooId, position: position++ }, select: { id: true } });
+        categoryIdByOdoo.set(odooId, saved.id);
+        adopted++;
+        continue;
+      }
       const saved =
         found ??
         (await prisma.category.create({
@@ -140,7 +167,7 @@ async function main(): Promise<void> {
         }));
       categoryIdByOdoo.set(odooId, saved.id);
     }
-    console.log(`Categories: ${categoryIdByOdoo.size}`);
+    console.log(`Categories: ${categoryIdByOdoo.size} (${adopted} took the name and photo of an old category)`);
 
     let created = 0;
     let updated = 0;
