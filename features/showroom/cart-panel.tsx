@@ -4,6 +4,7 @@ import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
+import { Barcode } from "@/components/barcode";
 import { Button } from "@/components/ui/button";
 import type { ShowroomProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
@@ -59,7 +60,7 @@ function Stepper({ entry, onIncrement, onDecrement }: { entry: CartEntry } & Omi
   );
 }
 
-function CartLineRow({ entry, onIncrement, onDecrement, onRemove }: { entry: CartEntry } & CartHandlers) {
+function CartLineRow({ entry, scan, onIncrement, onDecrement, onRemove }: { entry: CartEntry; scan: boolean } & CartHandlers) {
   const t = useTranslations("Showroom");
   const locale = useLocale();
   const { product, quantity } = entry;
@@ -76,6 +77,11 @@ function CartLineRow({ entry, onIncrement, onDecrement, onRemove }: { entry: Car
         <p className="mt-0.5 text-sm text-muted">
           {t("each", { price: formatMoney(product.price, locale) })}
         </p>
+        {scan && product.barcode && (
+          <span className="mt-1.5 inline-block rounded-[8px] bg-white px-2 py-1 text-black">
+            <Barcode value={product.barcode} height={36} moduleWidth={1.3} className="text-black" />
+          </span>
+        )}
       </div>
       <Button
         variant="ghost"
@@ -107,6 +113,7 @@ export function CartPanel({
   total,
   onClear,
   onCheckout,
+  scan = false,
   className,
   headerClassName,
   ...handlers
@@ -117,6 +124,8 @@ export function CartPanel({
   total: string;
   onClear: () => void;
   onCheckout: () => void;
+  /** list each line's barcode, for a cashier who scans off the screen */
+  scan?: boolean;
   className?: string;
   headerClassName?: string;
 } & CartHandlers) {
@@ -161,7 +170,7 @@ export function CartPanel({
                   {...listItem}
                   className="overflow-hidden border-b border-line last:border-b-0"
                 >
-                  <CartLineRow entry={entry} {...handlers} />
+                  <CartLineRow scan={scan} entry={entry} {...handlers} />
                 </motion.li>
               ))}
             </AnimatePresence>

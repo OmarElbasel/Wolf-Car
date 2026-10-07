@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditTrail } from '../activity/audit-trail.service';
 import { decimal, money } from '../common/money';
 import type { AuthUser } from '../common/types';
@@ -29,6 +29,7 @@ export class ProductsService {
   async list(user: AuthUser, q: ListProductsQueryDto): Promise<ProductView[]> {
     const branchId = user.branchId ?? q.branchId ?? null;
     const where: Prisma.ProductWhereInput = {
+      ...(q.visibility === 'all' ? {} : { isActive: q.visibility !== 'hidden' }),
       ...(q.price === 'priced' ? { price: { not: null } } : q.price === 'unpriced' ? { price: null } : {}),
       ...(q.q
         ? { OR: [{ name: { contains: q.q, mode: 'insensitive' } }, { barcode: { contains: q.q, mode: 'insensitive' } }] }
@@ -94,6 +95,8 @@ export class ProductsService {
     user: AuthUser,
   ): Promise<ProductView> {
     const before = await this.get(id);
+    // Odoo owns these three; the next sync would put its own values back anyway
+    if (before.fromOdoo && (dto.name !== undefined || dto.barcode !== undefined || image)) throw odooManaged();
     const oldKey = (await this.prisma.product.findUniqueOrThrow({ where: { id }, select: { imageKey: true } })).imageKey;
     const newKey = image ? await this.images.store(image) : undefined;
     const data: Prisma.ProductUncheckedUpdateInput = {
@@ -121,9 +124,10 @@ export class ProductsService {
   async updatePrice(id: string, dto: UpdatePriceDto, user: AuthUser): Promise<ProductView> {
     const newPrice = decimal(dto.price);
     const oldPrice = await this.prisma.$transaction(async (tx) => {
-      const [row] = await tx.$queryRaw<{ price: Prisma.Decimal | null }[]>`
-        SELECT price FROM products WHERE id = ${id}::uuid FOR UPDATE`;
+      const [row] = await tx.$queryRaw<{ price: Prisma.Decimal | null; odoo_id: number | null }[]>`
+        SELECT price, odoo_id FROM products WHERE id = ${id}::uuid FOR UPDATE`;
       if (!row) throw new NotFoundException('Product not found.');
+      if (typeof row.odoo_id === 'number') throw odooManaged();
       const current = row.price === null ? null : decimal(row.price.toString());
       if (current !== null && current.equals(newPrice)) return current;
       await tx.product.update({
@@ -175,8 +179,15 @@ export class ProductsService {
     const before = await this.prisma.$transaction(async (tx) => {
       const [branch] = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM branches WHERE id = ${branchId}::uuid FOR UPDATE`;
       if (!branch) throw new NotFoundException('Branch not found.');
-      const current = await tx.branchProduct.findMany({ where: { branchId }, orderBy: { position: 'asc' }, select: { productId: true } });
-      const currentIds = current.map((r) => r.productId);
+      const current = await tx.branchProduct.findMany({
+        where: { branchId },
+        orderBy: { position: 'asc' },
+        select: { productId: true, product: { select: { isActive: true } } },
+      });
+      // the dashboard only shows (and so only sends) the active products;
+      // hidden ones keep a place after them so nothing is lost if they return
+      const currentIds = current.filter((r) => r.product.isActive).map((r) => r.productId);
+      const hiddenIds = current.filter((r) => !r.product.isActive).map((r) => r.productId);
       const known = new Set(currentIds);
       const missing = currentIds.filter((pid) => !dto.productIds.includes(pid)).length;
       const unknown = dto.productIds.filter((pid) => !known.has(pid)).length;
@@ -190,16 +201,17 @@ export class ProductsService {
           unknown,
         });
       }
+      const ordered = [...dto.productIds, ...hiddenIds];
       await tx.$executeRaw`
         UPDATE branch_products bp
            SET position = o.ord - 1
-          FROM unnest(${dto.productIds}::uuid[]) WITH ORDINALITY AS o(product_id, ord)
+          FROM unnest(${ordered}::uuid[]) WITH ORDINALITY AS o(product_id, ord)
          WHERE bp.branch_id = ${branchId}::uuid AND bp.product_id = o.product_id`;
       return currentIds;
     });
 
     this.trail.setEntity('Branch', branchId).setBranch(branchId).setChange({ productIds: before }, { productIds: dto.productIds });
-    return this.list({ ...user, branchId }, { price: 'all' });
+    return this.list({ ...user, branchId }, { price: 'all', visibility: 'active' });
   }
 
   /** Serialises catalogue-wide position writes (product creation vs. reorder). */
@@ -207,6 +219,14 @@ export class ProductsService {
     await tx.$queryRaw`SELECT id FROM branches ORDER BY id FOR UPDATE`;
   }
 }
+
+const odooManaged = () =>
+  new ConflictException({
+    statusCode: 409,
+    error: 'Conflict',
+    code: 'ODOO_MANAGED',
+    message: 'This product comes from Odoo. Change its name, barcode, photo or price in Odoo.',
+  });
 
 function detailsOf(p: ProductView) {
   return { name: p.name, description: p.description, barcode: p.barcode, imageUrl: p.imageUrl };

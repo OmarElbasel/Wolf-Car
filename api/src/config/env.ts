@@ -119,6 +119,38 @@ export class Env {
   @IsOptional()
   @IsString()
   CHROME_PATH?: string;
+
+  /**
+   * The company's Odoo, the source of the product catalogue. All four are
+   * needed for the sync to run; without them the catalogue is edited by hand.
+   */
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsString()
+  @Matches(/^https?:\/\//, { message: 'ODOO_URL must start with http:// or https://' })
+  ODOO_URL?: string;
+
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsString()
+  ODOO_DB?: string;
+
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsString()
+  ODOO_LOGIN?: string;
+
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsString()
+  ODOO_API_KEY?: string;
+
+  /** How often the catalogue is brought up to date from Odoo. 0 turns the timer off. */
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(1440)
+  ODOO_SYNC_MINUTES = 15;
 }
 
 export function validateEnv(raw: Record<string, unknown>): Env {

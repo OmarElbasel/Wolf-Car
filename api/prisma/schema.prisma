@@ -60,16 +60,19 @@ enum LightJobRequestStatus {
 }
 
 model Branch {
-  id        String   @id @default(uuid()) @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
   /// Short uppercase code used as the order-number prefix, e.g. "GH".
-  code      String   @unique @db.VarChar(4)
-  name      String   @db.VarChar(120)
-  nameAr    String   @map("name_ar") @db.VarChar(120)
-  isActive  Boolean  @default(true) @map("is_active")
+  code           String   @unique @db.VarChar(4)
+  name           String   @db.VarChar(120)
+  nameAr         String   @map("name_ar") @db.VarChar(120)
+  isActive       Boolean  @default(true) @map("is_active")
+  /// The cashier enters sales in Odoo by scanning barcodes off the showroom
+  /// screen: the kiosk shows each product's barcode and keeps the basket closed.
+  scanFromScreen Boolean  @default(false) @map("scan_from_screen")
   /// Per-branch order counter, incremented inside the order transaction.
-  orderSeq  Int      @default(0) @map("order_seq")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  orderSeq       Int      @default(0) @map("order_seq")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   users    User[]
   products BranchProduct[]
@@ -233,12 +236,20 @@ model Category {
   /// Primary key from the legacy Supabase catalogue ("cat-1787146025137"), so
   /// re-running the import updates rows instead of duplicating them.
   legacyId  String?  @unique @map("legacy_id") @db.VarChar(64)
+  /// Id of the Odoo product category (product.category) this row was imported from.
+  odooId    Int?     @unique @map("odoo_id")
+  /// The brand a car model belongs to ("Leopard" for "Leopard 5"). A brand's
+  /// own products are common to its models and are listed inside each of them.
+  parentId  String?  @map("parent_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   products Product[]
+  parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryParent")
 
   @@index([position])
+  @@index([parentId])
   @@map("categories")
 }
 
@@ -253,6 +264,22 @@ model Product {
   categoryId     String?   @map("category_id") @db.Uuid
   /// Primary key from the legacy Supabase catalogue ("prod-1787146069197").
   legacyId       String?   @unique @map("legacy_id") @db.VarChar(64)
+  /// Id of the Odoo variant (product.product) this row was imported from, so
+  /// re-running the Odoo import updates rows instead of duplicating them.
+  odooId         Int?      @unique @map("odoo_id")
+  /// False hides the product from the showroom, the website and the dashboard
+  /// list. Rows are never deleted: past orders still point at them.
+  isActive       Boolean   @default(true) @map("is_active")
+  /// What Odoo's "last changed" dates were when this row was last synced. The
+  /// sync skips a row whose stamp has not moved.
+  odooStamp      String?   @map("odoo_stamp") @db.VarChar(80)
+  /// Id of the Odoo product (product.template). Rows that share it are the
+  /// colours or sizes of one product and are shown as one card with a picker.
+  odooTemplateId Int?      @map("odoo_template_id")
+  /// "أسود", "مطفي", … — null for a product that comes in one form only.
+  variantLabel   String?   @map("variant_label") @db.VarChar(60)
+  /// "#980606" for a colour variant, to draw its swatch.
+  variantColor   String?   @map("variant_color") @db.VarChar(7)
   /// UUID of the processed image files in UPLOAD_DIR (<key>.webp and <key>-sm.webp).
   imageKey       String    @map("image_key") @db.Uuid
   /// Null until Finance sets it. Unpriced products are hidden from the showroom.
@@ -273,6 +300,7 @@ model Product {
   @@index([name])
   @@index([barcode])
   @@index([categoryId])
+  @@index([odooTemplateId])
   @@map("products")
 }
 
@@ -496,4 +524,21 @@ model ActivityLog {
   @@index([action, occurredAt])
   @@index([entityType, entityId])
   @@map("activity_logs")
+}
+
+/// One run of the Odoo catalogue sync, so the dashboard can say when the
+/// catalogue was last brought up to date and whether that worked.
+model OdooSyncRun {
+  id         String    @id @default(uuid()) @db.Uuid
+  startedAt  DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
+  /// "schedule", or the id of the user who pressed "Sync now".
+  trigger    String    @db.VarChar(40)
+  ok         Boolean?
+  /// SyncSummary on success.
+  summary    Json?
+  error      String?   @db.VarChar(600)
+
+  @@index([startedAt])
+  @@map("odoo_sync_runs")
 }

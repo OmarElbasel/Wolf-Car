@@ -124,6 +124,7 @@
     "dayOpen": "This day is open. Send a request to reserve it.",
     "dayFull": "Closed: a full PPF car is booked.",
     "dayFullTwo": "Closed: two full PPF cars are booked. Light jobs only.",
+    "dayLight": "Light jobs this day",
     "waiting": "Waiting for the call center",
     "dayClosed": "Closed by the call center.",
     "requestLight": "Request a light job",

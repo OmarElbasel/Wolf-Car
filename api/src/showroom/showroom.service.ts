@@ -5,6 +5,7 @@ import type { AuthUser } from '../common/types';
 import { Prisma } from '../generated/prisma/client';
 import { ORDER_DETAIL_SELECT, orderAuditView, orderDetail, type OrderDetail } from '../orders/order.view';
 import { PrismaService } from '../prisma/prisma.service';
+import { countCards, VARIANT_SELECT, variantView } from '../products/variant.view';
 import { imageUrl } from '../uploads/image-processing';
 import type { CreateShowroomOrderDto } from '../orders/dto/orders.dto';
 
@@ -23,7 +24,7 @@ export class ShowroomService {
   async products(user: AuthUser) {
     const branch = await this.activeBranch(user);
     const rows = await this.prisma.branchProduct.findMany({
-      where: { branchId: branch.id, product: { price: { not: null } } },
+      where: { branchId: branch.id, product: { price: { not: null }, isActive: true } },
       orderBy: { position: 'asc' },
       select: {
         product: {
@@ -35,39 +36,51 @@ export class ShowroomService {
             price: true,
             imageKey: true,
             categoryId: true,
+            ...VARIANT_SELECT,
           },
         },
       },
     });
+    const active = await this.prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ position: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true, carModel: true, imageKey: true, parentId: true },
+    });
+    // a brand's own products are common to its models: they show in each of them
+    const models = new Map<string, string[]>();
+    for (const c of active) if (c.parentId) models.set(c.parentId, [...(models.get(c.parentId) ?? []), c.id]);
+
     const products = rows.map(({ product: p }) => ({
       id: p.id,
       name: p.name,
       description: p.description,
       barcode: p.barcode,
       categoryId: p.categoryId,
+      categoryIds: p.categoryId ? [p.categoryId, ...(models.get(p.categoryId) ?? [])] : [],
       price: money(p.price) as string,
       imageUrl: imageUrl(p.imageKey),
       thumbUrl: imageUrl(p.imageKey, 'sm'),
+      ...variantView(p),
     }));
 
-    const used = new Set(products.map((p) => p.categoryId).filter((id): id is string => id !== null));
-    const categories = used.size
-      ? await this.prisma.category.findMany({
-          where: { id: { in: [...used] }, isActive: true },
-          orderBy: [{ position: 'asc' }, { name: 'asc' }],
-          select: { id: true, name: true, carModel: true, imageKey: true },
-        })
-      : [];
+    const listed = new Map<string, (typeof rows)[number]['product'][]>();
+    for (const { product: p } of rows) {
+      for (const id of p.categoryId ? [p.categoryId, ...(models.get(p.categoryId) ?? [])] : []) listed.set(id, [...(listed.get(id) ?? []), p]);
+    }
+    // the colours of one product share a card, so they count once
+    const count = new Map([...listed].map(([id, items]) => [id, countCards(items)]));
+    // a brand with models is not a tab of its own
+    const categories = active.filter((c) => count.has(c.id) && !models.has(c.id));
 
     return {
-      branch: { id: branch.id, code: branch.code, name: branch.name, nameAr: branch.nameAr },
+      branch: { id: branch.id, code: branch.code, name: branch.name, nameAr: branch.nameAr, scanFromScreen: branch.scanFromScreen },
       categories: categories.map((c) => ({
         id: c.id,
         name: c.name,
         carModel: c.carModel,
         imageUrl: c.imageKey ? imageUrl(c.imageKey) : null,
         thumbUrl: c.imageKey ? imageUrl(c.imageKey, 'sm') : null,
-        count: products.filter((p) => p.categoryId === c.id).length,
+        count: count.get(c.id) ?? 0,
       })),
       products,
     };
@@ -105,6 +118,7 @@ export class ShowroomService {
           where: {
             id: { in: dto.items.map((i) => i.productId) },
             price: { not: null },
+            isActive: true,
             branchPositions: { some: { branchId: branch.id } },
           },
           select: { id: true, name: true, price: true },
@@ -176,7 +190,7 @@ export class ShowroomService {
 
   private async activeBranch(user: AuthUser) {
     const branch = user.branchId
-      ? await this.prisma.branch.findUnique({ where: { id: user.branchId }, select: { id: true, code: true, name: true, nameAr: true, isActive: true } })
+      ? await this.prisma.branch.findUnique({ where: { id: user.branchId }, select: { id: true, code: true, name: true, nameAr: true, isActive: true, scanFromScreen: true } })
       : null;
     if (!branch?.isActive) {
       throw new ForbiddenException({ statusCode: 403, error: 'Forbidden', code: 'NO_SHOWROOM_ACCESS', message: 'This account cannot use the showroom.' });

@@ -97,6 +97,7 @@ function Slots({ onLocked }: { onLocked: () => void }) {
   const data = view.data;
   const info = selected ? data?.days.find((d) => d.date === selected) : undefined;
   const fullCars = data?.bookings.filter((b) => b.type === "FULL" && b.receiveDate === selected) ?? [];
+  const lightCars = data?.bookings.filter((b) => b.type === "LIGHT" && b.receiveDate === selected) ?? [];
   const waiting = data?.requests.filter((r) => r.status === "PENDING" && r.date === selected) ?? [];
   const canRequest = info !== undefined && data !== undefined && info.state !== "CLOSED" && info.date >= data.today;
   const fullRoom = info !== undefined && info.fullCount < PPF_MAX_FULL_PER_DAY;
@@ -184,7 +185,28 @@ function Slots({ onLocked }: { onLocked: () => void }) {
                   ))}
                 </>
               )}
-              {info.lightCount > 0 && <p className="mt-2 text-[14px] text-ink-2">{t("Calendar.light", { count: info.lightCount })}</p>}
+              {lightCars.length > 0 ? (
+                <div className="mt-3">
+                  <p className="text-[14px] font-extrabold text-ink-2">{t("Slots.dayLight")}</p>
+                  <ul aria-label={t("Slots.dayLight")} className="mt-1 grid gap-1.5">
+                    {lightCars.map((b) => (
+                      <li key={b.id} className="rounded-[var(--radius-brand)] border border-line px-3 py-2 text-[15px]">
+                        <span dir="auto" className="font-extrabold">
+                          {b.car}
+                        </span>
+                        {b.ownerName && (
+                          <span dir="auto" className="ms-2 text-ink-2">
+                            {b.ownerName}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                // a past day: its cars are no longer in the list, only the count is known
+                info.lightCount > 0 && <p className="mt-2 text-[14px] text-ink-2">{t("Calendar.light", { count: info.lightCount })}</p>
+              )}
               {waiting.length > 0 && (
                 <div className="mt-3 rounded-[var(--radius-brand)] bg-warning-soft px-3 py-2.5">
                   <p className="text-[14px] font-extrabold text-warning">{t("Slots.waiting")}</p>

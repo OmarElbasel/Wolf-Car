@@ -82,6 +82,29 @@ describe("public catalog grid", () => {
     expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument();
   });
 
+  it("shows the colours of one product as one card and adds the picked colour", async () => {
+    const colour = (id: string, label: string): PublicProduct => ({
+      ...product(id, `Arm rest (${label})`, "99.00"),
+      groupId: "2406",
+      variantLabel: label,
+      variantColor: "#060505",
+    });
+    renderGrid([colour("black", "Black"), colour("beige", "Beige"), product("b", "3D Floor Mats", "120.50")]);
+    expect(names()).toEqual(["Arm rest", "3D Floor Mats"]);
+    expect(screen.getByText("2 products")).toBeInTheDocument();
+
+    const card = screen.getByRole("heading", { name: "Arm rest" }).closest("li")!;
+    const picker = within(card).getByRole("radiogroup", { name: "Colour" });
+    expect(within(picker).getByRole("radio", { name: "Black" })).toBeChecked();
+    await userEvent.click(within(picker).getByRole("radio", { name: "Beige" }));
+    await userEvent.click(within(card).getByRole("button", { name: "Add to cart" }));
+    expect(within(card).getByRole("group", { name: "Quantity of Arm rest (Beige)" })).toHaveTextContent("1");
+
+    // the other colour is a separate line with its own quantity
+    await userEvent.click(within(picker).getByRole("radio", { name: "Black" }));
+    expect(within(card).getByRole("button", { name: "Add to cart" })).toBeInTheDocument();
+  });
+
   it("has an empty state", () => {
     renderGrid([]);
     expect(screen.getByText("No products to show yet.")).toBeInTheDocument();

@@ -133,7 +133,8 @@ export const ProductRowContent = memo(function ProductRowContent({
         </div>
         {actions && (
           <div className="ms-auto flex shrink-0 items-center gap-1">
-            {permissions.canPrice && (
+            {product.fromOdoo && <Pill tone="neutral">{t("odoo.fromOdoo")}</Pill>}
+            {permissions.canPrice && !product.fromOdoo && (
               <Button variant="outline" size="sm" onClick={() => actions.onPrice(product)}>
                 {product.price === null ? t("price.set") : t("price.change")}
               </Button>
@@ -143,7 +144,7 @@ export const ProductRowContent = memo(function ProductRowContent({
                 <History className="size-5" strokeWidth={1.8} aria-hidden="true" />
               </IconAction>
             )}
-            {permissions.canEdit && (
+            {permissions.canEdit && !product.fromOdoo && (
               <IconAction label={t("editNamed", { name: product.name })} tooltip={tc("edit")} onClick={() => actions.onEdit(product)}>
                 <Pencil className="size-5" strokeWidth={1.8} aria-hidden="true" />
               </IconAction>

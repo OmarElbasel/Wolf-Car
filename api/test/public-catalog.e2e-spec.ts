@@ -17,7 +17,18 @@ describe('Public catalogue (e2e)', () => {
     expect(res.headers['cache-control']).toBe('public, max-age=60');
     expect(res.body.map((p: { name: string }) => p.name)).toEqual(['Dash Cam', 'Floor Mats', 'Phone Holder']);
     for (const product of res.body) {
-      expect(Object.keys(product).sort()).toEqual(['categoryId', 'description', 'id', 'imageUrl', 'name', 'price', 'thumbUrl']);
+      expect(Object.keys(product).sort()).toEqual([
+        'categoryId',
+        'description',
+        'groupId',
+        'id',
+        'imageUrl',
+        'name',
+        'price',
+        'thumbUrl',
+        'variantColor',
+        'variantLabel',
+      ]);
     }
     expect(res.body.map((p: { price: string | null }) => p.price)).toEqual(['499.00', '120.50', null]);
   });

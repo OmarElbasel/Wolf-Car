@@ -193,6 +193,35 @@ describe("Users page", () => {
     expect(within(creds).getByText("Show#Room-9911")).toBeInTheDocument();
   });
 
+  it("lets the admin type the new password instead of generating one", async () => {
+    mockList();
+    const cashier = USERS[2];
+    const bodies: unknown[] = [];
+    server.use(
+      http.post(`/api/users/${cashier.id}/reset-password`, async ({ request }) => {
+        const body = (await request.json()) as { password: string };
+        bodies.push(body);
+        return HttpResponse.json({ userId: cashier.id, username: cashier.username, displayName: cashier.displayName, role: "CASHIER", branchCode: "GH", password: body.password });
+      }),
+    );
+    const { user } = renderWithApp(<UsersPage />, { user: admin });
+    await user.click(await screen.findByRole("button", { name: "Actions for Gharrafa Cashier" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Reset password" }));
+    const confirm = await screen.findByRole("alertdialog");
+    const field = within(confirm).getByLabelText("New password (leave empty to generate one)");
+
+    // a password that breaks the policy cannot be sent
+    await user.type(field, "short");
+    expect(within(confirm).getByRole("button", { name: "Reset password" })).toBeDisabled();
+
+    await user.clear(field);
+    await user.type(field, "Chosen#Wolf2026!");
+    await user.click(within(confirm).getByRole("button", { name: "Reset password" }));
+    const creds = await screen.findByRole("dialog", { name: "Save these credentials now" });
+    expect(within(creds).getByText("Chosen#Wolf2026!")).toBeInTheDocument();
+    expect(bodies).toEqual([{ password: "Chosen#Wolf2026!" }]);
+  });
+
   it("puts the filters in the request query", async () => {
     const queries = mockList();
     const { user } = renderWithApp(<UsersPage />, { user: admin });

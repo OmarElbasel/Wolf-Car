@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Wrap, SectionHead, buttonClass } from "./Button";
 import { Icon } from "./Icon";
 import { getBranchList, bookingMessage, waLink, type BranchId } from "@/lib/branches";
-import { getBookingServices } from "@/lib/content";
+import { bookingServiceAvailable, getBookingServices, type BookingServiceId } from "@/lib/content";
 
 type Place = "branch" | "home";
 const BOOK_EVENT = "wolfcar:book";
@@ -28,12 +28,14 @@ function Choice({
   value,
   label,
   checked,
+  disabled = false,
   onChange,
 }: {
   name: string;
   value: string;
   label: string;
   checked: boolean;
+  disabled?: boolean;
   onChange: (v: string) => void;
 }) {
   return (
@@ -44,12 +46,13 @@ function Choice({
         id={`${name}-${value}`}
         value={value}
         checked={checked}
+        disabled={disabled}
         onChange={() => onChange(value)}
         className="peer pointer-events-none absolute opacity-0"
       />
       <label
         htmlFor={`${name}-${value}`}
-        className="inline-flex min-h-[44px] cursor-pointer items-center rounded-[var(--radius-brand)] border-[1.5px] border-line px-3.5 text-[15px] font-semibold transition-colors peer-checked:border-charcoal peer-checked:bg-charcoal peer-checked:text-white dark:peer-checked:border-accent dark:peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-ink"
+        className="inline-flex min-h-[44px] cursor-pointer items-center rounded-[var(--radius-brand)] border-[1.5px] border-line px-3.5 text-[15px] font-semibold transition-colors peer-checked:border-charcoal peer-checked:bg-charcoal peer-checked:text-white dark:peer-checked:border-accent dark:peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-ink peer-disabled:cursor-not-allowed peer-disabled:border-dashed peer-disabled:text-muted peer-disabled:line-through"
       >
         {label}
       </label>
@@ -85,19 +88,24 @@ export function BookingForm() {
   const t = useTranslations("Booking");
   const branchList = getBranchList(locale);
   const bookingServices = getBookingServices(locale);
-  const placeBranch = t("placeBranch");
-  const placeHome = t("placeHome");
-  const places = [placeBranch, placeHome];
+  const places: { id: Place; label: string }[] = [
+    { id: "branch", label: t("placeBranch") },
+    { id: "home", label: t("placeHome") },
+  ];
 
   const [branch, setBranch] = useState<BranchId>("binomran");
-  const [service, setService] = useState(bookingServices[0].value);
-  const [place, setPlace] = useState(places[0]);
+  const [picked, setService] = useState<BookingServiceId>(bookingServices[0].id);
+  const [place, setPlace] = useState<Place>("branch");
+  // PPF is not done at home, and Al Gharrafa does neither PPF nor tinting: a
+  // choice the new branch or place rules out falls back to the first that fits
+  const available = (id: BookingServiceId) => bookingServiceAvailable(id, branch, place);
+  const service = bookingServices.find((s) => s.id === picked && available(s.id)) ?? bookingServices.find((s) => available(s.id))!;
 
   useEffect(() => {
-    const onBook = (e: Event) => setPlace((e as CustomEvent<Place>).detail === "home" ? placeHome : placeBranch);
+    const onBook = (e: Event) => setPlace((e as CustomEvent<Place>).detail === "home" ? "home" : "branch");
     window.addEventListener(BOOK_EVENT, onBook);
     return () => window.removeEventListener(BOOK_EVENT, onBook);
-  }, [placeBranch, placeHome]);
+  }, []);
 
   return (
     <section id="book" className="scroll-mt-16 py-14 lg:py-20">
@@ -107,7 +115,7 @@ export function BookingForm() {
           onSubmit={(e) => {
             e.preventDefault();
             window.open(
-              waLink(locale, branch, bookingMessage(locale, branch, service, place)),
+              waLink(locale, branch, bookingMessage(locale, branch, service.value, places.find((p) => p.id === place)!.label)),
               "_blank",
               "noopener",
             );
@@ -129,24 +137,25 @@ export function BookingForm() {
           <Row label={t("serviceLabel")}>
             {bookingServices.map((s) => (
               <Choice
-                key={s.value}
+                key={s.id}
                 name="svc"
-                value={s.value}
+                value={s.id}
                 label={s.label}
-                checked={service === s.value}
-                onChange={setService}
+                checked={service.id === s.id}
+                disabled={!available(s.id)}
+                onChange={(v) => setService(v as BookingServiceId)}
               />
             ))}
           </Row>
           <Row label={t("placeLabel")} last>
             {places.map((p) => (
               <Choice
-                key={p}
+                key={p.id}
                 name="where"
-                value={p}
-                label={p}
-                checked={place === p}
-                onChange={setPlace}
+                value={p.id}
+                label={p.label}
+                checked={place === p.id}
+                onChange={(v) => setPlace(v as Place)}
               />
             ))}
           </Row>

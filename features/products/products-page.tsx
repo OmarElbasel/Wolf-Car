@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { PriceDialog } from "./price-dialog";
 import { PriceHistorySheet } from "./price-history-sheet";
 import { ProductFormSheet } from "./product-form";
+import { OdooSyncBar } from "./odoo-sync-bar";
 import { ProductList } from "./product-list";
 import type { RowActions, RowPermissions } from "./product-row";
 import { fetchProducts, parsePriceFilter, type PriceFilter, productKeys } from "./queries";
@@ -203,6 +204,7 @@ function ProductsManager() {
   return (
     <>
       <PageHeader title={t("title")} subtitle={subtitle} actions={addButton} />
+      <OdooSyncBar />
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] flex-1">

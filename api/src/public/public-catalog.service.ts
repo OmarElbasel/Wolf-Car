@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { countCards, VARIANT_SELECT, variantView } from '../products/variant.view';
 import { imageUrl } from '../uploads/image-processing';
 
 /**
@@ -16,6 +17,10 @@ export interface PublicProduct {
   price: string | null;
   imageUrl: string;
   thumbUrl: string;
+  /** products sharing a groupId are colours/sizes of one product; null otherwise */
+  groupId: string | null;
+  variantLabel: string | null;
+  variantColor: string | null;
 }
 
 /** A car-model grouping as shown publicly, with how many products it holds. */
@@ -36,9 +41,16 @@ export class PublicCatalogService {
 
   async list(categoryId?: string): Promise<PublicProduct[]> {
     // explicit select: the barcode is never read, so it cannot leak
+    // a model also lists what is common to its brand (the parent category)
+    const parentId = categoryId
+      ? ((await this.prisma.category.findUnique({ where: { id: categoryId }, select: { parentId: true } }))?.parentId ?? null)
+      : null;
     const rows = await this.prisma.product.findMany({
-      where: categoryId ? { categoryId, category: { isActive: true } } : undefined,
-      select: { id: true, name: true, description: true, categoryId: true, price: true, imageKey: true },
+      where: {
+        isActive: true,
+        ...(categoryId ? { categoryId: { in: parentId ? [categoryId, parentId] : [categoryId] }, category: { isActive: true } } : {}),
+      },
+      select: { id: true, name: true, description: true, categoryId: true, price: true, imageKey: true, ...VARIANT_SELECT },
       orderBy: { name: 'asc' },
       take: 5000,
     });
@@ -50,13 +62,18 @@ export class PublicCatalogService {
       price: p.price ? p.price.toFixed(2) : null,
       imageUrl: imageUrl(p.imageKey),
       thumbUrl: imageUrl(p.imageKey, 'sm'),
+      ...variantView(p),
     }));
   }
 
-  /** Active categories that hold at least one product, largest first. */
+  /**
+   * Active categories that hold at least one product, largest first. A brand
+   * with models under it is not offered itself: its products are counted, and
+   * listed, inside each model.
+   */
   async categories(): Promise<PublicCategory[]> {
     const rows = await this.prisma.category.findMany({
-      where: { isActive: true, products: { some: {} } },
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
@@ -64,10 +81,16 @@ export class PublicCatalogService {
         carModel: true,
         imageKey: true,
         position: true,
-        _count: { select: { products: true } },
+        parentId: true,
+        products: { where: { isActive: true }, select: { id: true, ...VARIANT_SELECT } },
       },
     });
+    const own = new Map(rows.map((c) => [c.id, c.products]));
+    const brands = new Set(rows.map((c) => c.parentId).filter((id): id is string => id !== null));
     return rows
+      .filter((c) => !brands.has(c.id))
+      .map((c) => ({ ...c, _count: { products: countCards([...c.products, ...((c.parentId && own.get(c.parentId)) || [])]) } }))
+      .filter((c) => c._count.products > 0)
       .sort((a, b) => b._count.products - a._count.products || a.position - b.position || a.name.localeCompare(b.name))
       .map((c) => ({
         id: c.id,

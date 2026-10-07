@@ -214,7 +214,7 @@ const STEPS: Record<Locale, { n: string; title: string; body: string }[]> = {
     {
       n: "02",
       title: "نحدد الموعد",
-      body: "في الفرع الأقرب لك أو عبر الخدمة المنزلية. وإذا احتاجت سيارتك الورشة، نرسل البريكداون مجانًا.",
+      body: "في الفرع الأقرب لك أو عبر الخدمة المنزلية. وإذا احتاجت سيارتك الورشة، نرسل البريكداون، وهو مجاني للفواتير فوق 1,000 ريال.",
     },
     {
       n: "03",
@@ -231,7 +231,7 @@ const STEPS: Record<Locale, { n: string; title: string; body: string }[]> = {
     {
       n: "02",
       title: "We set an appointment",
-      body: "At the branch nearest you, or through our home service. If your car needs the workshop, we send a free breakdown/tow.",
+      body: "At the branch nearest you, or through our home service. If your car needs the workshop, we send a tow, free on bills over 1,000 QAR.",
     },
     {
       n: "03",
@@ -249,16 +249,16 @@ const FAQS: Record<Locale, { q: string; a: string }[]> = {
     },
     {
       q: "كم تكلفة البريكداون؟",
-      a: "مجانًا. إذا احتاجت سيارتك الحضور إلى الفرع، نرسل البريكداون لنقلها.",
+      a: "مجاني للفواتير فوق 1,000 ريال. إذا احتاجت سيارتك الحضور إلى الفرع، نرسل البريكداون لنقلها.",
     },
     {
       q: "هل تخدمون السيارات غير الصينية؟",
       a: "نعم. نحن متخصصون في السيارات الصينية، والعازل وPPF وقطع الغيار والصيانة متاحة لجميع السيارات.",
     },
-    { q: "أي فرع أزور؟", a: "الأقرب لك، فالفرعان يقدمان الخدمات نفسها." },
+    { q: "أي فرع أزور؟", a: "الأقرب لك. الفرعان يقدمان الخدمات نفسها، ما عدا حماية الطلاء PPF والتظليل فهما في فرع بن عمران." },
     {
       q: "هل يمكنني التقسيط؟",
-      a: "نعم مع PayLater: 4 أقساط للطلبات فوق 300 ريال، وحتى 12 قسطًا للطلبات فوق 6,000 ريال.",
+      a: "نعم، عبر PayLater. يمكنك الدفع على 4 أقساط للطلبات فوق 300 ريال، وحتى 12 قسطًا للطلبات فوق 6,000 ريال.",
     },
   ],
   en: [
@@ -268,13 +268,13 @@ const FAQS: Record<Locale, { q: string; a: string }[]> = {
     },
     {
       q: "How much does the breakdown/tow cost?",
-      a: "Free. If your car needs to come to the branch, we send a tow truck to bring it in.",
+      a: "Free on bills over 1,000 QAR. If your car needs to come to the branch, we send a tow truck to bring it in.",
     },
     {
       q: "Do you service non-Chinese cars?",
       a: "Yes. We specialize in Chinese cars, and insulation, PPF, spare parts and maintenance are available for all cars.",
     },
-    { q: "Which branch should I visit?", a: "Whichever is closer — both branches offer the same services." },
+    { q: "Which branch should I visit?", a: "Whichever is closer. Both branches offer the same services, except PPF and tinting, which are at Bin Omran." },
     {
       q: "Can I pay in installments?",
       a: "Yes, with PayLater: 4 installments for orders over 300 QAR, and up to 12 installments for orders over 6,000 QAR.",
@@ -282,22 +282,24 @@ const FAQS: Record<Locale, { q: string; a: string }[]> = {
   ],
 };
 
-const BOOKING_SERVICES: Record<Locale, { value: string; label: string }[]> = {
+export type BookingServiceId = "accessories" | "ppf" | "tinting" | "programming" | "parts" | "maintenance";
+
+const BOOKING_SERVICES: Record<Locale, { id: BookingServiceId; value: string; label: string }[]> = {
   ar: [
-    { value: "الإكسسوارات", label: "إكسسوارات" },
-    { value: "حماية الطلاء PPF", label: "PPF" },
-    { value: "العازل والتظليل", label: "تظليل" },
-    { value: "البرمجة", label: "برمجة" },
-    { value: "قطع الغيار", label: "قطع غيار" },
-    { value: "الصيانة", label: "صيانة" },
+    { id: "accessories", value: "الإكسسوارات", label: "إكسسوارات" },
+    { id: "ppf", value: "حماية الطلاء PPF", label: "PPF" },
+    { id: "tinting", value: "العازل والتظليل", label: "تظليل" },
+    { id: "programming", value: "البرمجة", label: "برمجة" },
+    { id: "parts", value: "قطع الغيار", label: "قطع غيار" },
+    { id: "maintenance", value: "الصيانة", label: "صيانة" },
   ],
   en: [
-    { value: "Accessories", label: "Accessories" },
-    { value: "PPF paint protection", label: "PPF" },
-    { value: "Insulation & tinting", label: "Tinting" },
-    { value: "Programming", label: "Programming" },
-    { value: "Spare parts", label: "Spare parts" },
-    { value: "Maintenance", label: "Maintenance" },
+    { id: "accessories", value: "Accessories", label: "Accessories" },
+    { id: "ppf", value: "PPF paint protection", label: "PPF" },
+    { id: "tinting", value: "Insulation & tinting", label: "Tinting" },
+    { id: "programming", value: "Programming", label: "Programming" },
+    { id: "parts", value: "Spare parts", label: "Spare parts" },
+    { id: "maintenance", value: "Maintenance", label: "Maintenance" },
   ],
 };
 
@@ -327,6 +329,16 @@ export function getSteps(locale: Locale) {
 export function getFaqs(locale: Locale) {
   return FAQS[locale];
 }
+/**
+ * What cannot be booked together: PPF is never done at home, and Al Gharrafa
+ * does neither PPF nor tinting (both are at Bin Omran).
+ */
+export function bookingServiceAvailable(service: BookingServiceId, branch: "binomran" | "gharrafa", place: "branch" | "home"): boolean {
+  if (service === "ppf") return place === "branch" && branch === "binomran";
+  if (service === "tinting") return branch === "binomran";
+  return true;
+}
+
 export function getBookingServices(locale: Locale) {
   return BOOKING_SERVICES[locale];
 }

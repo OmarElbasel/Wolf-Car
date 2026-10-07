@@ -62,7 +62,7 @@ test.describe("public catalog", () => {
     const body = await api.text();
     expect(body).not.toMatch(/"barcode"|6291041500213/);
     for (const product of JSON.parse(body) as Record<string, unknown>[]) {
-      expect(Object.keys(product).sort()).toEqual(["categoryId", "description", "id", "imageUrl", "name", "price", "thumbUrl"]);
+      expect(Object.keys(product).sort()).toEqual(["categoryId", "description", "groupId", "id", "imageUrl", "name", "price", "thumbUrl", "variantColor", "variantLabel"]);
     }
   });
 
