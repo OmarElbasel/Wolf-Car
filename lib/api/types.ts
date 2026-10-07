@@ -56,6 +56,8 @@ export interface Product {
   /** "125.50" (QAR) or null until Finance sets it */
   price: string | null;
   priceUpdatedAt: string | null;
+  /** name, barcode, photo and price come from Odoo and are not edited here */
+  fromOdoo?: boolean;
   imageUrl: string;
   thumbUrl: string;
   createdBy: { id: string; displayName: string };

@@ -54,6 +54,19 @@ describe("products page permissions", () => {
     expect(screen.getAllByRole("button", { name: /^Price history of / })).toHaveLength(2);
   });
 
+  it("offers no price or edit button on a product that comes from Odoo", async () => {
+    server.use(http.get("/api/products", () => HttpResponse.json([{ ...brake, fromOdoo: true }, oil])));
+    const everything = makeUser({ permissions: ["product.read", "product.update.price", "product.update.details"] });
+    renderWithApp(<ProductsPage />, { user: everything });
+
+    expect(await screen.findByText("From Odoo")).toBeInTheDocument();
+    // only the hand-made product can still be priced and edited here
+    expect(screen.queryByRole("button", { name: "Change price" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Set price" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^Edit / })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^Price history of / })).toHaveLength(2);
+  });
+
   it("a Branch Manager can add, edit and reorder but not price", async () => {
     server.use(http.get("/api/products", () => HttpResponse.json([brake, oil])));
     renderWithApp(<ProductsPage />, { user: manager() });

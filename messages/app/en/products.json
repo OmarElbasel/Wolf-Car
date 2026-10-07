@@ -59,6 +59,15 @@
   "orderLabel": "List order",
   "savingOrder": "Saving the new order…",
   "editNamed": "Edit {name}",
+  "odoo": {
+    "lead": "Products come from Odoo. Last synced {when}, and again every {minutes} min.",
+    "never": "Products come from Odoo. Not synced yet.",
+    "now": "Sync now",
+    "syncing": "Syncing…",
+    "done": "Synced: {created} new, {updated} updated, {hidden} hidden.",
+    "failed": "The last sync with Odoo failed: {error}",
+    "fromOdoo": "From Odoo"
+  },
   "historyNamed": "Price history of {name}",
   "dnd": {
     "roleDescription": "sortable",
