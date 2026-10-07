@@ -18,12 +18,36 @@ describe('PublicCatalogService', () => {
         categoryId: null,
         price: new Prisma.Decimal('499.5'),
         imageKey: '11111111-1111-4111-8111-111111111111',
+        odooTemplateId: null,
+        variantLabel: null,
+        variantColor: null,
       },
     ] as never);
     const items = await service.list();
     const select = prisma.product.findMany.mock.calls[0][0]?.select as Record<string, boolean>;
-    expect(Object.keys(select).sort()).toEqual(['categoryId', 'description', 'id', 'imageKey', 'name', 'price']);
-    expect(Object.keys(items[0]).sort()).toEqual(['categoryId', 'description', 'id', 'imageUrl', 'name', 'price', 'thumbUrl']);
+    expect(Object.keys(select).sort()).toEqual([
+      'categoryId',
+      'description',
+      'id',
+      'imageKey',
+      'name',
+      'odooTemplateId',
+      'price',
+      'variantColor',
+      'variantLabel',
+    ]);
+    expect(Object.keys(items[0]).sort()).toEqual([
+      'categoryId',
+      'description',
+      'groupId',
+      'id',
+      'imageUrl',
+      'name',
+      'price',
+      'thumbUrl',
+      'variantColor',
+      'variantLabel',
+    ]);
     expect(items[0].price).toBe('499.50');
   });
 
@@ -36,10 +60,11 @@ describe('PublicCatalogService', () => {
 
   it('filters by an active category when one is given', async () => {
     prisma.product.findMany.mockResolvedValue([]);
+    prisma.category.findUnique.mockResolvedValue({ parentId: null } as never);
     await service.list('22222222-2222-4222-8222-222222222222');
     expect(prisma.product.findMany.mock.calls[0][0]?.where).toEqual({
       isActive: true,
-      categoryId: '22222222-2222-4222-8222-222222222222',
+      categoryId: { in: ['22222222-2222-4222-8222-222222222222'] },
       category: { isActive: true },
     });
   });

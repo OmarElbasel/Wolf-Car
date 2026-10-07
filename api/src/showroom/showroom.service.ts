@@ -5,6 +5,7 @@ import type { AuthUser } from '../common/types';
 import { Prisma } from '../generated/prisma/client';
 import { ORDER_DETAIL_SELECT, orderAuditView, orderDetail, type OrderDetail } from '../orders/order.view';
 import { PrismaService } from '../prisma/prisma.service';
+import { VARIANT_SELECT, variantView } from '../products/variant.view';
 import { imageUrl } from '../uploads/image-processing';
 import type { CreateShowroomOrderDto } from '../orders/dto/orders.dto';
 
@@ -35,29 +36,37 @@ export class ShowroomService {
             price: true,
             imageKey: true,
             categoryId: true,
+            ...VARIANT_SELECT,
           },
         },
       },
     });
+    const active = await this.prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ position: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true, carModel: true, imageKey: true, parentId: true },
+    });
+    // a brand's own products are common to its models: they show in each of them
+    const models = new Map<string, string[]>();
+    for (const c of active) if (c.parentId) models.set(c.parentId, [...(models.get(c.parentId) ?? []), c.id]);
+
     const products = rows.map(({ product: p }) => ({
       id: p.id,
       name: p.name,
       description: p.description,
       barcode: p.barcode,
       categoryId: p.categoryId,
+      categoryIds: p.categoryId ? [p.categoryId, ...(models.get(p.categoryId) ?? [])] : [],
       price: money(p.price) as string,
       imageUrl: imageUrl(p.imageKey),
       thumbUrl: imageUrl(p.imageKey, 'sm'),
+      ...variantView(p),
     }));
 
-    const used = new Set(products.map((p) => p.categoryId).filter((id): id is string => id !== null));
-    const categories = used.size
-      ? await this.prisma.category.findMany({
-          where: { id: { in: [...used] }, isActive: true },
-          orderBy: [{ position: 'asc' }, { name: 'asc' }],
-          select: { id: true, name: true, carModel: true, imageKey: true },
-        })
-      : [];
+    const count = new Map<string, number>();
+    for (const p of products) for (const id of p.categoryIds) count.set(id, (count.get(id) ?? 0) + 1);
+    // a brand with models is not a tab of its own
+    const categories = active.filter((c) => count.has(c.id) && !models.has(c.id));
 
     return {
       branch: { id: branch.id, code: branch.code, name: branch.name, nameAr: branch.nameAr },
@@ -67,7 +76,7 @@ export class ShowroomService {
         carModel: c.carModel,
         imageUrl: c.imageKey ? imageUrl(c.imageKey) : null,
         thumbUrl: c.imageKey ? imageUrl(c.imageKey, 'sm') : null,
-        count: products.filter((p) => p.categoryId === c.id).length,
+        count: count.get(c.id) ?? 0,
       })),
       products,
     };

@@ -12,8 +12,9 @@ export interface OdooVariant {
   display_name: string;
   /** The company's own "Arabic Product Name" field; the same for every variant of a product. */
   arabic_name: string | false;
-  /** Empty for a product without variants. */
+  /** Empty for a product without variants; one id per attribute (colour, size, …) otherwise. */
   product_template_variant_value_ids: number[];
+  product_tmpl_id: [number, string];
   barcode: string | false;
   lst_price: number;
   active: boolean;
@@ -26,11 +27,32 @@ export const VARIANT_FIELDS = [
   'display_name',
   'arabic_name',
   'product_template_variant_value_ids',
+  'product_tmpl_id',
   'barcode', 'lst_price', 'active', 'sale_ok', 'type', 'categ_id',
 ] as const;
 
+/** A product.template.attribute.value row: the "Black" of a colour variant. */
+export interface OdooAttributeValue {
+  id: number;
+  name: string;
+  html_color: string | false;
+}
+
+/** A product.category row. */
+export interface OdooCategory {
+  id: number;
+  complete_name: string;
+  parent_id: [number, string] | false;
+}
+
 export interface OdooProduct {
   odooId: number;
+  /** Shared by the colours/sizes of one product. */
+  templateOdooId: number;
+  /** "أسود" — null for a product that comes in one form only. */
+  variantLabel: string | null;
+  /** "#060505", when Odoo has a swatch for the colour. */
+  variantColor: string | null;
   name: string;
   barcode: string | null;
   /** QAR with two decimals, e.g. "99.00" */
@@ -61,26 +83,57 @@ export function skipReason(v: OdooVariant): string | null {
   return null;
 }
 
-/**
- * The Arabic name, with the variant's own "(Black)" taken from Odoo's display
- * name: the Arabic field belongs to the product, so variants would otherwise
- * be indistinguishable. Null when Odoo has no Arabic name.
- */
-function arabicName(v: OdooVariant): string | null {
-  const arabic = normaliseText(v.arabic_name || '');
-  if (!arabic) return null;
-  const variant = v.product_template_variant_value_ids.length ? /\(([^()]+)\)$/.exec(normaliseText(v.display_name)) : null;
-  return variant ? `${arabic} (${variant[1]})` : arabic;
+/** Odoo holds the colours and sizes in English only. Keyed in lower case. */
+const VARIANT_LABELS_AR: Readonly<Record<string, string>> = {
+  black: 'أسود',
+  white: 'أبيض',
+  'off white': 'أوف وايت',
+  beige: 'بيج',
+  brown: 'بني',
+  orange: 'برتقالي',
+  maroon: 'عنابي',
+  red: 'أحمر',
+  blue: 'أزرق',
+  'light blue': 'أزرق فاتح',
+  'deep blue': 'أزرق غامق',
+  green: 'أخضر',
+  gray: 'رمادي',
+  grey: 'رمادي',
+  silver: 'فضي',
+  gold: 'ذهبي',
+  carbon: 'كربون',
+  carbo: 'كربون',
+  small: 'صغير',
+  medium: 'وسط',
+  big: 'كبير',
+  large: 'كبير',
+};
+
+const ARABIC = /[\u0600-\u06FF]/;
+
+/** The variant's name as the showroom shows it: Arabic where it is known. */
+export function variantLabel(name: string): string {
+  const text = normaliseText(name);
+  // some values are written in both languages: "Matte/مطفي"
+  const arabicPart = text.split('/').map((part) => part.trim()).find((part) => ARABIC.test(part));
+  return (arabicPart ?? VARIANT_LABELS_AR[text.toLowerCase()] ?? text).slice(0, 60);
 }
 
-/** Maps a variant that passed skipReason. */
-export function toProduct(v: OdooVariant): OdooProduct {
+/** Maps a variant that passed skipReason. `value` is its colour or size, when it has one. */
+export function toProduct(v: OdooVariant, value?: OdooAttributeValue): OdooProduct {
   const warnings: string[] = [];
+  const label = value ? variantLabel(value.name) : null;
 
-  let name = arabicName(v) ?? normaliseText(v.display_name);
+  // the Arabic name belongs to the product, so every variant carries the same
+  // one; Odoo's own name already ends in the English "(Black)", which goes
+  const odooName = normaliseText(v.display_name);
+  const base = normaliseText(v.arabic_name || '') || (label ? odooName.replace(/\s*\([^()]*\)$/, '') : odooName);
+  const suffix = label ? ` (${label})` : '';
+  let name = `${base}${suffix}`;
   if (name.length > PRODUCT_NAME_MAX) {
     warnings.push(`name truncated to ${PRODUCT_NAME_MAX} characters`);
-    name = name.slice(0, PRODUCT_NAME_MAX);
+    // the colour must survive, or the variants of a long name become identical
+    name = `${base.slice(0, PRODUCT_NAME_MAX - suffix.length)}${suffix}`;
   }
 
   let barcode: string | null = (v.barcode ? normaliseText(v.barcode) : '') || null;
@@ -91,6 +144,9 @@ export function toProduct(v: OdooVariant): OdooProduct {
 
   return {
     odooId: v.id,
+    templateOdooId: v.product_tmpl_id[0],
+    variantLabel: label,
+    variantColor: value && value.html_color && /^#[0-9a-fA-F]{6}$/.test(value.html_color) ? value.html_color.toLowerCase() : null,
     name,
     barcode,
     price: v.lst_price.toFixed(2),
@@ -126,4 +182,35 @@ export function legacyCategoryKey(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
   return LEGACY_ALIASES[key] ?? key;
+}
+
+/**
+ * The brand a car model sits under, or null. A category directly under a root
+ * ("Car / LEOPARD") gets no parent: the root is not a brand, and linking to it
+ * would make its products common to every car.
+ */
+export function parentCategoryOdooId(category: OdooCategory, byId: ReadonlyMap<number, OdooCategory>): number | null {
+  const parent = category.parent_id ? byId.get(category.parent_id[0]) : undefined;
+  return parent?.parent_id ? parent.id : null;
+}
+
+/** Arabic names for the Odoo categories the old catalogue had no equivalent of, by legacyCategoryKey. */
+const CATEGORY_NAMES_AR: Readonly<Record<string, string>> = {
+  leopard: 'ليوبارد',
+  jetour: 'جيتور',
+  tank: 'تانك',
+  tank300: 'تانك 300',
+  haval: 'هافال',
+  rox01: 'روكس 01',
+  roxadamas: 'روكس أداماس',
+  dinza: 'دينزا',
+  dinza5: 'دينزا 5',
+  dinza8: 'دينزا 8',
+  caraccessories: 'اكسسوارات السيارات',
+  othercar: 'سيارات أخرى',
+  oils: 'زيوت',
+};
+
+export function arabicCategoryName(name: string): string | null {
+  return CATEGORY_NAMES_AR[legacyCategoryKey(name)] ?? null;
 }

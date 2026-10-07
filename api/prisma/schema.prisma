@@ -235,12 +235,18 @@ model Category {
   legacyId  String?  @unique @map("legacy_id") @db.VarChar(64)
   /// Id of the Odoo product category (product.category) this row was imported from.
   odooId    Int?     @unique @map("odoo_id")
+  /// The brand a car model belongs to ("Leopard" for "Leopard 5"). A brand's
+  /// own products are common to its models and are listed inside each of them.
+  parentId  String?  @map("parent_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   products Product[]
+  parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryParent")
 
   @@index([position])
+  @@index([parentId])
   @@map("categories")
 }
 
@@ -261,6 +267,13 @@ model Product {
   /// False hides the product from the showroom, the website and the dashboard
   /// list. Rows are never deleted: past orders still point at them.
   isActive       Boolean   @default(true) @map("is_active")
+  /// Id of the Odoo product (product.template). Rows that share it are the
+  /// colours or sizes of one product and are shown as one card with a picker.
+  odooTemplateId Int?      @map("odoo_template_id")
+  /// "أسود", "مطفي", … — null for a product that comes in one form only.
+  variantLabel   String?   @map("variant_label") @db.VarChar(60)
+  /// "#980606" for a colour variant, to draw its swatch.
+  variantColor   String?   @map("variant_color") @db.VarChar(7)
   /// UUID of the processed image files in UPLOAD_DIR (<key>.webp and <key>-sm.webp).
   imageKey       String    @map("image_key") @db.Uuid
   /// Null until Finance sets it. Unpriced products are hidden from the showroom.
@@ -281,6 +294,7 @@ model Product {
   @@index([name])
   @@index([barcode])
   @@index([categoryId])
+  @@index([odooTemplateId])
   @@map("products")
 }
 

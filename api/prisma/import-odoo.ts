@@ -17,7 +17,19 @@ import { copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { OdooClient, odooConfigFromEnv } from '../src/odoo/odoo-client';
-import { categoryName, legacyCategoryKey, skipReason, toProduct, VARIANT_FIELDS, type OdooProduct, type OdooVariant } from '../src/odoo/odoo-rows';
+import {
+  arabicCategoryName,
+  categoryName,
+  legacyCategoryKey,
+  parentCategoryOdooId,
+  skipReason,
+  toProduct,
+  VARIANT_FIELDS,
+  type OdooAttributeValue,
+  type OdooCategory,
+  type OdooProduct,
+  type OdooVariant,
+} from '../src/odoo/odoo-rows';
 import { placeInBranch } from '../src/odoo/place-in-branch';
 import { placeholderImage } from '../src/odoo/placeholder-image';
 import { createPgAdapter } from '../src/prisma/pg-adapter';
@@ -53,12 +65,23 @@ async function main(): Promise<void> {
     display_default_code: false,
   });
   const skipped = new Map<string, number>();
-  const products: OdooProduct[] = [];
+  const wantedVariants: OdooVariant[] = [];
   for (const v of variants) {
     const reason = skipReason(v);
     if (reason) skipped.set(reason, (skipped.get(reason) ?? 0) + 1);
-    else products.push(toProduct(v));
+    else wantedVariants.push(v);
   }
+  // the colour or size of each variant, and the category tree (which car belongs to which brand)
+  const valueIds = [...new Set(wantedVariants.flatMap((v) => v.product_template_variant_value_ids))];
+  const values = new Map(
+    (valueIds.length ? await odoo.read<OdooAttributeValue>('product.template.attribute.value', valueIds, ['name', 'html_color']) : []).map(
+      (value) => [value.id, value],
+    ),
+  );
+  const odooCategories = new Map(
+    (await odoo.searchRead<OdooCategory>('product.category', [], ['complete_name', 'parent_id'])).map((c) => [c.id, c]),
+  );
+  const products: OdooProduct[] = wantedVariants.map((v) => toProduct(v, values.get(v.product_template_variant_value_ids[0])));
   console.log(`Odoo has ${variants.length} variants: ${products.length} to import, ${variants.length - products.length} left out`);
   for (const [reason, n] of [...skipped].sort((a, b) => b[1] - a[1])) console.log(`  - ${n} ${reason}`);
 
@@ -146,11 +169,7 @@ async function main(): Promise<void> {
       const name = categoryName(categoryPath);
       const legacy = legacyByKey.get(legacyCategoryKey(name));
       if (legacy?.imageKey && !found?.imageKey) {
-        // its own copy of the files, so neither category can remove the other's photo
-        const imageKey = randomUUID();
-        for (const suffix of ['', '-sm']) {
-          await copyFile(path.join(uploadDir, `${legacy.imageKey}${suffix}.webp`), path.join(uploadDir, `${imageKey}${suffix}.webp`));
-        }
+        const imageKey = await copyImage(legacy.imageKey, uploadDir);
         const data = { name: legacy.name, nameEn: legacy.nameEn ?? name, carModel: legacy.carModel, imageKey };
         const saved = found
           ? await prisma.category.update({ where: { id: found.id }, data, select: { id: true } })
@@ -167,7 +186,34 @@ async function main(): Promise<void> {
         }));
       categoryIdByOdoo.set(odooId, saved.id);
     }
-    console.log(`Categories: ${categoryIdByOdoo.size} (${adopted} took the name and photo of an old category)`);
+    // brand links, Arabic names for the categories the old catalogue never had,
+    // and the brand's photo for a model that has none of its own
+    let models = 0;
+    for (const [odooId, id] of categoryIdByOdoo) {
+      const source = odooCategories.get(odooId);
+      const parentOdooId = source ? parentCategoryOdooId(source, odooCategories) : null;
+      const parentId = parentOdooId === null ? null : (categoryIdByOdoo.get(parentOdooId) ?? null);
+      const row = await prisma.category.findUniqueOrThrow({ where: { id }, select: { name: true, imageKey: true } });
+      const odooName = categoryName(paths.get(odooId) as string);
+      // only while the name is still Odoo's: one changed by hand is kept
+      const arabic = row.name === odooName ? arabicCategoryName(odooName) : null;
+      const parentImage =
+        !row.imageKey && parentId
+          ? (await prisma.category.findUniqueOrThrow({ where: { id: parentId }, select: { imageKey: true } })).imageKey
+          : null;
+      await prisma.category.update({
+        where: { id },
+        data: {
+          parentId,
+          ...(arabic ? { name: arabic, carModel: arabic } : {}),
+          ...(parentImage ? { imageKey: await copyImage(parentImage, uploadDir) } : {}),
+        },
+      });
+      if (parentId) models++;
+    }
+    console.log(
+      `Categories: ${categoryIdByOdoo.size} (${adopted} took the name and photo of an old category, ${models} are models of a brand)`,
+    );
 
     let created = 0;
     let updated = 0;
@@ -184,6 +230,9 @@ async function main(): Promise<void> {
         const row = await prisma.product.create({
           data: {
             odooId: p.odooId,
+            odooTemplateId: p.templateOdooId,
+            variantLabel: p.variantLabel,
+            variantColor: p.variantColor,
             name: p.name,
             barcode: p.barcode,
             categoryId,
@@ -203,6 +252,9 @@ async function main(): Promise<void> {
           where: { id: before.id },
           data: {
             name: p.name,
+            odooTemplateId: p.templateOdooId,
+            variantLabel: p.variantLabel,
+            variantColor: p.variantColor,
             barcode: p.barcode,
             categoryId,
             isActive: true,
@@ -254,6 +306,15 @@ async function main(): Promise<void> {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+/** A copy of a stored image under a new key, so no two rows can remove each other's photo. */
+async function copyImage(key: string, uploadDir: string): Promise<string> {
+  const copy = randomUUID();
+  for (const suffix of ['', '-sm']) {
+    await copyFile(path.join(uploadDir, `${key}${suffix}.webp`), path.join(uploadDir, `${copy}${suffix}.webp`));
+  }
+  return copy;
 }
 
 main().catch((err) => {
