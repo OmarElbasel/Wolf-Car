@@ -19,6 +19,11 @@ export function testEnv(): Record<string, string> {
     AUTH_THROTTLE_LIMIT: '100000',
     AUTH_THROTTLE_TTL_SECONDS: '60',
     UPLOAD_DIR: './storage/test-uploads',
+    // the suite never talks to a real Odoo, whatever the developer's .env holds
+    ODOO_URL: '',
+    ODOO_DB: '',
+    ODOO_LOGIN: '',
+    ODOO_API_KEY: '',
     JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET ?? 'test-secret-test-secret-test-secret-1234',
     TOTP_ENCRYPTION_KEY: process.env.TOTP_ENCRYPTION_KEY ?? 'x+2Xewyg9jKZ9SYe3LaZo/6ETQkH2lyjFhSkDhfxoBo=',
   };

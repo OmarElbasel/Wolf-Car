@@ -3,6 +3,7 @@ import { AuditTrail } from '../activity/audit-trail.service';
 import { PasswordService } from '../auth/password.service';
 import { TokenService } from '../auth/token.service';
 import { TwoFactorService } from '../auth/two-factor.service';
+import { isStrongPassword } from '../../../shared/validation';
 import { generatePassword } from '../common/crypto';
 import { type Page, skipTake } from '../common/pagination';
 import type { AuthUser } from '../common/types';
@@ -124,9 +125,10 @@ export class UsersService {
     this.trail.setEntity('User', id).setChange(userView(current), null);
   }
 
-  async resetPassword(id: string): Promise<IssuedCredentials> {
+  /** `chosen` is a password the admin typed; without it one is generated. */
+  async resetPassword(id: string, chosen?: string): Promise<IssuedCredentials> {
     const user = await this.find(id);
-    const password = generatePassword();
+    const password = this.passwordFor(user.username, chosen);
     await this.prisma.user.update({
       where: { id },
       data: { passwordHash: await this.passwords.hash(password), failedLoginCount: 0, lockedUntil: null },
@@ -136,10 +138,10 @@ export class UsersService {
     return this.credentials(user, { password });
   }
 
-  async resetShowroomPassword(id: string): Promise<IssuedCredentials> {
+  async resetShowroomPassword(id: string, chosen?: string): Promise<IssuedCredentials> {
     const user = await this.find(id);
     if (!user.branch) throw rule('NO_SHOWROOM', 'Only branch accounts have showroom credentials.');
-    const showroomPassword = generatePassword();
+    const showroomPassword = this.passwordFor(user.username, chosen);
     await this.prisma.user.update({
       where: { id },
       data: {
@@ -151,6 +153,13 @@ export class UsersService {
     await this.tokens.revokeUserSessions(id, 'showroom_password_reset', { audience: 'SHOWROOM' });
     this.trail.setEntity('User', id).setBranch(user.branch.id);
     return this.credentials(user, { showroomPassword });
+  }
+
+  /** The DTO has checked the policy; only here is the username known. */
+  private passwordFor(username: string, chosen?: string): string {
+    if (chosen === undefined) return generatePassword();
+    if (!isStrongPassword(chosen, username)) throw rule('PASSWORD_HAS_USERNAME', 'The password must not contain the username.');
+    return chosen;
   }
 
   async resetTwoFactor(id: string): Promise<UserView> {

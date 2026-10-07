@@ -125,6 +125,11 @@ describe("Sales slots page", () => {
     const full = screen.getByRole("region", { name: /12/ });
     expect(within(full).getByText("Closed: a full PPF car is booked.")).toBeInTheDocument();
     expect(within(full).getByText("Land Cruiser 2024")).toBeInTheDocument();
+    // the day's light jobs are listed right here, without opening the side panel
+    const light = within(full).getByRole("list", { name: "Light jobs this day" });
+    expect(within(light).getByText("Tesla Y")).toBeInTheDocument();
+    expect(within(light).getByText("Noor")).toBeInTheDocument();
+    expect(within(light).queryByText("Land Cruiser 2024")).not.toBeInTheDocument();
     expect(within(full).getByRole("button", { name: "Request a second full PPF (exception)" })).toBeInTheDocument();
     expect(within(full).getByRole("button", { name: "Request a light job" })).toBeInTheDocument();
     expect(within(full).queryByRole("list", { name: "Waiting for the call center" })).not.toBeInTheDocument();

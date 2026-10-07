@@ -17,11 +17,13 @@ import {
   UserX,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Pill, RoleBadge } from "@/components/app/badges";
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { CredentialsDialog } from "@/components/app/credentials-dialog";
+import { PasswordChecks } from "@/features/account/password-checks";
+import { isStrongPassword } from "@/shared/validation";
 import { PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
 import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
@@ -103,6 +105,9 @@ function UsersManager() {
   const [confirm, setConfirm] = useState<{ kind: ConfirmKind; user: UserView } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [credentials, setCredentials] = useState<IssuedCredentials[] | null>(null);
+  /** a password the admin typed for a reset; empty lets the API generate one */
+  const [chosen, setChosen] = useState("");
+  const chosenId = useId();
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["users"] });
   /** Runs an action, reporting failures as a toast (and rethrowing so dialogs stay open). */
@@ -114,12 +119,13 @@ function UsersManager() {
       throw e;
     }
   };
-  const post = <T,>(u: UserView, path: string) => api<T>(`/users/${u.id}/${path}`, { method: "POST" });
+  const post = <T,>(u: UserView, path: string, json?: object) => api<T>(`/users/${u.id}/${path}`, { method: "POST", json });
+  const chosenBody = () => (chosen ? { password: chosen } : undefined);
   const patch = (u: UserView, json: Partial<UserView>) => api<UserView>(`/users/${u.id}`, { method: "PATCH", json });
 
   const confirmAction: Record<ConfirmKind, (u: UserView) => Promise<unknown>> = {
-    resetPassword: async (u) => setCredentials([await post<IssuedCredentials>(u, "reset-password")]),
-    resetShowroom: async (u) => setCredentials([await post<IssuedCredentials>(u, "reset-showroom-password")]),
+    resetPassword: async (u) => setCredentials([await post<IssuedCredentials>(u, "reset-password", chosenBody())]),
+    resetShowroom: async (u) => setCredentials([await post<IssuedCredentials>(u, "reset-showroom-password", chosenBody())]),
     reset2fa: async (u) => {
       await post<UserView>(u, "reset-2fa");
       toast.success(t("Users.reset2faDone"));
@@ -158,11 +164,13 @@ function UsersManager() {
         }).catch(() => undefined);
         return;
       default:
+        setChosen("");
         setConfirm({ kind, user: u });
         setConfirmOpen(true);
     }
   };
 
+  const setsPassword = confirm?.kind === "resetPassword" || confirm?.kind === "resetShowroom";
   const confirmCopy = confirm && {
     resetPassword: { title: t("Users.resetPassword"), body: t("Users.resetPasswordBody", { name: isolate(confirm.user.displayName) }), label: t("Users.resetPassword") },
     resetShowroom: { title: t("Users.resetShowroom"), body: t("Users.resetShowroomBody"), label: t("Users.resetShowroom") },
@@ -326,8 +334,28 @@ function UsersManager() {
         body={confirmCopy?.body}
         confirmLabel={confirmCopy?.label}
         destructive={confirm?.kind === "delete"}
+        confirmDisabled={setsPassword && chosen !== "" && !isStrongPassword(chosen, confirm?.user.username)}
         onConfirm={() => (confirm ? run(() => confirmAction[confirm.kind](confirm.user)) : Promise.resolve())}
-      />
+      >
+        {setsPassword && confirm && (
+          <div className="grid gap-2">
+            <label htmlFor={chosenId} className="text-[14px] font-bold text-ink-2">
+              {t("Users.chosenPassword")}
+            </label>
+            {/* shown as typed: the admin has to read it out or copy it anyway */}
+            <Input
+              id={chosenId}
+              dir="ltr"
+              autoComplete="off"
+              spellCheck={false}
+              className="font-mono"
+              value={chosen}
+              onChange={(e) => setChosen(e.target.value)}
+            />
+            {chosen && <PasswordChecks password={chosen} username={confirm.user.username} />}
+          </div>
+        )}
+      </ConfirmDialog>
       <CredentialsDialog credentials={credentials} onClose={() => setCredentials(null)} />
     </>
   );

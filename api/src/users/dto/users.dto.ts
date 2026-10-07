@@ -1,7 +1,7 @@
 import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, MinLength, ValidateIf } from 'class-validator';
 import { DISPLAY_NAME_MAX } from '../../../../shared/validation';
 import { PageQueryDto } from '../../common/pagination';
-import { EmptyToNull, EmptyToUndefined, Trim, TrimLower } from '../../common/validators';
+import { EmptyToNull, EmptyToUndefined, IsStrongPassword, Trim, TrimLower } from '../../common/validators';
 import { Role } from '../../generated/prisma/enums';
 
 /** Roles that are not tied to a branch. Branch staff are created with their branch. */
@@ -24,6 +24,14 @@ export class CreateUserDto {
   /** Branch managers and cashiers are created together with their branch (POST /branches) or via staff replacement. */
   @IsIn(NON_BRANCH_ROLES)
   role: (typeof NON_BRANCH_ROLES)[number];
+}
+
+/** Body of the two reset-password routes. Empty: the API generates the password. */
+export class ResetPasswordDto {
+  /** A password the admin chose. It must meet the same policy as any other. */
+  @IsOptional()
+  @IsStrongPassword()
+  password?: string;
 }
 
 export class UpdateUserDto {

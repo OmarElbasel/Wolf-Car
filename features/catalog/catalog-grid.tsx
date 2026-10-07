@@ -7,6 +7,8 @@ import { useDeferredValue, useMemo, useState } from "react";
 import type { PublicProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { groupVariants, type ProductGroup } from "@/lib/variants";
+import { VariantPicker } from "@/components/variant-picker";
 import { cart, MAX_QTY, useCart } from "./cart";
 
 /** Cards rendered per "show more" step; a car model can hold 150+ products. */
@@ -35,6 +37,8 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
       : products;
     return sort === "name" ? matched : [...matched].sort(byPrice(sort === "priceAsc" ? 1 : -1));
   }, [products, deferred, sort]);
+  // the colours of one product share a card
+  const groups = useMemo(() => groupVariants(visible), [visible]);
 
   return (
     <>
@@ -66,29 +70,29 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
           </select>
         </label>
         <p className="w-full text-sm font-semibold text-muted sm:ms-auto sm:w-auto" aria-live="polite">
-          {t("count", { count: visible.length })}
+          {t("count", { count: groups.length })}
         </p>
       </div>
 
-      {visible.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="rounded-[var(--radius-brand-lg)] border border-dashed border-line px-6 py-12 text-center text-ink-2">
           {products.length === 0 ? t("empty") : t("noMatch")}
         </p>
       ) : (
         <>
           <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4" data-testid="catalog-grid">
-            {visible.slice(0, shown).map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {groups.slice(0, shown).map((g) => (
+              <ProductCard key={g.key} group={g} />
             ))}
           </ul>
-          {visible.length > shown && (
+          {groups.length > shown && (
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
                 onClick={() => setShown((n) => n + PAGE)}
                 className="inline-flex min-h-[50px] items-center rounded-[var(--radius-brand)] border-[1.5px] border-line bg-surface px-6 text-[16px] font-bold hover:border-ink"
               >
-                {t("showMore", { count: visible.length - shown })}
+                {t("showMore", { count: groups.length - shown })}
               </button>
             </div>
           )}
@@ -98,9 +102,12 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
   );
 }
 
-function ProductCard({ product: p }: { product: PublicProduct }) {
+function ProductCard({ group }: { group: ProductGroup<PublicProduct> }) {
   const t = useTranslations("ProductsPage");
   const locale = useLocale();
+  const [picked, setPicked] = useState(group.variants[0].id);
+  // a search or sort can drop the picked colour from the group
+  const p = group.variants.find((v) => v.id === picked) ?? group.variants[0];
   const qty = useCart().find((l) => l.id === p.id)?.qty ?? 0;
 
   return (
@@ -110,7 +117,7 @@ function ProductCard({ product: p }: { product: PublicProduct }) {
       <div className="relative aspect-square bg-white">
         <Image
           src={p.imageUrl}
-          alt={p.name}
+          alt={group.title}
           fill
           sizes="(min-width:1280px) 220px, (min-width:768px) 30vw, 48vw"
           className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.04] sm:p-5"
@@ -118,9 +125,10 @@ function ProductCard({ product: p }: { product: PublicProduct }) {
         />
       </div>
       <div className="flex flex-1 flex-col gap-2 border-t border-line p-3 sm:p-3.5">
-        <h2 dir="auto" title={p.name} className="line-clamp-2 min-h-[2.7em] text-start text-[15px] leading-[1.35] font-bold">
-          {p.name}
+        <h2 dir="auto" title={group.title} className="line-clamp-2 min-h-[2.7em] text-start text-[15px] leading-[1.35] font-bold">
+          {group.title}
         </h2>
+        {group.variants.length > 1 && <VariantPicker variants={group.variants} selected={p.id} onSelect={setPicked} label={t("variant")} />}
         <p className="text-[17px] font-extrabold text-accent-ink tabular-nums">
           {p.price == null ? <span className="text-[15px] text-muted">{t("priceOnRequest")}</span> : formatMoney(p.price, locale)}
         </p>

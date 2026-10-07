@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Lock, ShoppingCart } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BrandMark } from "@/components/app/brand";
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
@@ -24,8 +24,12 @@ import { canAdd, itemCount, quantityOf, total as cartTotal } from "./cart";
 import { type CartEntry, CartPanel } from "./cart-panel";
 import { ALL_CATEGORIES, CategoryTabs } from "./category-tabs";
 import { CheckoutDialog } from "./checkout-dialog";
+import { type Filters, filterProducts, isFiltering, NO_FILTERS } from "./filter";
 import { newIdempotencyKey } from "./idempotency";
-import { ProductCard } from "./product-card";
+import { KioskFilters, KioskSearch } from "./kiosk-toolbar";
+import { cn } from "@/lib/utils";
+import { groupVariants } from "@/lib/variants";
+import { ProductGroupCard } from "./product-card";
 import { SuccessOverlay } from "./success-overlay";
 import { clearStoredCart, useCart } from "./use-cart";
 import { IDLE_TIMEOUT_MS, useIdleTimeout } from "./use-idle-timeout";
@@ -38,6 +42,10 @@ export interface ShowroomCatalog {
 
 export const SHOWROOM_PRODUCTS_KEY = ["showroom", "products"] as const;
 const HEADER_H = "76px";
+/** Two cards across a small tablet, three across an upright kiosk, up to five on a wide wall screen. */
+const GRID = "grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 min-[2000px]:grid-cols-5";
+/** Cards rendered per "show more" step; a car model can hold 150+ products. */
+const PAGE = 24;
 
 function KioskSplash() {
   const t = useTranslations();
@@ -55,7 +63,7 @@ function KioskSplash() {
 function ProductGridSkeleton() {
   const t = useTranslations("Common");
   return (
-    <div role="status" aria-live="polite" className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+    <div role="status" aria-live="polite" className={GRID}>
       <span className="sr-only">{t("loading")}</span>
       {Array.from({ length: 6 }, (_, i) => (
         <div key={i} className="overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface">
@@ -90,6 +98,10 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   const [clearOpen, setClearOpen] = useState(false);
   const [category, setCategory] = useState<string>(ALL_CATEGORIES);
   const [lockOpen, setLockOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
+  const [shown, setShown] = useState(PAGE);
+  // typing stays instant while a long grid catches up
+  const query = useDeferredValue(filters.query);
 
   const catalog = useQuery({
     queryKey: SHOWROOM_PRODUCTS_KEY,
@@ -105,7 +117,16 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   const products = catalog.data?.products ?? [];
   const categories = catalog.data?.categories ?? [];
   // the cart still resolves against every product, not just the visible tab
-  const visible = category === ALL_CATEGORIES ? products : products.filter((p) => p.categoryId === category);
+  // a product common to a brand carries every model of that brand in categoryIds
+  const inCategory =
+    category === ALL_CATEGORIES ? products : products.filter((p) => (p.categoryIds ?? [p.categoryId]).includes(category));
+  const applied = { ...filters, query };
+  const cars = new Map(categories.map((c) => [c.id, `${c.name} ${c.carModel ?? ""}`]));
+  // the colours of one product share a card
+  const groups = groupVariants(filterProducts(inCategory, applied, cars));
+  const filtering = isFiltering(applied);
+  // what the same search finds across every car, offered when this car has nothing
+  const elsewhere = category !== ALL_CATEGORIES && groups.length === 0 ? groupVariants(filterProducts(products, applied, cars)).length : 0;
   const byId = new Map(products.map((p) => [p.id, p]));
   const entries: CartEntry[] = cart.lines.flatMap((line) => {
     const product = byId.get(line.productId);
@@ -115,11 +136,26 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   const count = itemCount({ lines });
   const total = cartTotal({ lines }, new Map(products.map((p) => [p.id, p.price])));
   const branch = catalog.data?.branch ?? user.branch;
+  // the cashier scans barcodes off this screen: show them, and keep the basket out of the way
+  const scan = catalog.data?.branch.scanFromScreen ?? false;
   const branchName = branch ? (locale === "ar" ? branch.nameAr : branch.name) : null;
 
+  const changeFilters = (patch: Partial<Filters>) => {
+    setFilters((f) => ({ ...f, ...patch }));
+    setShown(PAGE);
+  };
+  const selectCategory = (id: string) => {
+    setCategory(id);
+    setShown(PAGE);
+  };
+
+  // the next visitor starts from the full catalogue, not the last one's search
   const reset = () => {
     placedRef.current = false;
     clear();
+    setFilters(NO_FILTERS);
+    setCategory(ALL_CATEGORIES);
+    setShown(PAGE);
     setOrder(null);
     setCheckoutKey(null);
     setSheetOpen(false);
@@ -127,10 +163,11 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   };
 
   useIdleTimeout(
-    cart.lines.length > 0 && order === null,
+    (cart.lines.length > 0 || isFiltering(filters) || category !== ALL_CATEGORIES) && order === null,
     () => {
+      const hadCart = cart.lines.length > 0;
       reset();
-      toast(t("idleReset"));
+      if (hadCart) toast(t("idleReset"));
     },
     idleTimeoutMs,
   );
@@ -160,6 +197,7 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
     total,
     onClear: () => setClearOpen(true),
     onCheckout: openCheckout,
+    scan,
     ...handlers,
   };
 
@@ -195,8 +233,10 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
         </div>
       </header>
 
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
-        <main className="min-w-0 px-4 pt-5 pb-36 lg:px-6 lg:pb-8">
+      {/* the basket docks beside the grid only on a wide landscape screen; an
+          upright kiosk keeps its full width for the products */}
+      <div className={cn(!scan && "lg:landscape:grid lg:landscape:grid-cols-[minmax(0,1fr)_360px] xl:landscape:grid-cols-[minmax(0,1fr)_400px]")}>
+        <main className={cn("min-w-0 px-4 pt-5 pb-36 lg:px-6", !scan && "lg:landscape:pb-8")}>
           <h1 className="sr-only">{branchName ? `${t("title")} · ${branchName}` : t("title")}</h1>
           {catalog.isPending ? (
             <ProductGridSkeleton />
@@ -206,31 +246,77 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
             <EmptyState title={t("noProducts")} />
           ) : (
             <>
-              <CategoryTabs categories={categories} selected={category} total={products.length} onSelect={setCategory} />
-              {visible.length === 0 ? (
-                <EmptyState title={t("noProducts")} />
+              {/* the search stays in reach while the grid scrolls under it */}
+              <div className="sticky z-20 -mx-4 -mt-3 bg-sand px-4 py-3 lg:-mx-6 lg:px-6" style={{ top: HEADER_H }}>
+                <KioskSearch value={filters.query} onChange={(value) => changeFilters({ query: value })} />
+              </div>
+              <div className="grid gap-3">
+                <CategoryTabs categories={categories} selected={category} total={groupVariants(products).length} onSelect={selectCategory} />
+                <KioskFilters filters={filters} onChange={changeFilters} />
+              </div>
+              <p className="mt-4 mb-3 text-[15px] font-bold text-ink-2" aria-live="polite" data-testid="result-count">
+                {t("results", { count: groups.length })}
+              </p>
+              {groups.length === 0 ? (
+                filtering ? (
+                  <EmptyState
+                    title={t("noMatch")}
+                    body={t("noMatchHint")}
+                    action={
+                      <div className="flex flex-wrap justify-center gap-3">
+                        {elsewhere > 0 && (
+                          <Button size="touch" onClick={() => selectCategory(ALL_CATEGORIES)}>
+                            {t("searchAll")} ({elsewhere})
+                          </Button>
+                        )}
+                        <Button size="touch" variant="outline" onClick={() => changeFilters(NO_FILTERS)}>
+                          {t("clearFilters")}
+                        </Button>
+                      </div>
+                    }
+                  />
+                ) : (
+                  <EmptyState title={t("noProducts")} />
+                )
               ) : (
-                <ul className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-label={t("title")}>
-                  {visible.map((product) => (
-                    <li key={product.id} className="grid">
-                      <ProductCard product={product} quantity={quantityOf(cart, product.id)} onAdd={() => handleAdd(product)} />
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul className={GRID} aria-label={t("title")}>
+                    {groups.slice(0, shown).map((group) => (
+                      <li key={group.key} className="grid">
+                        <ProductGroupCard group={group} scan={scan} quantityOf={(id) => quantityOf(cart, id)} onAdd={handleAdd} />
+                      </li>
+                    ))}
+                  </ul>
+                  {groups.length > shown && (
+                    <div className="mt-6 flex justify-center">
+                      <Button size="touch" variant="outline" className="min-w-64" onClick={() => setShown((n) => n + PAGE)}>
+                        {t("showMore", { count: groups.length - shown })}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
         </main>
 
-        <aside className="hidden border-s border-line bg-surface lg:block">
-          <div className="sticky" style={{ top: HEADER_H, height: `calc(100dvh - ${HEADER_H})` }}>
-            <CartPanel heading={<h2 className="text-xl leading-tight font-extrabold">{t("cart")}</h2>} {...panelProps} />
-          </div>
-        </aside>
+        {!scan && (
+          <aside className="hidden border-s border-line bg-surface lg:landscape:block">
+            <div className="sticky" style={{ top: HEADER_H, height: `calc(100dvh - ${HEADER_H})` }}>
+              <CartPanel heading={<h2 className="text-xl leading-tight font-extrabold">{t("cart")}</h2>} {...panelProps} />
+            </div>
+          </aside>
+        )}
       </div>
 
-      {/* tablets in portrait: a bottom bar that opens the cart as a sheet */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] lg:hidden">
+      {/* tablets in portrait, and every screen where the basket is not docked:
+          a bottom bar that opens the cart as a sheet */}
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]",
+          !scan && "lg:landscape:hidden",
+        )}
+      >
         <div className="mx-auto flex max-w-3xl items-center gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-ink-2">{t("items", { count })}</p>

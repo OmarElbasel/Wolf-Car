@@ -64,7 +64,7 @@ export default async function AboutPage({
 
   const stats = [
     { value: "2", label: t("statBranches"), note: t("statBranchesNote") },
-    { value: "5", label: t("statBrands"), note: t("statBrandsNote") },
+    { value: t("statBrandsValue"), label: t("statBrands"), note: t("statBrandsNote") },
     { value: "+1,200", label: t("statProducts"), note: t("statProductsNote") },
     { value: t("statTowValue"), label: t("statTow"), note: t("statTowNote") },
   ];

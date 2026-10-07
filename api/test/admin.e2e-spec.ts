@@ -97,6 +97,39 @@ describe('Administration: users, branches, permissions (e2e)', () => {
       expect((await as(admin).post(`/api/users/${world.financeId}/reset-showroom-password`)).status).toBe(400);
     });
 
+    it('sets a password the admin chose, for the dashboard and for the showroom', async () => {
+      const chosen = 'Chosen#Wolf2026!';
+      const res = await as(admin).post(`/api/users/${world.gh.cashierId}/reset-password`).send({ password: chosen });
+      expect(res.status).toBe(200);
+      expect(res.body.password).toBe(chosen);
+      await login(t, 'gh.cashier', chosen);
+
+      const kiosk = 'Kiosk#Wolf2026!!';
+      const showroom = await as(admin).post(`/api/users/${world.gh.cashierId}/reset-showroom-password`).send({ password: kiosk });
+      expect(showroom.status).toBe(200);
+      expect(showroom.body.showroomPassword).toBe(kiosk);
+      await showroomLogin(t, 'gh.cashier', kiosk);
+
+      // the chosen password is never written to the activity log
+      const logs = await t.prisma.activityLog.findMany({ where: { action: { in: ['user.password.reset', 'user.showroom_password.reset'] } } });
+      const dump = JSON.stringify(logs, (_key, value: unknown) => (typeof value === 'bigint' ? value.toString() : value));
+      expect(logs).toHaveLength(2);
+      expect(dump).not.toContain(chosen);
+      expect(dump).not.toContain(kiosk);
+    });
+
+    it('refuses a chosen password that is weak or is the username, and changes nothing', async () => {
+      const before = await t.prisma.user.findUniqueOrThrow({ where: { id: world.bo.cashierId }, select: { passwordHash: true } });
+      const weak = await as(admin).post(`/api/users/${world.bo.cashierId}/reset-password`).send({ password: 'short' });
+      expect(weak.status).toBe(400);
+      const same = await as(admin).post(`/api/users/${world.bo.cashierId}/reset-password`).send({ password: 'Bo.Cashier#2026' });
+      expect(same.status).toBe(400);
+      const extra = await as(admin).post(`/api/users/${world.bo.cashierId}/reset-password`).send({ password: 'Chosen#Wolf2026!', role: 'SUPER_ADMIN' });
+      expect(extra.status).toBe(400);
+      const after = await t.prisma.user.findUniqueOrThrow({ where: { id: world.bo.cashierId }, select: { passwordHash: true } });
+      expect(after.passwordHash).toBe(before.passwordHash);
+    });
+
     it("resets a user's 2FA so they can sign in with the password alone", async () => {
       const fin = (await login(t, 'finance', PW.finance)).token;
       const setup = await as(fin).post('/api/account/2fa/setup', { password: PW.finance });

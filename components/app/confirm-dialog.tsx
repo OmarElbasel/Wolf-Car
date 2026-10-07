@@ -22,6 +22,8 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   destructive,
+  confirmDisabled,
+  children,
   onConfirm,
 }: {
   open: boolean;
@@ -31,6 +33,10 @@ export function ConfirmDialog({
   confirmLabel: ReactNode;
   cancelLabel?: ReactNode;
   destructive?: boolean;
+  /** e.g. while a field inside the dialog is invalid */
+  confirmDisabled?: boolean;
+  /** extra content between the text and the buttons, such as an input */
+  children?: ReactNode;
   onConfirm: () => Promise<unknown>;
 }) {
   const t = useTranslations("Common");
@@ -42,11 +48,12 @@ export function ConfirmDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{body}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{cancelLabel ?? t("cancel")}</AlertDialogCancel>
           <Button
             variant={destructive ? "destructive" : "default"}
-            disabled={busy}
+            disabled={busy || confirmDisabled}
             onClick={async () => {
               setBusy(true);
               try {
