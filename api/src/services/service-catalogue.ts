@@ -17,10 +17,11 @@ export type Body = (typeof BODIES)[number];
 export const BODY_AR: Record<Body, string> = { sedan: 'سيدان', suv: 'SUV' };
 
 export const DEFAULT_TIERS: Record<TierSet, { nameAr: string; nameEn: string }[]> = {
+  // no film brand in the name: the brand behind a package changes
   ppf: [
-    { nameAr: 'البكج الأول · Xpel', nameEn: 'Package 1 · Xpel' },
-    { nameAr: 'البكج الثاني · Onyx', nameEn: 'Package 2 · Onyx' },
-    { nameAr: 'البكج الثالث · Ultra Guard', nameEn: 'Package 3 · Ultra Guard' },
+    { nameAr: 'البكج الأول', nameEn: 'Package 1' },
+    { nameAr: 'البكج الثاني', nameEn: 'Package 2' },
+    { nameAr: 'البكج الثالث', nameEn: 'Package 3' },
   ],
   tint: [
     { nameAr: 'CARONIC', nameEn: 'CARONIC' },
@@ -133,7 +134,7 @@ export const DEFAULT_SERVICES: DefaultService[] = [
 
 /**
  * The name an order line, the cashier's screen and a receipt show for one
- * price of a service: "الحماية الكاملة للسيارة · البكج الأول · Xpel · SUV".
+ * price of a service: "الحماية الكاملة للسيارة · البكج الأول · SUV".
  */
 export function lineName(serviceNameAr: string, tierNameAr: string | null, body: string | null): string {
   const parts = [serviceNameAr, tierNameAr, body === 'sedan' || body === 'suv' ? BODY_AR[body] : null];
