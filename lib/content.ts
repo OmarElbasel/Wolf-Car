@@ -258,7 +258,7 @@ const FAQS: Record<Locale, { q: string; a: string }[]> = {
     { q: "أي فرع أزور؟", a: "الأقرب لك. الفرعان يقدمان الخدمات نفسها، ما عدا حماية الطلاء PPF والتظليل فهما في فرع بن عمران." },
     {
       q: "هل يمكنني التقسيط؟",
-      a: "نعم، عبر PayLater. يمكنك الدفع على 4 أقساط للطلبات فوق 300 ريال، وحتى 12 قسطًا للطلبات فوق 6,000 ريال.",
+      a: "نعم، عبر PayLater. يمكنك الدفع على 4 أقساط للطلبات من 300 إلى 5,999 ريال، و6 أقساط من 6,000 إلى 9,999 ريال، و12 قسطًا للطلبات من 10,000 ريال فأكثر.",
     },
   ],
   en: [
@@ -277,7 +277,7 @@ const FAQS: Record<Locale, { q: string; a: string }[]> = {
     { q: "Which branch should I visit?", a: "Whichever is closer. Both branches offer the same services, except PPF and tinting, which are at Bin Omran." },
     {
       q: "Can I pay in installments?",
-      a: "Yes, with PayLater: 4 installments for orders over 300 QAR, and up to 12 installments for orders over 6,000 QAR.",
+      a: "Yes, with PayLater: 4 installments for orders from 300 to 5,999 QAR, 6 installments from 6,000 to 9,999 QAR, and 12 installments for orders of 10,000 QAR or more.",
     },
   ],
 };

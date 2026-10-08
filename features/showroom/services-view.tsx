@@ -68,7 +68,7 @@ export function ServicesView({
   onAdd: (productId: string) => boolean;
 }) {
   const t = useTranslations("Showroom");
-  const [body, setBody] = useState<ServiceBody>("sedan");
+  const [body, setBody] = useState<ServiceBody>("suv");
   const labelId = useId();
   const groups = bySection(searchServices(catalog, query));
 
