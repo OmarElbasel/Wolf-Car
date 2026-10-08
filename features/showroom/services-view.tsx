@@ -8,7 +8,7 @@ import { PosterButton } from "@/components/poster-button";
 import { Button } from "@/components/ui/button";
 import type { Service, ServiceBody, ServiceCatalog, ShowroomProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
-import { packagePoster } from "@/lib/packages";
+import { packagePoster, servicePoster } from "@/lib/packages";
 import { bySection, localName, localNote, SERVICE_BODIES, serviceLineName, serviceRows } from "@/lib/services";
 import { cn } from "@/lib/utils";
 import { normalize } from "./filter";
@@ -226,17 +226,32 @@ function ServiceCard({
   onAdd: (productId: string) => boolean;
 }) {
   const t = useTranslations("Showroom");
+  const tc = useTranslations("Common");
   const locale = useLocale();
   const name = localName(service, locale);
   const note = localNote(service, locale);
   const rows = serviceRows(service, catalog.tiers, body);
   const inCart = rows.some((r) => quantityOf(r.productId) > 0);
+  const poster = servicePoster(service.poster);
 
   return (
     <article
       aria-label={name}
-      className={cn("flex flex-col rounded-[var(--radius-brand-lg)] border bg-surface p-4 transition-colors", inCart ? "border-accent" : "border-line")}
+      className={cn(
+        "flex flex-col overflow-hidden rounded-[var(--radius-brand-lg)] border bg-surface p-4 transition-colors",
+        inCart ? "border-accent" : "border-line",
+      )}
     >
+      {poster && (
+        <PosterButton
+          poster={poster}
+          name={name}
+          viewLabel={t("viewPoster", { name })}
+          closeLabel={tc("close")}
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          className="-mx-4 -mt-4 mb-4 w-[calc(100%+2rem)] border-b border-line"
+        />
+      )}
       <h3 dir="auto" className="text-start text-lg leading-snug font-extrabold">
         {name}
       </h3>

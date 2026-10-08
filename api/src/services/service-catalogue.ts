@@ -40,6 +40,8 @@ export interface DefaultService {
   nameEn: string;
   noteAr?: string;
   noteEn?: string;
+  /** which of the shop's posters is shown with it */
+  poster?: string;
   tierSet?: TierSet;
   bodySplit?: boolean;
   /**
@@ -84,15 +86,18 @@ export const DEFAULT_SERVICES: DefaultService[] = [
   ppf('ppfParts', 'حماية الأنوار الخلفية', 'Tail lights', [400, 450], [300, 350], [200, 250]),
   ppf('ppfParts', 'حماية السقف', 'Roof', [2300, 2500], [1500, 1700], [1000, 1200]),
 
-  ppf(
-    'ppfPartial',
-    'الحماية الأمامية الكاملة (كبوت + رفارف + صدام + مرايا)',
-    'Full front protection (hood + fenders + bumper + mirrors)',
-    [3499, 3999],
-    [2999, 3499],
-    [1699, 1999],
-  ),
-  ppf('ppfPartial', 'حماية مقدمة السيارة ربع', 'Quarter front protection', [2999, 3499], [2499, 2999], [1499, 1699]),
+  {
+    ...ppf(
+      'ppfPartial',
+      'الحماية الأمامية الكاملة (كبوت + رفارف + صدام + مرايا)',
+      'Full front protection (hood + fenders + bumper + mirrors)',
+      [3499, 3999],
+      [2999, 3499],
+      [1699, 1999],
+    ),
+    poster: 'front-full',
+  },
+  { ...ppf('ppfPartial', 'حماية مقدمة السيارة ربع', 'Quarter front protection', [2999, 3499], [2499, 2999], [1499, 1699]), poster: 'front-quarter' },
 
   {
     ...ppf('ppfFull', 'الحماية الكاملة للسيارة', 'Full Protection — the whole car', [7999, 8999], [5999, 6999], [4999, 5999]),

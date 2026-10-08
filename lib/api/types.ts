@@ -132,6 +132,8 @@ export interface Service {
   tierSet: string | null;
   /** separate sedan and SUV prices */
   bodySplit: boolean;
+  /** which of the shop's posters is shown with it (lib/packages.ts); null for none */
+  poster?: string | null;
   isActive: boolean;
   thumbUrl: string | null;
   prices: ServicePrice[];

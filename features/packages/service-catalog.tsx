@@ -8,7 +8,7 @@ import { cart, useCart } from "@/features/catalog/cart";
 import { QtyStepper } from "@/features/catalog/catalog-grid";
 import type { Service, ServiceBody, ServiceCatalog as Catalog, ServiceSection } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
-import { packagePoster } from "@/lib/packages";
+import { packagePoster, servicePoster } from "@/lib/packages";
 import { bySection, localName, localNote, SERVICE_BODIES, serviceLineName, serviceRows } from "@/lib/services";
 import { cn } from "@/lib/utils";
 
@@ -151,9 +151,20 @@ function ServiceCard({ service, catalog, body }: { service: Service; catalog: Ca
   const items = useCart();
   const name = localName(service, locale);
   const note = localNote(service, locale);
+  const poster = servicePoster(service.poster);
 
   return (
-    <article aria-label={name} className="flex flex-col rounded-[var(--radius-brand-lg)] border border-line bg-surface p-5">
+    <article aria-label={name} className="flex flex-col overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface p-5">
+      {poster && (
+        <PosterButton
+          poster={poster}
+          name={name}
+          viewLabel={t("viewPoster", { name })}
+          closeLabel={t("close")}
+          sizes="(min-width: 1280px) 400px, (min-width: 768px) 50vw, 100vw"
+          className="-mx-5 -mt-5 mb-4 w-[calc(100%+2.5rem)] border-b border-line"
+        />
+      )}
       <h3 dir="auto" className="text-start text-[17px] leading-snug font-extrabold">
         {name}
       </h3>

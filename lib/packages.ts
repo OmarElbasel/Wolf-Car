@@ -14,7 +14,7 @@ export const FLAG_BADGE = {
 export const BUNDLE_COUPON = 1000;
 
 /** What every complete package includes (keys in Packages.services). */
-export const BUNDLE_SERVICES = ["fullPpf", "insulation", "windshield", "polish", "seats", "upholstery", "rims", "pickup"] as const;
+export const BUNDLE_SERVICES = ["fullPpf", "insulation", "windshield", "polish", "seats", "upholstery", "rims", "screen", "pickup"] as const;
 
 /** One of the shop's own Instagram posters (public/assets/packages). */
 export interface Poster {
@@ -23,19 +23,25 @@ export interface Poster {
   height: number;
 }
 
+const poster = (name: string): Poster => ({ src: `/assets/packages/${name}.webp`, width: 1400, height: 1400 });
+
 /**
  * The posters of the three complete packages, in package order (البكج الأول,
  * الثاني, الثالث). They print a price too: the SUV price at the time they were
  * made, so a price change in the dashboard needs a new poster.
  */
-const PACKAGE_POSTERS: readonly Poster[] = [
-  { src: "/assets/packages/bundle1.webp", width: 946, height: 1684 },
-  { src: "/assets/packages/bundle2.webp", width: 946, height: 1688 },
-  { src: "/assets/packages/bundle3.webp", width: 944, height: 1688 },
-];
+const PACKAGE_POSTERS: readonly Poster[] = [poster("package-1"), poster("package-2"), poster("package-3")];
 
 /** The poster of a PPF package: the first package of the set gets the first poster, and so on. */
 export function packagePoster(tiers: readonly { id: string; set: string }[], tierId: string): Poster | null {
   const index = tiers.filter((t) => t.set === "ppf").findIndex((t) => t.id === tierId);
   return PACKAGE_POSTERS[index] ?? null;
 }
+
+/** Posters of single services, by the key a service carries (Service.poster). */
+const SERVICE_POSTERS: Record<string, Poster> = {
+  "front-full": poster("poster-front-full"),
+  "front-quarter": poster("poster-front-quarter"),
+};
+
+export const servicePoster = (key: string | null | undefined): Poster | null => (key ? (SERVICE_POSTERS[key] ?? null) : null);

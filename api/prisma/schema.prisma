@@ -331,6 +331,8 @@ model Service {
   tierSet   String?  @map("tier_set") @db.VarChar(20)
   /// True when it has separate sedan and SUV prices.
   bodySplit Boolean  @default(false) @map("body_split")
+  /// Which of the shop's posters is shown with it ("front-full"); null for none.
+  poster    String?  @db.VarChar(40)
   position  Int      @default(0)
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
