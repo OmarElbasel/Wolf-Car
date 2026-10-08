@@ -69,6 +69,11 @@ model Branch {
   /// The cashier enters sales in Odoo by scanning barcodes off the showroom
   /// screen: the kiosk shows each product's barcode and keeps the basket closed.
   scanFromScreen Boolean  @default(false) @map("scan_from_screen")
+  /// Hash of the 6-digit PIN the showroom screen signs in with; null until set.
+  showroomPinHash        String?   @map("showroom_pin_hash")
+  /// Wrong PINs since the last right one; locks the sign-in at LOGIN_MAX_ATTEMPTS.
+  showroomPinFailedCount Int       @default(0) @map("showroom_pin_failed_count")
+  showroomPinLockedUntil DateTime? @map("showroom_pin_locked_until") @db.Timestamptz(3)
   /// Per-branch order counter, incremented inside the order transaction.
   orderSeq       Int      @default(0) @map("order_seq")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)

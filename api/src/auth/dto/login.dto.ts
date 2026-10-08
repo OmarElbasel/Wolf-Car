@@ -1,5 +1,6 @@
-import { IsJWT, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, ValidateIf } from 'class-validator';
-import { RECOVERY_CODE_PATTERN, TOTP_CODE_PATTERN } from '../../../../shared/validation';
+import { Transform } from 'class-transformer';
+import { IsJWT, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateIf } from 'class-validator';
+import { normaliseDigits, RECOVERY_CODE_PATTERN, SHOWROOM_PIN_PATTERN, TOTP_CODE_PATTERN } from '../../../../shared/validation';
 import { TrimLower } from '../../common/validators';
 
 export class LoginDto {
@@ -33,4 +34,15 @@ export class TwoFactorLoginDto {
   @IsString()
   @Matches(RECOVERY_CODE_PATTERN, { message: 'recoveryCode must look like xxxxx-xxxxx' })
   recoveryCode?: string;
+}
+
+/** The showroom screen's sign-in: which branch it stands in, and that branch's PIN. */
+export class ShowroomPinLoginDto {
+  @IsUUID()
+  branchId: string;
+
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? normaliseDigits(value).trim() : value))
+  @IsString()
+  @Matches(SHOWROOM_PIN_PATTERN, { message: 'pin must be exactly 6 digits' })
+  pin: string;
 }

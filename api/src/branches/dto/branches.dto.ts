@@ -1,6 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator';
-import { BRANCH_CODE_PATTERN, BRANCH_NAME_MAX, DISPLAY_NAME_MAX } from '../../../../shared/validation';
+import { BRANCH_CODE_PATTERN, BRANCH_NAME_MAX, DISPLAY_NAME_MAX, normaliseDigits, SHOWROOM_PIN_PATTERN } from '../../../../shared/validation';
 import { EmptyToUndefined, Trim, TrimLower } from '../../common/validators';
 
 export class StaffDto {
@@ -67,4 +67,12 @@ export class UpdateBranchDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+}
+
+export class ShowroomPinDto {
+  /** Exactly 6 digits (Arabic-Indic digits are accepted and stored as Latin). */
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? normaliseDigits(value).trim() : value))
+  @IsString()
+  @Matches(SHOWROOM_PIN_PATTERN, { message: 'pin must be exactly 6 digits' })
+  pin: string;
 }

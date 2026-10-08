@@ -26,6 +26,8 @@ interface AuthApi {
   can: (permission: PermissionKey) => boolean;
   canAny: (...permissions: PermissionKey[]) => boolean;
   login: (username: string, password: string) => Promise<Profile | TwoFactorChallenge>;
+  /** Showroom screens only: the branch and its 6-digit PIN. */
+  pinLogin: (branchId: string, pin: string) => Promise<Profile>;
   verifyTwoFactor: (challengeToken: string, second: { code: string } | { recoveryCode: string }) => Promise<Profile>;
   logout: () => Promise<void>;
   /** Re-reads the profile (e.g. after enabling 2FA). */
@@ -103,6 +105,7 @@ export function AuthProvider({ audience, children }: { audience: Audience; child
         const result = await publicPost<AuthResult | TwoFactorChallenge>(PATHS[audience].login, { username, password });
         return "twoFactorRequired" in result ? result : accept(result);
       },
+      pinLogin: async (branchId, pin) => accept(await publicPost<AuthResult>("/auth/showroom/pin", { branchId, pin })),
       verifyTwoFactor: async (challengeToken, second) =>
         accept(await publicPost<AuthResult>(PATHS[audience].twoFactor, { challengeToken, ...second })),
       logout: async () => {
@@ -143,6 +146,9 @@ export function StaticAuthProvider({
     canAny: (...ps) => ps.some((p) => permissions.has(p)),
     login: async () => {
       throw new Error("login not available in StaticAuthProvider");
+    },
+    pinLogin: async () => {
+      throw new Error("pinLogin not available in StaticAuthProvider");
     },
     verifyTwoFactor: async () => {
       throw new Error("verifyTwoFactor not available in StaticAuthProvider");

@@ -38,7 +38,7 @@
   "loadError": "Couldn't load the products.",
   "lock": "Lock showroom",
   "lockTitle": "Sign out of the showroom?",
-  "lockBody": "The cart will be cleared and the tablet will ask for the showroom password again.",
+  "lockBody": "The cart will be cleared and the screen will ask for the branch PIN again.",
   "idleReset": "The cart was cleared after a few minutes without activity.",
   "categories": "Car categories",
   "allCategories": "All",

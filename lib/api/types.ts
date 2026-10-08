@@ -219,6 +219,8 @@ export interface BranchView {
   nameAr: string;
   isActive: boolean;
   createdAt: string;
+  /** whether the showroom screen can sign in to this branch (the PIN itself is never sent) */
+  showroomPinSet?: boolean;
   manager: StaffRef | null;
   cashier: StaffRef | null;
 }

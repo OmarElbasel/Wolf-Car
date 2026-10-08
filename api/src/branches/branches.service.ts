@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditTrail } from '../activity/audit-trail.service';
 import { PasswordService } from '../auth/password.service';
 import { TokenService } from '../auth/token.service';
+import { ShowroomPinService } from '../auth/showroom-pin.service';
 import { generatePassword } from '../common/crypto';
 import type { AuthUser } from '../common/types';
 import type { Role } from '../generated/prisma/client';
@@ -19,6 +20,7 @@ const BRANCH_SELECT = {
   nameAr: true,
   isActive: true,
   createdAt: true,
+  showroomPinHash: true,
   users: { where: { deletedAt: null }, select: STAFF_SELECT },
 } as const;
 
@@ -29,6 +31,7 @@ type BranchRow = {
   nameAr: string;
   isActive: boolean;
   createdAt: Date;
+  showroomPinHash: string | null;
   users: { id: string; username: string; displayName: string; email: string | null; isActive: boolean; role: Role }[];
 };
 
@@ -44,6 +47,8 @@ function branchView(b: BranchRow) {
     nameAr: b.nameAr,
     isActive: b.isActive,
     createdAt: b.createdAt,
+    /** whether the showroom screen can sign in to this branch; the PIN itself is never sent */
+    showroomPinSet: b.showroomPinHash !== null,
     manager: staff('BRANCH_MANAGER'),
     cashier: staff('CASHIER'),
   };
@@ -65,6 +70,7 @@ export class BranchesService {
     private readonly prisma: PrismaService,
     private readonly passwords: PasswordService,
     private readonly tokens: TokenService,
+    private readonly pins: ShowroomPinService,
     private readonly trail: AuditTrail,
   ) {}
 
@@ -132,6 +138,13 @@ export class BranchesService {
     const branch = await this.get(branchId);
     this.trail.setEntity('Branch', branchId).setBranch(branchId).setChange(null, branch);
     return { branch, credentials };
+  }
+
+  /** Sets the PIN the branch's showroom screen signs in with; screens signed in with the old one are signed out. */
+  async setShowroomPin(id: string, pin: string): Promise<BranchView> {
+    await this.pins.setPin(id, pin);
+    this.trail.setEntity('Branch', id).setBranch(id);
+    return this.get(id);
   }
 
   async update(id: string, dto: UpdateBranchDto): Promise<BranchView> {

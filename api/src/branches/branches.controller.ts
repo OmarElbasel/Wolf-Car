@@ -1,11 +1,11 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Audit } from '../common/decorators/audit.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequireAnyPermission, RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import type { AuthUser } from '../common/types';
 import { BranchesService } from './branches.service';
-import { CreateBranchDto, StaffDto, UpdateBranchDto } from './dto/branches.dto';
+import { CreateBranchDto, ShowroomPinDto, StaffDto, UpdateBranchDto } from './dto/branches.dto';
 import { ParseStaffRolePipe } from './staff-role.pipe';
 
 @ApiTags('branches')
@@ -43,6 +43,13 @@ export class BranchesController {
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBranchDto) {
     return this.branches.update(id, dto);
+  }
+
+  /** Sets the 6-digit PIN the branch's showroom screen signs in with. The PIN is never returned. */
+  @Audit('branch.showroom_pin.set', { entity: 'Branch', idParam: 'id' })
+  @Put(':id/showroom-pin')
+  setShowroomPin(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ShowroomPinDto) {
+    return this.branches.setShowroomPin(id, dto.pin);
   }
 
   /** Retires the current manager or cashier and creates their replacement (credentials returned once). */

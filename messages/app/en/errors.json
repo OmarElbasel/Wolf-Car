@@ -54,5 +54,7 @@
   "SALES_PIN_NOT_SET": "This page isn't open yet. Ask the call center.",
   "SALES_PIN_INVALID": "Wrong PIN.",
   "SALES_PIN_LOCKED": "Too many wrong PINs. Try again in {minutes} min.",
-  "SALES_ACCESS_REQUIRED": "Enter the PIN to continue."
+  "SALES_ACCESS_REQUIRED": "Enter the PIN to continue.",
+  "SHOWROOM_PIN_INVALID": "Wrong PIN.",
+  "SHOWROOM_PIN_LOCKED": "Too many wrong PINs. Try again in {minutes} min."
 }
