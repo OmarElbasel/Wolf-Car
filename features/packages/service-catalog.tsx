@@ -30,7 +30,7 @@ export function ServiceCatalog({
   const labelId = useId();
 
   return (
-    <div className="grid gap-12">
+    <div className="grid grid-cols-1 gap-12">
       <div className="flex flex-wrap items-center gap-3">
         <span id={labelId} className="text-sm font-bold text-ink-2">
           {t("bodyLabel")}
