@@ -209,9 +209,12 @@ describe("showroom kiosk", () => {
     expect(screen.getByText("Full Protection")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View the Package 1 · Xpel poster full size" })).toBeInTheDocument();
     expect(screen.getByText("Includes a free CARONIC window tint")).toBeInTheDocument();
-    expect(screen.getByText("QAR 7,999")).toBeInTheDocument();
+    // most customers drive an SUV, so that price shows first
+    expect(screen.getByText("QAR 8,999")).toBeInTheDocument();
 
     // the car type picks which price is shown and added
+    await user.click(screen.getByRole("button", { name: "Sedan" }));
+    expect(screen.getByText("QAR 7,999")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "SUV" }));
     expect(screen.getByText("QAR 8,999")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Add Full Protection · Package 1 · Xpel" }));
