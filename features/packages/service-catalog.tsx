@@ -26,7 +26,7 @@ export function ServiceCatalog({
   extras?: Partial<Record<ServiceSection, ReactNode>>;
 }) {
   const t = useTranslations("Packages");
-  const [body, setBody] = useState<ServiceBody>("sedan");
+  const [body, setBody] = useState<ServiceBody>("suv");
   const labelId = useId();
 
   return (
