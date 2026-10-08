@@ -10,6 +10,7 @@ import { formatMoney } from "@/lib/format";
 import { fast, spring } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { ProductGroup } from "@/lib/variants";
+import { ImageZoom } from "@/components/image-zoom";
 import { VariantPicker } from "@/components/variant-picker";
 import { ScanBarcode } from "./scan-barcode";
 
@@ -57,6 +58,7 @@ export function ProductCard({
   onAdd: () => boolean;
 }) {
   const t = useTranslations("Showroom");
+  const tc = useTranslations("Common");
   const locale = useLocale();
   const [flash, setFlash] = useState(0);
 
@@ -79,14 +81,22 @@ export function ProductCard({
       <div className="relative aspect-[4/3] overflow-hidden bg-white">
         {/* absolute, so the 4/3 box keeps its height: a tall catalogue photo
             would otherwise stretch the card via the image's intrinsic size */}
-        <ProductImage product={product} sizes={PRODUCT_IMAGE_SIZES} className="absolute inset-0 p-3" />
+        <ImageZoom
+          src={product.imageUrl}
+          name={product.name}
+          viewLabel={t("viewImage", { name: product.name })}
+          closeLabel={tc("close")}
+          className="absolute inset-0 size-full"
+        >
+          <ProductImage product={product} sizes={PRODUCT_IMAGE_SIZES} className="absolute inset-0 p-3" />
+        </ImageZoom>
         {quantity > 0 && (
           <motion.span
             key={quantity}
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={spring}
-            className="absolute end-3 top-3 grid h-11 min-w-11 place-items-center rounded-full bg-accent px-2 text-lg font-extrabold text-white tabular-nums"
+            className="pointer-events-none absolute end-3 top-3 grid h-11 min-w-11 place-items-center rounded-full bg-accent px-2 text-lg font-extrabold text-white tabular-nums"
             data-testid="card-quantity"
           >
             <span aria-hidden="true">{quantity}</span>

@@ -8,6 +8,7 @@ import type { PublicProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { groupVariants, type ProductGroup } from "@/lib/variants";
+import { ImageZoom } from "@/components/image-zoom";
 import { VariantPicker } from "@/components/variant-picker";
 import { cart, MAX_QTY, useCart } from "./cart";
 
@@ -114,7 +115,13 @@ function ProductCard({ group }: { group: ProductGroup<PublicProduct> }) {
     <li className="group flex flex-col overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface transition-colors hover:border-[#cfcbc4] dark:hover:border-[#4a463f]">
       {/* Most legacy photos are ~200 px wide: shown contained on white at about
           their own size, so they stay sharp instead of being stretched. */}
-      <div className="relative aspect-square bg-white">
+      <ImageZoom
+        src={p.imageUrl}
+        name={p.name}
+        viewLabel={t("viewImage", { name: p.name })}
+        closeLabel={t("closeImage")}
+        className="relative aspect-square w-full bg-white"
+      >
         <Image
           src={p.imageUrl}
           alt={group.title}
@@ -123,7 +130,7 @@ function ProductCard({ group }: { group: ProductGroup<PublicProduct> }) {
           className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.04] sm:p-5"
           unoptimized
         />
-      </div>
+      </ImageZoom>
       <div className="flex flex-1 flex-col gap-2 border-t border-line p-3 sm:p-3.5">
         <h2 dir="auto" title={group.title} className="line-clamp-2 min-h-[2.7em] text-start text-[15px] leading-[1.35] font-bold">
           {group.title}
