@@ -220,6 +220,7 @@ Effective permissions = role permissions + user grants − user revokes, **resol
 | `branch.manage` | Create/manage branches, replace staff | — |
 | `permission.manage` | Edit role and user permissions | — |
 | `activity.read` | View the activity log | — |
+| `analytics.read` | View website visitor statistics | — |
 | `showroom.password.view_or_change` | Change own showroom password | Manager, Cashier |
 
 (“—” = Super Admin only by default.)

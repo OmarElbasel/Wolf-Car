@@ -1,4 +1,5 @@
 import type { VariantInfo } from "@/lib/variants";
+import type { SiteDevice, SiteSource } from "@/shared/analytics";
 import type { OrderStatusName, PermissionGroup, PermissionKey, RoleName } from "@/shared/permissions";
 
 export type { OrderStatusName, PermissionKey, RoleName };
@@ -399,4 +400,35 @@ export interface SlotsView {
   days: DayInfo[];
   bookings: SalesBooking[];
   requests: SalesRequest[];
+}
+
+export interface AnalyticsTotals {
+  /** people per day, added up over the range */
+  visitors: number;
+  visits: number;
+  pageviews: number;
+  whatsappOrder: number;
+  whatsappBooking: number;
+  whatsappChat: number;
+  calls: number;
+  addToCart: number;
+  visitorsAdded: number;
+  visitorsOrdered: number;
+  visitorsContacted: number;
+}
+
+/** Visitor statistics of the public website between two Qatar days. */
+export interface AnalyticsSummary {
+  from: string;
+  to: string;
+  totals: AnalyticsTotals;
+  /** the same number of days just before `from` */
+  previous: AnalyticsTotals;
+  daily: { day: string; visitors: number; pageviews: number; contacts: number }[];
+  pages: { path: string; views: number; visitors: number }[];
+  sources: { source: SiteSource; visits: number }[];
+  devices: { device: SiteDevice; visitors: number }[];
+  locales: { locale: string; visitors: number }[];
+  products: { id: string | null; name: string; count: number }[];
+  models: { name: string; count: number }[];
 }

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { PublicProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
+import { track } from "@/lib/track";
 
 /**
  * The website basket. There is no checkout: the customer sends the list to the
@@ -80,6 +81,7 @@ export const cart = {
         : // `?? null`: a catalogue response cached from before prices were public has none
           [...current, { id: p.id, name: p.name, price: p.price ?? null, thumbUrl: p.thumbUrl, qty: 1 }],
     );
+    track("add_to_cart", { label: p.name, targetId: p.id });
   },
   setQty(id: string, qty: number) {
     const current = load();

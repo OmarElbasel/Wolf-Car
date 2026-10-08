@@ -1,5 +1,6 @@
 import account from "./account.json";
 import activity from "./activity.json";
+import analytics from "./analytics.json";
 import auth from "./auth.json";
 import bookings from "./bookings.json";
 import branches from "./branches.json";
@@ -18,6 +19,7 @@ import validation from "./validation.json";
 const messages = {
   Account: account,
   Activity: activity,
+  Analytics: analytics,
   Auth: auth,
   Branches: branches,
   Common: common,

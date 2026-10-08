@@ -100,6 +100,7 @@ export function CartSheet() {
                   href={waLink(locale, "binomran", orderMessage(items, locale))}
                   target="_blank"
                   rel="noopener"
+                  data-track="whatsapp_order"
                   className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--radius-brand)] bg-wa px-5 text-[17px] font-bold text-white hover:brightness-95"
                 >
                   <Icon name="wa" className="size-5" />

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getBranchList, telLink, waLink, type BranchId } from "@/lib/branches";
+import { track } from "@/lib/track";
 
 type Intent = { kind: "wa"; message?: string } | { kind: "call" };
 
@@ -52,6 +53,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     const current = intent;
     setIntent(null);
     if (!current) return;
+    track(current.kind === "call" ? "call" : "whatsapp_chat", { label: branch });
     if (current.kind === "call") {
       window.location.assign(telLink(locale, branch));
     } else {

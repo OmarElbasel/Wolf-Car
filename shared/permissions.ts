@@ -36,6 +36,7 @@ export const PERMISSIONS = {
   'branch.manage': { group: 'admin', description: 'Create and manage branches' },
   'permission.manage': { group: 'admin', description: 'Grant or revoke permissions per role and per user' },
   'activity.read': { group: 'admin', description: 'View the activity log' },
+  'analytics.read': { group: 'admin', description: 'View website visitor statistics' },
   'showroom.password.view_or_change': {
     group: 'account',
     description: 'Manage own showroom credentials (change the showroom password)',

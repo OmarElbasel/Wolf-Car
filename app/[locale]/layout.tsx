@@ -4,6 +4,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { notFound } from "next/navigation";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { THEME_SCRIPT } from "@/lib/theme";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
@@ -99,6 +100,7 @@ export default async function LocaleLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }}
         />
+        <SiteAnalytics />
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>
