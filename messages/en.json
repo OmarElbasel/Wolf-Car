@@ -171,6 +171,8 @@
     "addToCart": "Add to cart",
     "qtyFor": "Quantity of {name}",
     "variant": "Colour",
+    "viewImage": "View {name} larger",
+    "closeImage": "Close",
     "decrease": "Decrease quantity",
     "increase": "Increase quantity",
     "perkOrderTitle": "Order on WhatsApp",

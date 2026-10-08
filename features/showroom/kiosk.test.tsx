@@ -223,6 +223,19 @@ describe("showroom kiosk", () => {
     expect(within(panel()).getByTestId("cart-total")).toHaveTextContent("QAR 8,999.00");
   });
 
+  it("opens a product's photo large when it is pressed, without adding it", async () => {
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog())));
+    const { user } = renderKiosk();
+
+    await user.click(await screen.findByRole("button", { name: "View Brake pads larger" }));
+    const dialog = screen.getByRole("dialog", { name: "Brake pads" });
+    expect(within(dialog).getByRole("img", { name: "Brake pads" })).toHaveAttribute("src", BRAKES.imageUrl);
+    expect(screen.queryByTestId("card-quantity")).not.toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
   it("shows a product common to a brand inside each of that brand's models", async () => {
     // filed under the brand; the API lists the brand's models in categoryIds
     const common: ShowroomProduct = { ...CLIP, categoryId: "brand", categoryIds: ["brand", "cat-1", "cat-2"] };
