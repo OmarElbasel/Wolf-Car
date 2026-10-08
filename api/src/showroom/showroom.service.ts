@@ -5,6 +5,7 @@ import type { AuthUser } from '../common/types';
 import { Prisma } from '../generated/prisma/client';
 import { ORDER_DETAIL_SELECT, orderAuditView, orderDetail, type OrderDetail } from '../orders/order.view';
 import { PrismaService } from '../prisma/prisma.service';
+import { branchBarcode, branchBarcodeBases } from '../products/branch-barcodes';
 import { countCards, VARIANT_SELECT, variantView } from '../products/variant.view';
 import { ServicesService } from '../services/services.service';
 import { imageUrl } from '../uploads/image-processing';
@@ -53,11 +54,12 @@ export class ShowroomService {
     const models = new Map<string, string[]>();
     for (const c of active) if (c.parentId) models.set(c.parentId, [...(models.get(c.parentId) ?? []), c.id]);
 
+    const bases = await branchBarcodeBases(this.prisma, branch.id);
     const products = rows.map(({ product: p }) => ({
       id: p.id,
       name: p.name,
       description: p.description,
-      barcode: p.barcode,
+      barcode: branchBarcode(p, bases),
       categoryId: p.categoryId,
       categoryIds: p.categoryId ? [p.categoryId, ...(models.get(p.categoryId) ?? [])] : [],
       price: money(p.price) as string,
@@ -181,7 +183,10 @@ export class ShowroomService {
       throw err;
     }
 
-    const order = orderDetail(await this.prisma.order.findUniqueOrThrow({ where: { id: orderId }, select: ORDER_DETAIL_SELECT }));
+    const order = orderDetail(
+      await this.prisma.order.findUniqueOrThrow({ where: { id: orderId }, select: ORDER_DETAIL_SELECT }),
+      await branchBarcodeBases(this.prisma, branch.id),
+    );
     this.trail.setEntity('Order', order.id).setBranch(branch.id).setChange(null, orderAuditView(order));
     return { order, replayed: false };
   }
@@ -191,7 +196,7 @@ export class ShowroomService {
       where: { createdById_idempotencyKey: { createdById: userId, idempotencyKey: key } },
       select: ORDER_DETAIL_SELECT,
     });
-    return row ? orderDetail(row) : null;
+    return row ? orderDetail(row, await branchBarcodeBases(this.prisma, row.branch.id)) : null;
   }
 
   private async activeBranch(user: AuthUser) {
