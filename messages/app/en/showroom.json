@@ -38,7 +38,7 @@
   "loadError": "Couldn't load the products.",
   "lock": "Lock showroom",
   "lockTitle": "Sign out of the showroom?",
-  "lockBody": "The cart will be cleared and the tablet will ask for the showroom password again.",
+  "lockBody": "The cart will be cleared and the screen will ask for the branch PIN again.",
   "idleReset": "The cart was cleared after a few minutes without activity.",
   "categories": "Car categories",
   "allCategories": "All",
@@ -55,5 +55,22 @@
   "noMatchHint": "Try another word, or clear the filters.",
   "clearFilters": "Clear filters",
   "searchAll": "Search all cars",
-  "showMore": "Show more ({count})"
+  "showMore": "Show more ({count})",
+  "services": "Packages & services",
+  "bodyLabel": "Your car",
+  "body": {
+    "sedan": "Sedan",
+    "suv": "SUV"
+  },
+  "section": {
+    "ppfFull": "Full protection packages",
+    "ppfPartial": "Front protection",
+    "ppfParts": "Protection for single parts",
+    "glass": "Glass protection",
+    "tint": "Window tint",
+    "care": "Ceramic and polish",
+    "blackEdition": "Black Edition",
+    "paint": "Paint"
+  },
+  "viewPoster": "View the {name} poster full size"
 }

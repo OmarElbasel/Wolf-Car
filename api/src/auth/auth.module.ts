@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { LockoutService } from './lockout.service';
 import { PasswordService } from './password.service';
 import { SessionUserService } from './session-user.service';
+import { ShowroomPinService } from './showroom-pin.service';
 import { JWT_ISSUER, TokenService } from './token.service';
 import { TwoFactorService } from './two-factor.service';
 
@@ -24,7 +25,7 @@ import { TwoFactorService } from './two-factor.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokenService, PasswordService, LockoutService, TwoFactorService, SessionUserService, JwtAuthGuard],
-  exports: [TokenService, PasswordService, TwoFactorService, SessionUserService, AuthService, JwtAuthGuard],
+  providers: [AuthService, TokenService, PasswordService, LockoutService, TwoFactorService, SessionUserService, ShowroomPinService, JwtAuthGuard],
+  exports: [TokenService, PasswordService, TwoFactorService, SessionUserService, ShowroomPinService, AuthService, JwtAuthGuard],
 })
 export class AuthModule {}

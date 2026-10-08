@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import type { LockoutService } from './lockout.service';
 import type { PasswordService } from './password.service';
 import type { SessionUserService } from './session-user.service';
+import type { ShowroomPinService } from './showroom-pin.service';
 import type { TokenService } from './token.service';
 import type { TwoFactorService } from './two-factor.service';
 
@@ -36,9 +37,10 @@ describe('AuthService', () => {
   const lockout = mock<LockoutService>();
   const twoFactor = mock<TwoFactorService>();
   const sessions = mock<SessionUserService>();
+  const pins = mock<ShowroomPinService>();
   const trail = mock<AuditTrail>();
   const config = new ConfigService({ LOGIN_LOCK_MINUTES: 15 });
-  const service = new AuthService(prisma, passwords, tokens, lockout, twoFactor, sessions, trail, config as never);
+  const service = new AuthService(prisma, passwords, tokens, lockout, twoFactor, sessions, pins, trail, config as never);
 
   const principal = (permissions: PermissionKey[] = []) => ({
     id: 'u-1',
@@ -152,6 +154,32 @@ describe('AuthService', () => {
     prisma.user.findFirst.mockResolvedValue({ ...baseUser, branchId: null, branch: null } as never);
     sessions.permissionsFor.mockResolvedValue(new Set(['order.create']));
     await expect(service.showroomLogin({ username: 'gh.manager', password: 'pw' }, meta)).rejects.toBeInstanceOf(ForbiddenException);
+    expect(tokens.createSession).not.toHaveBeenCalled();
+  });
+
+  it('signs a showroom screen in as the branch\'s cashier once the branch PIN checks out', async () => {
+    trail.setBranch.mockReturnValue(trail);
+    prisma.user.findFirst.mockResolvedValue({ ...baseUser, role: 'CASHIER' } as never);
+    sessions.permissionsFor.mockResolvedValue(new Set(['order.create']));
+
+    await service.showroomPinLogin({ branchId: 'b-1', pin: '482913' }, meta);
+    expect(pins.check).toHaveBeenCalledWith('b-1', '482913');
+    expect(prisma.user.findFirst.mock.calls[0][0]?.where).toEqual({ branchId: 'b-1', role: 'CASHIER', deletedAt: null, isActive: true });
+    expect(tokens.createSession).toHaveBeenCalledWith('u-1', 'SHOWROOM', meta);
+  });
+
+  it('opens no session when the PIN is wrong, or the branch has no cashier who may place orders', async () => {
+    trail.setBranch.mockReturnValue(trail);
+    pins.check.mockRejectedValueOnce(new Error('wrong pin'));
+    await expect(service.showroomPinLogin({ branchId: 'b-1', pin: '000000' }, meta)).rejects.toThrow('wrong pin');
+    expect(prisma.user.findFirst).not.toHaveBeenCalled();
+
+    prisma.user.findFirst.mockResolvedValue(null);
+    await expect(service.showroomPinLogin({ branchId: 'b-1', pin: '482913' }, meta)).rejects.toBeInstanceOf(ForbiddenException);
+
+    prisma.user.findFirst.mockResolvedValue({ ...baseUser, role: 'CASHIER' } as never);
+    sessions.permissionsFor.mockResolvedValue(new Set());
+    await expect(service.showroomPinLogin({ branchId: 'b-1', pin: '482913' }, meta)).rejects.toBeInstanceOf(ForbiddenException);
     expect(tokens.createSession).not.toHaveBeenCalled();
   });
 

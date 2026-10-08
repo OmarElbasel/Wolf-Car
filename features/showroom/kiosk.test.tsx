@@ -177,6 +177,49 @@ describe("showroom kiosk", () => {
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(30);
   });
 
+  it("offers packages and services in a tab of their own and orders them like a product", async () => {
+    const services: ShowroomCatalog["services"] = {
+      tiers: [{ id: "t1", set: "ppf", nameAr: "البكج الأول · Xpel", nameEn: "Package 1 · Xpel" }],
+      services: [
+        {
+          id: "s-full",
+          section: "ppfFull",
+          nameAr: "الحماية الكاملة",
+          nameEn: "Full Protection",
+          noteAr: null,
+          noteEn: "Includes a free CARONIC window tint",
+          tierSet: "ppf",
+          bodySplit: true,
+          isActive: true,
+          thumbUrl: "/api/uploads/tile-sm.webp",
+          prices: [
+            { productId: "7c1f1f7e-0000-4000-8000-0000000000a1", tierId: "t1", body: "sedan", price: "7999.00" },
+            { productId: "7c1f1f7e-0000-4000-8000-0000000000a2", tierId: "t1", body: "suv", price: "8999.00" },
+          ],
+        },
+      ],
+    };
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json({ ...catalog(), services })));
+    const { user } = renderKiosk();
+
+    await user.click(await screen.findByRole("tab", { name: /Packages & services/ }));
+    expect(screen.queryByRole("heading", { name: "Brake pads" })).not.toBeInTheDocument();
+    // a complete package is a card of its own, under its poster
+    expect(screen.getByRole("heading", { name: "Package 1 · Xpel" })).toBeInTheDocument();
+    expect(screen.getByText("Full Protection")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "View the Package 1 · Xpel poster full size" })).toBeInTheDocument();
+    expect(screen.getByText("Includes a free CARONIC window tint")).toBeInTheDocument();
+    expect(screen.getByText("QAR 7,999")).toBeInTheDocument();
+
+    // the car type picks which price is shown and added
+    await user.click(screen.getByRole("button", { name: "SUV" }));
+    expect(screen.getByText("QAR 8,999")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add Full Protection · Package 1 · Xpel" }));
+
+    expect(within(panel()).getByText("Full Protection · Package 1 · Xpel · SUV")).toBeInTheDocument();
+    expect(within(panel()).getByTestId("cart-total")).toHaveTextContent("QAR 8,999.00");
+  });
+
   it("shows a product common to a brand inside each of that brand's models", async () => {
     // filed under the brand; the API lists the brand's models in categoryIds
     const common: ShowroomProduct = { ...CLIP, categoryId: "brand", categoryIds: ["brand", "cat-1", "cat-2"] };

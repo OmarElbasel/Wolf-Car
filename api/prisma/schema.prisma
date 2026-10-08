@@ -69,6 +69,11 @@ model Branch {
   /// The cashier enters sales in Odoo by scanning barcodes off the showroom
   /// screen: the kiosk shows each product's barcode and keeps the basket closed.
   scanFromScreen Boolean  @default(false) @map("scan_from_screen")
+  /// Hash of the 6-digit PIN the showroom screen signs in with; null until set.
+  showroomPinHash        String?   @map("showroom_pin_hash")
+  /// Wrong PINs since the last right one; locks the sign-in at LOGIN_MAX_ATTEMPTS.
+  showroomPinFailedCount Int       @default(0) @map("showroom_pin_failed_count")
+  showroomPinLockedUntil DateTime? @map("showroom_pin_locked_until") @db.Timestamptz(3)
   /// Per-branch order counter, incremented inside the order transaction.
   orderSeq       Int      @default(0) @map("order_seq")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -282,6 +287,13 @@ model Product {
   variantColor   String?   @map("variant_color") @db.VarChar(7)
   /// UUID of the processed image files in UPLOAD_DIR (<key>.webp and <key>-sm.webp).
   imageKey       String    @map("image_key") @db.Uuid
+  /// Set on the hidden rows that hold one price of a service (see Service).
+  /// Such a row is never listed with the catalogue and never comes from Odoo.
+  serviceId      String?   @map("service_id") @db.Uuid
+  /// Which package or film of the service this price is for; null when it has one.
+  serviceTierId  String?   @map("service_tier_id") @db.Uuid
+  /// "sedan" or "suv" when the service is priced by car type.
+  serviceBody    String?   @map("service_body") @db.VarChar(10)
   /// Null until Finance sets it. Unpriced products are hidden from the showroom.
   price          Decimal?  @db.Decimal(12, 2)
   priceUpdatedAt DateTime? @map("price_updated_at") @db.Timestamptz(3)
@@ -293,6 +305,8 @@ model Product {
   createdBy       User            @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   updatedBy       User?           @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   category        Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  service         Service?        @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  serviceTier     ServiceTier?    @relation(fields: [serviceTierId], references: [id], onDelete: Restrict)
   branchPositions BranchProduct[]
   priceHistory    PriceHistory[]
   orderItems      OrderItem[]
@@ -301,7 +315,54 @@ model Product {
   @@index([barcode])
   @@index([categoryId])
   @@index([odooTemplateId])
+  @@index([serviceId])
   @@map("products")
+}
+
+/// A service or package sold next to the parts: PPF, tint, polish, paint.
+/// Kept here, not in Odoo, and edited in the dashboard. Each of its prices is
+/// a hidden Product row (Product.serviceId), so a service goes into an order,
+/// onto the cashier's screen and onto a receipt exactly as a part does.
+model Service {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// Which heading it is listed under: "ppfParts", "ppfPartial", "ppfFull",
+  /// "glass", "tint", "care", "blackEdition" or "paint".
+  section   String   @db.VarChar(20)
+  nameAr    String   @map("name_ar") @db.VarChar(80)
+  nameEn    String   @map("name_en") @db.VarChar(80)
+  noteAr    String?  @map("note_ar") @db.VarChar(200)
+  noteEn    String?  @map("note_en") @db.VarChar(200)
+  /// The set of packages or films it is priced by (ServiceTier.set); null for one price.
+  tierSet   String?  @map("tier_set") @db.VarChar(20)
+  /// True when it has separate sedan and SUV prices.
+  bodySplit Boolean  @default(false) @map("body_split")
+  /// Which of the shop's posters is shown with it ("front-full"); null for none.
+  poster    String?  @db.VarChar(40)
+  position  Int      @default(0)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  prices Product[]
+
+  @@index([position])
+  @@map("services")
+}
+
+/// One column of a service price table: a PPF package ("Package 1 · Xpel"),
+/// a tint film ("CARONIC") or a car model ("Leopard 5").
+model ServiceTier {
+  id       String @id @default(uuid()) @db.Uuid
+  /// "ppf", "tint" or "model"
+  set      String @db.VarChar(20)
+  nameAr   String @map("name_ar") @db.VarChar(40)
+  nameEn   String @map("name_en") @db.VarChar(40)
+  position Int    @default(0)
+
+  prices Product[]
+
+  @@index([set, position])
+  @@map("service_tiers")
 }
 
 /// Per-branch showroom display order of the (global) catalog.

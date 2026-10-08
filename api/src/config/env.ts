@@ -67,8 +67,9 @@ export class Env {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(720)
-  SHOWROOM_SESSION_TTL_HOURS = 16;
+  // 90 days: a fixed screen in the branch signs in once with its PIN; a new PIN signs it out
+  @Max(2160)
+  SHOWROOM_SESSION_TTL_HOURS = 2160;
 
   @Transform(toBool)
   @IsBoolean()

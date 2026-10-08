@@ -6,11 +6,12 @@ import { AccountLockedException, AuthFailedException } from '../common/errors';
 import type { AuthUser, RequestMeta } from '../common/types';
 import type { Role, SessionAudience } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import type { LoginDto, TwoFactorLoginDto } from './dto/login.dto';
+import type { LoginDto, ShowroomPinLoginDto, TwoFactorLoginDto } from './dto/login.dto';
 import type { AuthResult, IssuedAuth, Profile, TwoFactorChallenge } from './auth.types';
 import { LockoutService, type LoginChannel } from './lockout.service';
 import { PasswordService } from './password.service';
 import { SessionUserService } from './session-user.service';
+import { ShowroomPinService } from './showroom-pin.service';
 import { TokenService } from './token.service';
 import { TwoFactorService } from './two-factor.service';
 
@@ -55,6 +56,7 @@ export class AuthService {
     private readonly lockout: LockoutService,
     private readonly twoFactor: TwoFactorService,
     private readonly sessions: SessionUserService,
+    private readonly pins: ShowroomPinService,
     private readonly trail: AuditTrail,
     private readonly config: ConfigService<Env, true>,
   ) {}
@@ -106,6 +108,33 @@ export class AuthService {
         message: 'This account cannot use the showroom.',
       });
     }
+    return this.startSession(user, 'SHOWROOM', meta);
+  }
+
+  /**
+   * Showroom screen sign-in: the branch and its PIN. The session belongs to
+   * the branch's cashier, as it did when the cashier typed their own showroom
+   * password, so orders and permissions work exactly as before.
+   */
+  async showroomPinLogin(dto: ShowroomPinLoginDto, meta: RequestMeta): Promise<IssuedAuth> {
+    this.trail.addMetadata({ branchId: dto.branchId, channel: 'showroom_pin' });
+    await this.pins.check(dto.branchId, dto.pin);
+    // only now is the id known to be a real branch
+    this.trail.setBranch(dto.branchId);
+    const user = await this.prisma.user.findFirst({
+      where: { branchId: dto.branchId, role: 'CASHIER', deletedAt: null, isActive: true },
+      select: LOGIN_SELECT,
+    });
+    if (!user || !user.branch?.isActive || !(await this.sessions.permissionsFor(user)).has('order.create')) {
+      this.trail.addMetadata({ reason: 'no_showroom_access' });
+      throw new ForbiddenException({
+        statusCode: 403,
+        error: 'Forbidden',
+        code: 'NO_SHOWROOM_ACCESS',
+        message: 'This branch cannot use the showroom.',
+      });
+    }
+    this.trail.setActor(actorOf(user));
     return this.startSession(user, 'SHOWROOM', meta);
   }
 

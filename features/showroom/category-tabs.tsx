@@ -1,11 +1,13 @@
 "use client";
 
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ShowroomCategory } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 export const ALL_CATEGORIES = "__all__";
+/** the packages and services tab: not a car, and not part of the Odoo catalogue */
+export const SERVICES_TAB = "__services__";
 
 /**
  * Car-model tabs above the kiosk grid. With well over a thousand products in
@@ -18,18 +20,25 @@ export function CategoryTabs({
   categories,
   selected,
   total,
+  services = 0,
   onSelect,
 }: {
   categories: ShowroomCategory[];
   selected: string;
   /** number of products across every category */
   total: number;
+  /** how many services and packages there are; the tab is left out at 0 */
+  services?: number;
   onSelect: (id: string) => void;
 }) {
   const t = useTranslations("Showroom");
-  if (categories.length === 0) return null;
+  if (categories.length === 0 && services === 0) return null;
 
-  const tabs = [{ id: ALL_CATEGORIES, name: t("allCategories"), count: total, thumbUrl: null }, ...categories];
+  const tabs = [
+    { id: ALL_CATEGORIES, name: t("allCategories"), count: total, thumbUrl: null },
+    ...(services > 0 ? [{ id: SERVICES_TAB, name: t("services"), count: services, thumbUrl: null }] : []),
+    ...categories,
+  ];
 
   return (
     <div
@@ -56,12 +65,16 @@ export function CategoryTabs({
             <span
               className={cn(
                 "grid h-[52px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[var(--radius-brand)]",
-                c.id === ALL_CATEGORIES ? (active ? "bg-white/20" : "bg-sand text-ink-2") : "bg-white",
+                c.id === ALL_CATEGORIES && (active ? "bg-white/20" : "bg-sand text-ink-2"),
+                c.id === SERVICES_TAB && (active ? "bg-white/20" : "bg-charcoal text-white"),
+                c.id !== ALL_CATEGORIES && c.id !== SERVICES_TAB && "bg-white",
               )}
               aria-hidden="true"
             >
               {c.id === ALL_CATEGORIES ? (
                 <LayoutGrid className="size-6" strokeWidth={1.8} />
+              ) : c.id === SERVICES_TAB ? (
+                <ShieldCheck className="size-7" strokeWidth={1.8} />
               ) : c.thumbUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- API-served webp rendition; no optimizer round-trip
                 <img src={c.thumbUrl} alt="" loading="lazy" decoding="async" draggable={false} className="size-full object-contain p-1" />

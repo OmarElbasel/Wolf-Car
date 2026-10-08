@@ -1,36 +1,47 @@
 "use client";
 
 import { Maximize2, X } from "lucide-react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useState } from "react";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Poster } from "@/lib/packages";
 import { cn } from "@/lib/utils";
 
 /**
- * A package poster that opens full size, so its small print is readable on a
- * phone. The expand and close buttons sit top-right in both languages: the
- * posters' top-left corner holds the film's flag.
+ * A package poster that opens full size, so its small print is readable. The
+ * expand and close buttons sit top-right in both languages: the posters'
+ * top-left corner holds the film's flag.
  */
-export function PosterButton({ poster, name, sizes, className }: { poster: Poster; name: string; sizes: string; className?: string }) {
-  const t = useTranslations("Packages");
+export function PosterButton({
+  poster,
+  name,
+  viewLabel,
+  closeLabel,
+  sizes,
+  className,
+}: {
+  poster: Poster;
+  name: string;
+  /** "View the Package 1 poster full size" */
+  viewLabel: string;
+  closeLabel: string;
+  sizes: string;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={t("viewPoster", { name })}
-        className={cn("group relative block w-full overflow-hidden bg-white", className)}
-      >
-        <Image
+      <button type="button" onClick={() => setOpen(true)} aria-label={viewLabel} className={cn("group relative block w-full overflow-hidden bg-white", className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- a static webp already sized for the card; also drawn on the kiosk, outside the site's image setup */}
+        <img
           src={poster.src}
           alt=""
           width={poster.width}
           height={poster.height}
           sizes={sizes}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
           className="h-auto w-full transition-transform duration-500 group-hover:scale-[1.02]"
         />
         <span
@@ -44,17 +55,17 @@ export function PosterButton({ poster, name, sizes, className }: { poster: Poste
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent showCloseButton={false} className="w-auto max-w-none gap-0 overflow-visible border-0 bg-transparent p-0 sm:max-w-none">
           <DialogTitle className="sr-only">{name}</DialogTitle>
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element -- as above */}
+          <img
             src={poster.src}
             alt={name}
             width={poster.width}
             height={poster.height}
-            sizes="(min-width: 640px) 500px, 100vw"
             className="block h-auto max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] rounded-[var(--radius-brand-lg)]"
           />
-          <DialogClose className="absolute top-2.5 right-2.5 grid size-10 place-items-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80">
+          <DialogClose className="absolute top-2.5 right-2.5 grid size-12 place-items-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80">
             <X className="size-5" aria-hidden="true" />
-            <span className="sr-only">{t("close")}</span>
+            <span className="sr-only">{closeLabel}</span>
           </DialogClose>
         </DialogContent>
       </Dialog>
