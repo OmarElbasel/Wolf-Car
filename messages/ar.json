@@ -171,6 +171,8 @@
     "addToCart": "أضف إلى السلة",
     "qtyFor": "كمية {name}",
     "variant": "اللون",
+    "viewImage": "تكبير صورة {name}",
+    "closeImage": "إغلاق",
     "decrease": "إنقاص الكمية",
     "increase": "زيادة الكمية",
     "perkOrderTitle": "اطلب عبر واتساب",
