@@ -6,6 +6,7 @@ import { decimal } from '../common/money';
 import { type Page, skipTake } from '../common/pagination';
 import type { AuthUser } from '../common/types';
 import { Prisma } from '../generated/prisma/client';
+import { branchBarcodeBases } from '../products/branch-barcodes';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ListOrdersQueryDto, UpdateOrderDto } from './dto/orders.dto';
 import { canReadAllBranches, orderReadScope, orderWriteScope } from './order-scope';
@@ -65,7 +66,7 @@ export class OrdersService {
   async get(user: AuthUser, id: string, scope: Prisma.OrderWhereInput = orderReadScope(user)): Promise<OrderDetail> {
     const row = await this.prisma.order.findFirst({ where: { AND: [{ id }, scope] }, select: ORDER_DETAIL_SELECT });
     if (!row) throw new NotFoundException('Order not found.');
-    return orderDetail(row);
+    return orderDetail(row, await branchBarcodeBases(this.prisma, row.branch.id));
   }
 
   /**
