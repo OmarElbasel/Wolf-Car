@@ -1,5 +1,6 @@
 import { money } from '../common/money';
 import type { OrderStatus, Prisma } from '../generated/prisma/client';
+import { branchBarcode } from '../products/branch-barcodes';
 import { imageUrl } from '../uploads/image-processing';
 
 const PERSON = { select: { id: true, username: true, displayName: true } } as const;
@@ -34,7 +35,7 @@ export const ORDER_DETAIL_SELECT = {
       unitPrice: true,
       quantity: true,
       lineTotal: true,
-      product: { select: { imageKey: true, barcode: true } },
+      product: { select: { imageKey: true, barcode: true, odooTemplateId: true, variantLabel: true } },
     },
   },
 } as const;
@@ -68,7 +69,7 @@ interface OrderDetailRow extends OrderRow {
     unitPrice: Prisma.Decimal;
     quantity: number;
     lineTotal: Prisma.Decimal;
-    product: { imageKey: string; barcode: string | null };
+    product: { imageKey: string; barcode: string | null; odooTemplateId: number | null; variantLabel: string | null };
   }[];
 }
 
@@ -93,14 +94,18 @@ export function orderSummary(o: OrderRow) {
   };
 }
 
-export function orderDetail(o: OrderDetailRow) {
+/**
+ * `bases` comes from branchBarcodeBases for the order's branch: a branch whose
+ * till is not Odoo scans a multi-colour product by its shared code.
+ */
+export function orderDetail(o: OrderDetailRow, bases: ReadonlyMap<number, string> | null = null) {
   return {
     ...orderSummary(o),
     items: o.items.map((i) => ({
       id: i.id,
       productId: i.productId,
       productName: i.productName,
-      barcode: i.product.barcode,
+      barcode: branchBarcode(i.product, bases),
       thumbUrl: imageUrl(i.product.imageKey, 'sm'),
       unitPrice: money(i.unitPrice),
       quantity: i.quantity,
