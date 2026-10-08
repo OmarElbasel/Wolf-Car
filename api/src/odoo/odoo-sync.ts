@@ -169,7 +169,8 @@ export async function syncOdooCatalogue(
   );
   const wanted = new Set(products.map((p) => p.odooId));
   const stale = [...existing.values()].filter((p) => !wanted.has(p.odooId as number));
-  const legacyCount = await prisma.product.count({ where: { odooId: null, isActive: true } });
+  // services are kept here on purpose: they are not legacy and never hidden by a sync
+  const legacyCount = await prisma.product.count({ where: { odooId: null, serviceId: null, isActive: true } });
 
   const changed = products.filter((p) => {
     const before = existing.get(p.odooId);
@@ -422,7 +423,7 @@ export async function syncOdooCatalogue(
   if (hideLegacy) {
     summary.hiddenLegacy = (
       await prisma.product.updateMany({
-        where: { odooId: null, isActive: true },
+        where: { odooId: null, serviceId: null, isActive: true },
         data: { isActive: false },
       })
     ).count;

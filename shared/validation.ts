@@ -83,6 +83,8 @@ export const PHONE_PATTERN = /^\+?[0-9 ]{6,20}$/;
 export const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 export const SALES_PIN_PATTERN = /^\d{6}$/;
+/** The PIN a branch's showroom screen signs in with. */
+export const SHOWROOM_PIN_PATTERN = /^\d{6}$/;
 /** Full PPF cars one day can hold: normally one, a second as an exception. */
 export const PPF_MAX_FULL_PER_DAY = 2;
 /** Most days one calendar request may cover (a month view plus its edges). */

@@ -17,12 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api/client";
-import type { BranchSummary, OrderDetail, Profile, ShowroomCategory, ShowroomProduct } from "@/lib/api/types";
+import type { BranchSummary, OrderDetail, Profile, ServiceCatalog, ShowroomCategory, ShowroomProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
+import { EMPTY_SERVICES } from "@/lib/services";
 import { ORDER_MAX_LINES, ORDER_MAX_QUANTITY } from "@/shared/validation";
 import { canAdd, itemCount, quantityOf, total as cartTotal } from "./cart";
 import { type CartEntry, CartPanel } from "./cart-panel";
-import { ALL_CATEGORIES, CategoryTabs } from "./category-tabs";
+import { ALL_CATEGORIES, CategoryTabs, SERVICES_TAB } from "./category-tabs";
 import { CheckoutDialog } from "./checkout-dialog";
 import { type Filters, filterProducts, isFiltering, NO_FILTERS } from "./filter";
 import { newIdempotencyKey } from "./idempotency";
@@ -30,6 +31,7 @@ import { KioskFilters, KioskSearch } from "./kiosk-toolbar";
 import { cn } from "@/lib/utils";
 import { groupVariants } from "@/lib/variants";
 import { ProductGroupCard } from "./product-card";
+import { serviceProducts, ServicesView } from "./services-view";
 import { SuccessOverlay } from "./success-overlay";
 import { clearStoredCart, useCart } from "./use-cart";
 import { IDLE_TIMEOUT_MS, useIdleTimeout } from "./use-idle-timeout";
@@ -38,6 +40,8 @@ export interface ShowroomCatalog {
   branch: BranchSummary;
   categories: ShowroomCategory[];
   products: ShowroomProduct[];
+  /** packages and services; absent only while an older API is still running */
+  services?: ServiceCatalog;
 }
 
 export const SHOWROOM_PRODUCTS_KEY = ["showroom", "products"] as const;
@@ -107,8 +111,8 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
     queryKey: SHOWROOM_PRODUCTS_KEY,
     queryFn: async () => {
       const data = await api<ShowroomCatalog>("/showroom/products", { audience: "showroom" });
-      // products that were unpriced or removed since they were added leave the cart
-      prune(data.products.map((p) => p.id));
+      // products and services that were unpriced or removed since they were added leave the cart
+      prune([...data.products.map((p) => p.id), ...(data.services?.services ?? []).flatMap((s) => s.prices.map((p) => p.productId))]);
       return data;
     },
     refetchInterval: 60_000,
@@ -125,16 +129,20 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   // the colours of one product share a card
   const groups = groupVariants(filterProducts(inCategory, applied, cars));
   const filtering = isFiltering(applied);
+  const showServices = category === SERVICES_TAB;
   // what the same search finds across every car, offered when this car has nothing
   const elsewhere = category !== ALL_CATEGORIES && groups.length === 0 ? groupVariants(filterProducts(products, applied, cars)).length : 0;
-  const byId = new Map(products.map((p) => [p.id, p]));
+  const offer = catalog.data?.services ?? EMPTY_SERVICES;
+  // each price of a service is a basket line of its own, named in full
+  const orderable = [...products, ...serviceProducts(offer, locale, (b) => t(`body.${b}`))];
+  const byId = new Map(orderable.map((p) => [p.id, p]));
   const entries: CartEntry[] = cart.lines.flatMap((line) => {
     const product = byId.get(line.productId);
     return product ? [{ product, quantity: line.quantity }] : [];
   });
   const lines = entries.map((e) => ({ productId: e.product.id, quantity: e.quantity }));
   const count = itemCount({ lines });
-  const total = cartTotal({ lines }, new Map(products.map((p) => [p.id, p.price])));
+  const total = cartTotal({ lines }, new Map(orderable.map((p) => [p.id, p.price])));
   const branch = catalog.data?.branch ?? user.branch;
   // the cashier scans barcodes off this screen: show them, and keep the basket out of the way
   const scan = catalog.data?.branch.scanFromScreen ?? false;
@@ -242,7 +250,7 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
             <ProductGridSkeleton />
           ) : catalog.isError && !catalog.data ? (
             <ErrorState error={catalog.error} onRetry={() => void catalog.refetch()} />
-          ) : products.length === 0 ? (
+          ) : orderable.length === 0 ? (
             <EmptyState title={t("noProducts")} />
           ) : (
             <>
@@ -251,48 +259,70 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
                 <KioskSearch value={filters.query} onChange={(value) => changeFilters({ query: value })} />
               </div>
               <div className="grid gap-3">
-                <CategoryTabs categories={categories} selected={category} total={groupVariants(products).length} onSelect={selectCategory} />
-                <KioskFilters filters={filters} onChange={changeFilters} />
+                <CategoryTabs
+                  categories={categories}
+                  selected={category}
+                  total={groupVariants(products).length}
+                  services={offer.services.length}
+                  onSelect={selectCategory}
+                />
+                {!showServices && <KioskFilters filters={filters} onChange={changeFilters} />}
               </div>
-              <p className="mt-4 mb-3 text-[15px] font-bold text-ink-2" aria-live="polite" data-testid="result-count">
-                {t("results", { count: groups.length })}
-              </p>
-              {groups.length === 0 ? (
-                filtering ? (
-                  <EmptyState
-                    title={t("noMatch")}
-                    body={t("noMatchHint")}
-                    action={
-                      <div className="flex flex-wrap justify-center gap-3">
-                        {elsewhere > 0 && (
-                          <Button size="touch" onClick={() => selectCategory(ALL_CATEGORIES)}>
-                            {t("searchAll")} ({elsewhere})
-                          </Button>
-                        )}
-                        <Button size="touch" variant="outline" onClick={() => changeFilters(NO_FILTERS)}>
-                          {t("clearFilters")}
-                        </Button>
-                      </div>
-                    }
+              {showServices ? (
+                <div className="mt-5">
+                  <ServicesView
+                    catalog={offer}
+                    query={query}
+                    quantityOf={(id) => quantityOf(cart, id)}
+                    onAdd={(id) => {
+                      const product = byId.get(id);
+                      return product ? handleAdd(product) : false;
+                    }}
                   />
-                ) : (
-                  <EmptyState title={t("noProducts")} />
-                )
+                </div>
               ) : (
                 <>
-                  <ul className={GRID} aria-label={t("title")}>
-                    {groups.slice(0, shown).map((group) => (
-                      <li key={group.key} className="grid">
-                        <ProductGroupCard group={group} scan={scan} quantityOf={(id) => quantityOf(cart, id)} onAdd={handleAdd} />
-                      </li>
-                    ))}
-                  </ul>
-                  {groups.length > shown && (
-                    <div className="mt-6 flex justify-center">
-                      <Button size="touch" variant="outline" className="min-w-64" onClick={() => setShown((n) => n + PAGE)}>
-                        {t("showMore", { count: groups.length - shown })}
-                      </Button>
-                    </div>
+                  <p className="mt-4 mb-3 text-[15px] font-bold text-ink-2" aria-live="polite" data-testid="result-count">
+                    {t("results", { count: groups.length })}
+                  </p>
+                  {groups.length === 0 ? (
+                    filtering ? (
+                      <EmptyState
+                        title={t("noMatch")}
+                        body={t("noMatchHint")}
+                        action={
+                          <div className="flex flex-wrap justify-center gap-3">
+                            {elsewhere > 0 && (
+                              <Button size="touch" onClick={() => selectCategory(ALL_CATEGORIES)}>
+                                {t("searchAll")} ({elsewhere})
+                              </Button>
+                            )}
+                            <Button size="touch" variant="outline" onClick={() => changeFilters(NO_FILTERS)}>
+                              {t("clearFilters")}
+                            </Button>
+                          </div>
+                        }
+                      />
+                    ) : (
+                      <EmptyState title={t("noProducts")} />
+                    )
+                  ) : (
+                    <>
+                      <ul className={GRID} aria-label={t("title")}>
+                        {groups.slice(0, shown).map((group) => (
+                          <li key={group.key} className="grid">
+                            <ProductGroupCard group={group} scan={scan} quantityOf={(id) => quantityOf(cart, id)} onAdd={handleAdd} />
+                          </li>
+                        ))}
+                      </ul>
+                      {groups.length > shown && (
+                        <div className="mt-6 flex justify-center">
+                          <Button size="touch" variant="outline" className="min-w-64" onClick={() => setShown((n) => n + PAGE)}>
+                            {t("showMore", { count: groups.length - shown })}
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}

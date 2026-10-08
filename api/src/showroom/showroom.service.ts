@@ -6,6 +6,7 @@ import { Prisma } from '../generated/prisma/client';
 import { ORDER_DETAIL_SELECT, orderAuditView, orderDetail, type OrderDetail } from '../orders/order.view';
 import { PrismaService } from '../prisma/prisma.service';
 import { countCards, VARIANT_SELECT, variantView } from '../products/variant.view';
+import { ServicesService } from '../services/services.service';
 import { imageUrl } from '../uploads/image-processing';
 import type { CreateShowroomOrderDto } from '../orders/dto/orders.dto';
 
@@ -14,11 +15,13 @@ export class ShowroomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly trail: AuditTrail,
+    private readonly services: ServicesService,
   ) {}
 
   /**
    * The branch's priced products in the manager-defined order, with full
-   * details, plus the catalogue's categories so the kiosk can offer tabs.
+   * details, plus the catalogue's categories so the kiosk can offer tabs,
+   * and the services and packages it sells beside them.
    * Only categories that actually have a priced product here are returned.
    */
   async products(user: AuthUser) {
@@ -83,6 +86,8 @@ export class ShowroomService {
         count: count.get(c.id) ?? 0,
       })),
       products,
+      // PPF, tint, polish and paint: the same at every branch, ordered like a part
+      services: await this.services.publicList(),
     };
   }
 
@@ -119,7 +124,8 @@ export class ShowroomService {
             id: { in: dto.items.map((i) => i.productId) },
             price: { not: null },
             isActive: true,
-            branchPositions: { some: { branchId: branch.id } },
+            // a part must be on this branch's list; a service is offered at every branch
+            OR: [{ branchPositions: { some: { branchId: branch.id } } }, { service: { isActive: true } }],
           },
           select: { id: true, name: true, price: true },
         });

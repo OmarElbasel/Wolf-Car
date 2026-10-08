@@ -5,6 +5,7 @@ import { authUser } from '../../test/unit/helpers';
 import type { AuditTrail } from '../activity/audit-trail.service';
 import type { PasswordService } from '../auth/password.service';
 import type { TokenService } from '../auth/token.service';
+import type { ShowroomPinService } from '../auth/showroom-pin.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import { BranchesService } from './branches.service';
 
@@ -22,8 +23,9 @@ describe('BranchesService', () => {
   const prisma = mockDeep<PrismaService>();
   const passwords = mock<PasswordService>();
   const tokens = mock<TokenService>();
+  const pins = mock<ShowroomPinService>();
   const trail = mock<AuditTrail>();
-  const service = new BranchesService(prisma, passwords, tokens, trail);
+  const service = new BranchesService(prisma, passwords, tokens, pins, trail);
   const admin = authUser({ id: 'admin', role: 'SUPER_ADMIN', branchId: null });
 
   beforeEach(() => {

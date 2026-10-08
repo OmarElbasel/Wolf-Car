@@ -14,13 +14,15 @@ import type { SessionAudience } from '../generated/prisma/client';
 import { AuthService, publicAuth } from './auth.service';
 import type { AuthResult, IssuedAuth, Profile, TwoFactorChallenge } from './auth.types';
 import { clearRefreshCookie, hasCsrfHeader, readRefreshCookie, setRefreshCookie } from './cookies';
-import { LoginDto, TwoFactorLoginDto } from './dto/login.dto';
+import { LoginDto, ShowroomPinLoginDto, TwoFactorLoginDto } from './dto/login.dto';
+import { ShowroomPinService } from './showroom-pin.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly pins: ShowroomPinService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -108,6 +110,27 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResult> {
     return this.withCookie(res, 'SHOWROOM', await this.auth.showroomLogin(dto, requestMeta(req)));
+  }
+
+  /** The branches a showroom screen can sign in to (active, with a PIN set). */
+  @Public()
+  @Get('showroom/branches')
+  showroomBranches() {
+    return this.pins.branches();
+  }
+
+  /** Showroom screen sign-in: the branch and its 6-digit PIN. */
+  @Public()
+  @AuthThrottle()
+  @Audit('auth.showroom.pin_login', { entity: 'Session' })
+  @Post('showroom/pin')
+  @HttpCode(200)
+  async showroomPinLogin(
+    @Body() dto: ShowroomPinLoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResult> {
+    return this.withCookie(res, 'SHOWROOM', await this.auth.showroomPinLogin(dto, requestMeta(req)));
   }
 
   @Public()

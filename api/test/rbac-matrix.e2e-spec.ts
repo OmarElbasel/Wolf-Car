@@ -25,6 +25,8 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'POST /api/auth/logout': { public: 204 },
   'GET /api/auth/me': DASHBOARD,
   'POST /api/auth/showroom/login': ALL,
+  'GET /api/auth/showroom/branches': { public: 200 },
+  'POST /api/auth/showroom/pin': ALL,
   'POST /api/auth/showroom/refresh': { public: 401 },
   'POST /api/auth/showroom/logout': { public: 204 },
   'GET /api/auth/showroom/me': ['kiosk'],
@@ -58,6 +60,7 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'GET /api/branches/options': ['admin', 'finance', 'manager'],
   'GET /api/branches/:id': ['admin'],
   'PATCH /api/branches/:id': ['admin'],
+  'PUT /api/branches/:id/showroom-pin': ['admin'],
   'POST /api/branches/:id/staff/:role/replace': ['admin'],
 
   'GET /api/uploads/:file': { public: 404 },
@@ -70,6 +73,10 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'PATCH /api/products/:id/price': ['admin', 'finance'],
   'GET /api/odoo/sync': ['admin', 'finance', 'manager'],
   'POST /api/odoo/sync': ['admin', 'finance'],
+  'GET /api/services': ['admin', 'finance', 'manager'],
+  'POST /api/services': ['admin', 'manager'],
+  'PATCH /api/services/:id': ['admin', 'manager'],
+  'PATCH /api/services/tiers/:id': ['admin', 'manager'],
 
   'GET /api/showroom/products': ['kiosk'],
   'POST /api/showroom/orders': ['kiosk'],
@@ -105,6 +112,7 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
 
   'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },
+  'GET /api/public/services': { public: 200 },
 
   'GET /api/activity': ['admin'],
   'GET /api/activity/actions': ['admin'],

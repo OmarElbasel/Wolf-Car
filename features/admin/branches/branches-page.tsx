@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, RefreshCw } from "lucide-react";
+import { KeyRound, Pencil, Plus, RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { api } from "@/lib/api/client";
 import type { BranchView, IssuedCredentials, StaffRef } from "@/lib/api/types";
 
 import { CreateBranchSheet, EditBranchSheet, ReplaceStaffDialog, type ReplaceTarget, SLOT_ROLE, type StaffSlot } from "./branch-forms";
+import { ShowroomPinDialog } from "./showroom-pin-dialog";
 
 /** Super Admin: branches with their one manager and one cashier. */
 export function BranchesPage() {
@@ -42,6 +43,7 @@ function BranchesManager() {
   const [replacing, setReplacing] = useState<ReplaceTarget | null>(null);
   const [replaceOpen, setReplaceOpen] = useState(false);
   const [credentials, setCredentials] = useState<IssuedCredentials[] | null>(null);
+  const [pinFor, setPinFor] = useState<BranchView | null>(null);
 
   const refresh = () => Promise.all([queryClient.invalidateQueries({ queryKey: ["branches"] }), queryClient.invalidateQueries({ queryKey: ["users"] })]);
 
@@ -78,6 +80,7 @@ function BranchesManager() {
                   setReplacing({ branch: b, slot });
                   setReplaceOpen(true);
                 }}
+                onSetPin={() => setPinFor(b)}
               />
             </li>
           ))}
@@ -106,12 +109,31 @@ function BranchesManager() {
           void refresh();
         }}
       />
+      <ShowroomPinDialog
+        branch={pinFor}
+        onClose={() => setPinFor(null)}
+        onSaved={() => {
+          setPinFor(null);
+          toast.success(t("Branches.pinSaved"));
+          void refresh();
+        }}
+      />
       <CredentialsDialog credentials={credentials} onClose={() => setCredentials(null)} />
     </>
   );
 }
 
-function BranchCard({ branch, onEdit, onReplace }: { branch: BranchView; onEdit: () => void; onReplace: (slot: StaffSlot) => void }) {
+function BranchCard({
+  branch,
+  onEdit,
+  onReplace,
+  onSetPin,
+}: {
+  branch: BranchView;
+  onEdit: () => void;
+  onReplace: (slot: StaffSlot) => void;
+  onSetPin: () => void;
+}) {
   const t = useTranslations();
   const locale = useLocale();
   const [primary, secondary] = locale === "ar" ? [branch.nameAr, branch.name] : [branch.name, branch.nameAr];
@@ -151,6 +173,18 @@ function BranchCard({ branch, onEdit, onReplace }: { branch: BranchView; onEdit:
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <StaffBlock slot="manager" staff={branch.manager} onReplace={() => onReplace("manager")} />
         <StaffBlock slot="cashier" staff={branch.cashier} onReplace={() => onReplace("cashier")} />
+      </div>
+
+      {/* what the showroom screen of this branch signs in with */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-brand)] bg-sand px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <KeyRound className="size-[18px] text-ink-2" aria-hidden="true" strokeWidth={1.8} />
+          <span className="text-[15px] font-bold">{t("Branches.showroomPin")}</span>
+          {branch.showroomPinSet ? <Pill>{t("Branches.pinSet")}</Pill> : <Pill tone="warning">{t("Branches.pinNotSet")}</Pill>}
+        </div>
+        <Button variant="outline" size="sm" className="bg-surface" onClick={onSetPin}>
+          {branch.showroomPinSet ? t("Branches.pinChangeAction") : t("Branches.pinSetAction")}
+        </Button>
       </div>
     </article>
   );

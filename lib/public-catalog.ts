@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import type { PublicCategory, PublicProduct } from "@/lib/api/types";
+import type { PublicCategory, PublicProduct, ServiceCatalog } from "@/lib/api/types";
 
 const API_INTERNAL_URL = process.env.API_INTERNAL_URL ?? "http://localhost:4000";
 
@@ -28,4 +28,9 @@ export function fetchPublicCatalog(categoryId?: string): Promise<PublicProduct[]
 
 export function fetchPublicCategories(): Promise<PublicCategory[] | null> {
   return fetchPublic<PublicCategory[]>("categories");
+}
+
+/** Services and packages (PPF, tint, polish, paint) with the prices set in the dashboard. */
+export function fetchPublicServices(): Promise<ServiceCatalog | null> {
+  return fetchPublic<ServiceCatalog>("services");
 }

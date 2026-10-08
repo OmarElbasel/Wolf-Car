@@ -194,31 +194,13 @@
     "close": "Close"
   },
   "Packages": {
-    "metaTitle": "Protection packages | Wolf Car Auto Services",
-    "metaDescription": "PPF protection packages with prices in QAR: complete packages with 8 services, and front protection for sedans and SUVs. Order on WhatsApp from Wolf Car Bin Omran.",
-    "label": "Protection packages",
-    "title": "Protect your car with a ready-made package",
-    "body": "Prices in QAR. Add a package to your order and send it to our Bin Omran branch on WhatsApp.",
+    "metaTitle": "Packages and services | Wolf Car Auto Services",
+    "metaDescription": "Paint protection film, window tint, ceramic, polish and paint, with prices in QAR for sedan and SUV. Order on WhatsApp from our Bin Omran branch.",
+    "label": "Packages and services",
+    "title": "Protection, tint and care for your car",
+    "body": "Prices in QAR. Pick your car type, add what you need to your order and send it to our Bin Omran branch on WhatsApp.",
     "jumpAria": "Package types",
-    "jumpBundles": "Complete packages",
-    "jumpFront": "Front protection",
     "from": "from {price}",
-    "bundlesTitle": "Complete protection packages",
-    "bundlesBody": "Every package has the same 8 services. They differ in the protection film.",
-    "bundleName": {
-      "bundle1": "Package 1",
-      "bundle2": "Package 2",
-      "bundle3": "Package 3"
-    },
-    "films": {
-      "bundle1": "American film · Premium",
-      "bundle2": "German film",
-      "bundle3": "American film · Standard",
-      "deStandard": "German film · Standard",
-      "dePremium": "German film · Premium",
-      "us": "American film"
-    },
-    "coupon": "+ {amount} purchase coupon",
     "includesTitle": "Every package includes",
     "services": {
       "fullPpf": "Full-body paint protection",
@@ -228,6 +210,7 @@
       "seats": "Pro seat protection",
       "upholstery": "Interior upholstery protection",
       "rims": "Nano-ceramic for the rims",
+      "screen": "Free interior screen protection",
       "pickup": "Pickup and delivery from your home"
     },
     "perkPickupTitle": "Free home pickup",
@@ -236,28 +219,31 @@
     "perkPayBody": "4 installments · up to 12",
     "perkCouponTitle": "{amount} coupon",
     "perkCouponBody": "For accessories, programming, or oil and filter changes",
-    "frontTitle": "Front protection",
-    "frontBody": "Protection film for the front of the car, where stone chips hit. Pick your car type to see its prices.",
     "bodyLabel": "Your car",
     "bodyTypes": {
       "sedan": "Sedan",
       "suv": "SUV / 4×4"
     },
-    "coverage": {
-      "quarter": "Quarter front",
-      "full": "Full front"
-    },
-    "coverageTitle": "{coverage} protection",
     "add": "Add",
-    "addToOrder": "Add to order",
     "addAria": "Add {name} to your order",
+    "promoTitle": "Packages and services",
+    "promoBody": "Protection film, tint, polish and paint from {price}",
+    "promoCta": "See packages",
+    "unavailable": "The price list is not available right now. Please try again in a moment.",
+    "promoBodyPlain": "Protection film, tint, polish and paint",
+    "section": {
+      "ppfFull": "Full protection packages",
+      "ppfPartial": "Front protection",
+      "ppfParts": "Protection for single parts",
+      "glass": "Glass protection",
+      "tint": "Window tint",
+      "care": "Ceramic and polish",
+      "blackEdition": "Black Edition",
+      "paint": "Paint"
+    },
     "viewPoster": "View the {name} poster full size",
     "close": "Close",
-    "lineBundle": "{name} · complete protection · {film}",
-    "lineFront": "{coverage} protection · {film} · {body}",
-    "promoTitle": "Protection packages",
-    "promoBody": "Complete packages from {bundle} · front protection from {front}",
-    "promoCta": "See packages"
+    "addToOrder": "Add to order"
   },
   "Legal": {
     "metaTitle": "{page} | Wolf Car Auto Services",

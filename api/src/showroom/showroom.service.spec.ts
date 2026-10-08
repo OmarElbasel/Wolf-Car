@@ -4,12 +4,14 @@ import { authUser } from '../../test/unit/helpers';
 import type { AuditTrail } from '../activity/audit-trail.service';
 import { Prisma } from '../generated/prisma/client';
 import type { PrismaService } from '../prisma/prisma.service';
+import type { ServicesService } from '../services/services.service';
 import { ShowroomService } from './showroom.service';
 
 describe('ShowroomService', () => {
   const prisma = mockDeep<PrismaService>();
   const trail = mock<AuditTrail>();
-  const service = new ShowroomService(prisma, trail);
+  const services = mock<ServicesService>();
+  const service = new ShowroomService(prisma, trail, services);
   const user = authUser({ id: 'u-1', role: 'CASHIER', branchId: 'gh', audience: 'SHOWROOM' }, ['order.create']);
   const dto = { userId: 'u-1', customerName: 'Sara', items: [{ productId: 'p1', quantity: 2 }, { productId: 'p2', quantity: 1 }] };
 
@@ -50,7 +52,11 @@ describe('ShowroomService', () => {
       ['Mats', '50.00', '50.00'],
     ]);
     // only priced products that belong to this branch's catalogue are accepted
-    expect(prisma.product.findMany.mock.calls[0][0]?.where).toMatchObject({ price: { not: null }, branchPositions: { some: { branchId: 'gh' } } });
+    expect(prisma.product.findMany.mock.calls[0][0]?.where).toMatchObject({
+      price: { not: null },
+      // a part must be on this branch's list; a service is sold at every branch
+      OR: [{ branchPositions: { some: { branchId: 'gh' } } }, { service: { isActive: true } }],
+    });
   });
 
   it('rejects unavailable (unknown or unpriced) products', async () => {

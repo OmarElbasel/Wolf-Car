@@ -48,6 +48,8 @@ export class PublicCatalogService {
     const rows = await this.prisma.product.findMany({
       where: {
         isActive: true,
+        // services have their own endpoint (public/services)
+        serviceId: null,
         ...(categoryId ? { categoryId: { in: parentId ? [categoryId, parentId] : [categoryId] }, category: { isActive: true } } : {}),
       },
       select: { id: true, name: true, description: true, categoryId: true, price: true, imageKey: true, ...VARIANT_SELECT },
