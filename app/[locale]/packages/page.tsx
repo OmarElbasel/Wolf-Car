@@ -8,11 +8,12 @@ import { Footer } from "@/components/Footer";
 import { Icon } from "@/components/Icon";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { CartSheet } from "@/features/catalog/cart-sheet";
-import { BundleCards } from "@/features/packages/bundle-cards";
-import { FrontProtection } from "@/features/packages/front-protection";
+import { ServiceCatalog } from "@/features/packages/service-catalog";
 import { routing } from "@/i18n/routing";
 import { formatMoney } from "@/lib/format";
-import { BUNDLE_COUPON, BUNDLE_SERVICES, lowestPrices } from "@/lib/packages";
+import { BUNDLE_COUPON, BUNDLE_SERVICES } from "@/lib/packages";
+import { fetchPublicServices } from "@/lib/public-catalog";
+import { lowestPrice } from "@/lib/services";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -22,8 +23,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 /**
- * PPF protection packages (lib/packages.ts). Ordered like the parts catalogue:
- * they go into the same basket, which is sent to the Bin Omran branch on WhatsApp.
+ * Services and packages: PPF, tint, polish and paint, with the prices set in
+ * the dashboard. Ordered like the parts catalogue: they go into the same
+ * basket, which is sent to the Bin Omran branch on WhatsApp.
  */
 export default async function PackagesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -31,11 +33,12 @@ export default async function PackagesPage({ params }: { params: Promise<{ local
   setRequestLocale(locale);
   const t = await getTranslations("Packages");
   const money = (n: number) => formatMoney(n, locale, { whole: true });
-  const from = lowestPrices();
-  const jumps = [
-    { href: "#complete", label: t("jumpBundles"), price: from.bundle },
-    { href: "#front", label: t("jumpFront"), price: from.front },
-  ];
+  const catalog = await fetchPublicServices();
+  // the two most asked-for kinds get a shortcut with their starting price
+  const jumps = (["ppfFull", "ppfPartial"] as const).flatMap((section) => {
+    const price = lowestPrice((catalog?.services ?? []).filter((s) => s.section === section));
+    return price === null ? [] : [{ href: `#${section}`, label: t(`section.${section}`), price }];
+  });
   const perks = [
     { icon: <Icon name="truck" className="size-5" />, title: t("perkPickupTitle"), body: t("perkPickupBody") },
     { icon: <Icon name="card" className="size-5" />, title: t("perkPayTitle"), body: t("perkPayBody") },
@@ -45,6 +48,39 @@ export default async function PackagesPage({ params }: { params: Promise<{ local
       body: t("perkCouponBody"),
     },
   ];
+
+  // keyed: it crosses to the client inside an object, where React treats it as a list item
+  const includes = (
+    <div key="includes" className="mt-3.5 grid gap-3.5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="rounded-[var(--radius-brand-lg)] border border-line bg-surface p-5">
+        <h3 className="mb-3.5 text-[17px] font-extrabold">{t("includesTitle")}</h3>
+        <ol className="grid gap-2.5 sm:grid-cols-2">
+          {BUNDLE_SERVICES.map((s, i) => (
+            <li key={s} className="flex items-center gap-3">
+              <span
+                className="grid size-8 shrink-0 place-items-center rounded-[8px] bg-accent text-[15px] font-extrabold text-white tabular-nums"
+                aria-hidden="true"
+              >
+                {i + 1}
+              </span>
+              <span className="text-[15px] font-semibold">{t(`services.${s}`)}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <ul className="grid gap-2.5">
+        {perks.map((p) => (
+          <li key={p.title} className="flex items-center gap-3 rounded-[var(--radius-brand-lg)] border border-line bg-surface px-4 py-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-brand)] bg-sand text-accent-ink">{p.icon}</span>
+            <span className="leading-snug">
+              <b className="block text-[15px] font-extrabold">{p.title}</b>
+              <small className="block text-[13px] text-muted">{p.body}</small>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <>
@@ -81,52 +117,11 @@ export default async function PackagesPage({ params }: { params: Promise<{ local
             </div>
           </section>
 
-          <section id="complete" aria-labelledby="complete-title" className="scroll-mt-24">
-            <h2 id="complete-title" className="text-[clamp(23px,4.6vw,30px)] leading-[1.3] font-extrabold">
-              {t("bundlesTitle")}
-            </h2>
-            <p className="mt-1 mb-5 text-ink-2">{t("bundlesBody")}</p>
-            <BundleCards />
-
-            <div className="mt-3.5 grid gap-3.5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-              <div className="rounded-[var(--radius-brand-lg)] border border-line bg-surface p-5">
-                <h3 className="mb-3.5 text-[17px] font-extrabold">{t("includesTitle")}</h3>
-                <ol className="grid gap-2.5 sm:grid-cols-2">
-                  {BUNDLE_SERVICES.map((s, i) => (
-                    <li key={s} className="flex items-center gap-3">
-                      <span
-                        className="grid size-8 shrink-0 place-items-center rounded-[8px] bg-accent text-[15px] font-extrabold text-white tabular-nums"
-                        aria-hidden="true"
-                      >
-                        {i + 1}
-                      </span>
-                      <span className="text-[15px] font-semibold">{t(`services.${s}`)}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <ul className="grid gap-2.5">
-                {perks.map((p) => (
-                  <li key={p.title} className="flex items-center gap-3 rounded-[var(--radius-brand-lg)] border border-line bg-surface px-4 py-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-brand)] bg-sand text-accent-ink">{p.icon}</span>
-                    <span className="leading-snug">
-                      <b className="block text-[15px] font-extrabold">{p.title}</b>
-                      <small className="block text-[13px] text-muted">{p.body}</small>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-
-          <section id="front" aria-labelledby="front-title" className="mt-12 scroll-mt-24">
-            <FrontProtection>
-              <h2 id="front-title" className="text-[clamp(23px,4.6vw,30px)] leading-[1.3] font-extrabold">
-                {t("frontTitle")}
-              </h2>
-              <p className="mt-1 max-w-[620px] text-ink-2">{t("frontBody")}</p>
-            </FrontProtection>
-          </section>
+          {catalog === null || catalog.services.length === 0 ? (
+            <p className="rounded-[var(--radius-brand-lg)] border border-dashed border-line px-6 py-12 text-center text-ink-2">{t("unavailable")}</p>
+          ) : (
+            <ServiceCatalog catalog={catalog} extras={{ ppfFull: includes }} />
+          )}
         </Wrap>
       </main>
       <CartSheet />

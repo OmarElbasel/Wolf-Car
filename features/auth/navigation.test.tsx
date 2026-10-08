@@ -29,8 +29,8 @@ describe("permission-gated navigation", () => {
     expect(labels(["order.read.branch", "order.confirm", "order.create"])).toEqual(["overview", "orders", "account"]);
   });
 
-  it("shows finance products and orders", () => {
-    expect(labels(["product.read", "product.update.price", "order.read.all"])).toEqual(["overview", "products", "orders", "account"]);
+  it("shows finance products, the services they price, and orders", () => {
+    expect(labels(["product.read", "product.update.price", "order.read.all"])).toEqual(["overview", "products", "services", "orders", "account"]);
   });
 
   it("shows the call center the two booking pages", () => {

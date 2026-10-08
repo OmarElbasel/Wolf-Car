@@ -99,6 +99,49 @@ export interface ShowroomCategory {
   count: number;
 }
 
+export type ServiceSection = "ppfParts" | "ppfPartial" | "ppfFull" | "glass" | "tint" | "care" | "blackEdition" | "paint";
+export type ServiceBody = "sedan" | "suv";
+
+/** One column of a service's price table: a PPF package, a tint film or a car model. */
+export interface ServiceTier {
+  id: string;
+  /** "ppf", "tint" or "model" */
+  set: string;
+  nameAr: string;
+  nameEn: string;
+}
+
+/** One price of a service. It is ordered by `productId`, exactly like a product. */
+export interface ServicePrice {
+  productId: string;
+  tierId: string | null;
+  body: ServiceBody | null;
+  /** null in the dashboard while Finance has not set it; never null for customers */
+  price: string | null;
+}
+
+/** A service or package kept in the dashboard, not in Odoo: PPF, tint, polish, paint. */
+export interface Service {
+  id: string;
+  section: ServiceSection;
+  nameAr: string;
+  nameEn: string;
+  noteAr: string | null;
+  noteEn: string | null;
+  /** the set of tiers it is priced by; null for a single price */
+  tierSet: string | null;
+  /** separate sedan and SUV prices */
+  bodySplit: boolean;
+  isActive: boolean;
+  thumbUrl: string | null;
+  prices: ServicePrice[];
+}
+
+export interface ServiceCatalog {
+  tiers: ServiceTier[];
+  services: Service[];
+}
+
 export interface OrderSummary {
   id: string;
   code: string;

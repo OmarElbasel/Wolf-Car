@@ -29,6 +29,8 @@ export class ProductsService {
   async list(user: AuthUser, q: ListProductsQueryDto): Promise<ProductView[]> {
     const branchId = user.branchId ?? q.branchId ?? null;
     const where: Prisma.ProductWhereInput = {
+      // the hidden rows behind a service's prices are edited on the services page
+      serviceId: null,
       ...(q.visibility === 'all' ? {} : { isActive: q.visibility !== 'hidden' }),
       ...(q.price === 'priced' ? { price: { not: null } } : q.price === 'unpriced' ? { price: null } : {}),
       ...(q.q

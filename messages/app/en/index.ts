@@ -10,6 +10,7 @@ import nav from "./nav.json";
 import orders from "./orders.json";
 import permissions from "./permissions.json";
 import products from "./products.json";
+import services from "./services.json";
 import showroom from "./showroom.json";
 import users from "./users.json";
 import validation from "./validation.json";
@@ -26,6 +27,7 @@ const messages = {
   Orders: orders,
   Permissions: permissions,
   Products: products,
+  Services: services,
   Showroom: showroom,
   Users: users,
   Validation: validation,

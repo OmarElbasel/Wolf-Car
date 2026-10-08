@@ -120,7 +120,7 @@ export class BranchesService {
           showroomPassword: s.showroomPassword,
         });
       }
-      const products = await tx.product.findMany({ select: { id: true }, orderBy: { name: 'asc' } });
+      const products = await tx.product.findMany({ where: { serviceId: null }, select: { id: true }, orderBy: { name: 'asc' } });
       if (products.length) {
         await tx.branchProduct.createMany({
           data: products.map((p, position) => ({ branchId: branch.id, productId: p.id, position })),

@@ -64,6 +64,8 @@ describe('PublicCatalogService', () => {
     await service.list('22222222-2222-4222-8222-222222222222');
     expect(prisma.product.findMany.mock.calls[0][0]?.where).toEqual({
       isActive: true,
+      // a service's price rows are never part of the parts catalogue
+      serviceId: null,
       categoryId: { in: ['22222222-2222-4222-8222-222222222222'] },
       category: { isActive: true },
     });

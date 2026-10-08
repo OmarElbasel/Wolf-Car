@@ -55,5 +55,22 @@
   "noMatchHint": "جرّب كلمة أخرى أو امسح الفلاتر.",
   "clearFilters": "مسح الفلاتر",
   "searchAll": "ابحث في كل السيارات",
-  "showMore": "عرض المزيد ({count})"
+  "showMore": "عرض المزيد ({count})",
+  "services": "الباقات والخدمات",
+  "bodyLabel": "سيارتك",
+  "body": {
+    "sedan": "سيدان",
+    "suv": "SUV"
+  },
+  "section": {
+    "ppfFull": "باقات الحماية الكاملة",
+    "ppfPartial": "حماية المقدمة",
+    "ppfParts": "حماية القطع الفردية",
+    "glass": "حماية الزجاج",
+    "tint": "العازل الحراري",
+    "care": "السيراميك والبولش",
+    "blackEdition": "بلاك إديشن",
+    "paint": "الصبغ"
+  },
+  "viewPoster": "عرض ملصق {name} بالحجم الكامل"
 }

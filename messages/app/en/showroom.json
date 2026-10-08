@@ -55,5 +55,22 @@
   "noMatchHint": "Try another word, or clear the filters.",
   "clearFilters": "Clear filters",
   "searchAll": "Search all cars",
-  "showMore": "Show more ({count})"
+  "showMore": "Show more ({count})",
+  "services": "Packages & services",
+  "bodyLabel": "Your car",
+  "body": {
+    "sedan": "Sedan",
+    "suv": "SUV"
+  },
+  "section": {
+    "ppfFull": "Full protection packages",
+    "ppfPartial": "Front protection",
+    "ppfParts": "Protection for single parts",
+    "glass": "Glass protection",
+    "tint": "Window tint",
+    "care": "Ceramic and polish",
+    "blackEdition": "Black Edition",
+    "paint": "Paint"
+  },
+  "viewPoster": "View the {name} poster full size"
 }

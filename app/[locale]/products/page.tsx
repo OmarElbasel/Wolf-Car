@@ -14,8 +14,9 @@ import { ModelSidebar, ModelTabs } from "@/features/catalog/model-tabs";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { formatMoney } from "@/lib/format";
-import { FLAG_BADGE, lowestPrices } from "@/lib/packages";
-import { fetchPublicCatalog, fetchPublicCategories } from "@/lib/public-catalog";
+import { FLAG_BADGE } from "@/lib/packages";
+import { fetchPublicCatalog, fetchPublicCategories, fetchPublicServices } from "@/lib/public-catalog";
+import { lowestPrice } from "@/lib/services";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -42,7 +43,8 @@ export default async function ProductsPage({
   setRequestLocale(locale);
   const t = await getTranslations("ProductsPage");
   const pkg = await getTranslations("Packages");
-  const from = lowestPrices();
+  const services = (await fetchPublicServices())?.services ?? [];
+  const from = lowestPrice(services);
   const categories = (await fetchPublicCategories()) ?? [];
   // an unknown or stale id falls back to every product instead of an empty page
   const selected = categories.find((c) => c.id === rawCategory);
@@ -91,7 +93,7 @@ export default async function ProductsPage({
             <span className="min-w-0 flex-1 leading-snug">
               <b className="block text-[15px] font-extrabold">{pkg("promoTitle")}</b>
               <small className="block text-[13px] text-muted tabular-nums">
-                {pkg("promoBody", { bundle: formatMoney(from.bundle, locale, { whole: true }), front: formatMoney(from.front, locale, { whole: true }) })}
+                {from === null ? pkg("promoBodyPlain") : pkg("promoBody", { price: formatMoney(from, locale, { whole: true }) })}
               </small>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-accent-ink">

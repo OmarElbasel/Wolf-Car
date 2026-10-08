@@ -12,6 +12,7 @@ import {
   Package,
   ReceiptText,
   ShieldCheck,
+  Sparkles,
   Store,
   UserCog,
   Users,
@@ -41,6 +42,7 @@ import { cn } from "@/lib/utils";
 const ICONS: Record<NavItem["icon"], typeof Package> = {
   home: LayoutDashboard,
   products: Package,
+  services: Sparkles,
   orders: ReceiptText,
   ppf: CalendarCheck,
   reservations: CalendarClock,
