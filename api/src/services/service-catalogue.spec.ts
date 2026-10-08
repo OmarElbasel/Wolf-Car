@@ -27,7 +27,7 @@ describe('the starting services (the accountant\'s sheet)', () => {
 
 describe('lineName', () => {
   it('names an order line by service, package and car type', () => {
-    expect(lineName('الحماية الكاملة للسيارة', 'البكج الأول · Xpel', 'suv')).toBe('الحماية الكاملة للسيارة · البكج الأول · Xpel · SUV');
+    expect(lineName('الحماية الكاملة للسيارة', 'البكج الأول', 'suv')).toBe('الحماية الكاملة للسيارة · البكج الأول · SUV');
     expect(lineName('بولش كامل', null, null)).toBe('بولش كامل');
   });
 
