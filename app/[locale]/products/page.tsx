@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Wrap } from "@/components/Button";
 import { Footer } from "@/components/Footer";
 import { Icon } from "@/components/Icon";
+import { TrackModelView } from "@/components/SiteAnalytics";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { CartSheet } from "@/features/catalog/cart-sheet";
 import { CatalogGrid } from "@/features/catalog/catalog-grid";
@@ -58,6 +59,7 @@ export default async function ProductsPage({
   return (
     <>
       <SubpageHeader />
+      {selected && <TrackModelView id={selected.id} name={categoryName(selected, "en")} />}
       <main id="main" className="bg-sand pt-6 pb-24 lg:pt-8">
         <Wrap>
           {/* banner for the selected car model (the Wolf Car van for "all") */}

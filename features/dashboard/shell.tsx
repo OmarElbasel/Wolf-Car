@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarChart3,
   Building2,
   CalendarCheck,
   CalendarClock,
@@ -50,6 +51,7 @@ const ICONS: Record<NavItem["icon"], typeof Package> = {
   branches: Building2,
   permissions: ShieldCheck,
   activity: History,
+  analytics: BarChart3,
   account: UserCog,
   showroom: Store,
 };

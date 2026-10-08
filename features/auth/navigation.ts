@@ -28,7 +28,7 @@ export interface NavItem {
   label: string;
   /** shown when the user has ANY of these (empty = everyone signed in) */
   any: PermissionKey[];
-  icon: "home" | "products" | "services" | "orders" | "ppf" | "reservations" | "users" | "branches" | "permissions" | "activity" | "account" | "showroom";
+  icon: "home" | "products" | "services" | "orders" | "ppf" | "reservations" | "users" | "branches" | "permissions" | "activity" | "analytics" | "account" | "showroom";
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -42,6 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/branches", label: "branches", any: ["branch.manage"], icon: "branches" },
   { href: "/dashboard/permissions", label: "permissions", any: ["permission.manage"], icon: "permissions" },
   { href: "/dashboard/activity", label: "activity", any: ["activity.read"], icon: "activity" },
+  { href: "/dashboard/analytics", label: "analytics", any: ["analytics.read"], icon: "analytics" },
   { href: "/dashboard/account", label: "account", any: [], icon: "account" },
 ];
 

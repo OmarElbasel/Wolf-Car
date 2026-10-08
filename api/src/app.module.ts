@@ -7,6 +7,7 @@ import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
 import { AccountModule } from './account/account.module';
 import { ActivityModule } from './activity/activity.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { AuditInterceptor } from './activity/audit.interceptor';
 import { AuthModule } from './auth/auth.module';
 import { BranchesModule } from './branches/branches.module';
@@ -100,6 +101,7 @@ type IdRequest = IncomingMessage & { id?: string };
     ReservationsModule,
     ReceiptsModule,
     PublicModule,
+    AnalyticsModule,
   ],
   controllers: [HealthController],
   providers: [

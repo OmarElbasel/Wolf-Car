@@ -113,9 +113,12 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'GET /api/public/categories': { public: 200 },
   'GET /api/public/products': { public: 200 },
   'GET /api/public/services': { public: 200 },
+  'POST /api/public/events': { public: 400 }, // empty body
 
   'GET /api/activity': ['admin'],
   'GET /api/activity/actions': ['admin'],
+
+  'GET /api/analytics/summary': ['admin'],
 };
 
 const fillPath = (path: string) =>

@@ -51,6 +51,7 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.$executeRawUnsafe('TRUNCATE TABLE activity_logs');
   await prisma.$transaction(async (tx) => {
     for (const table of [
+      'site_events',
       'light_job_requests',
       'ppf_bookings',
       'ppf_closed_days',

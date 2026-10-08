@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Wrap, SectionHead, buttonClass } from "./Button";
 import { Icon } from "./Icon";
 import { getBranchList, bookingMessage, waLink, type BranchId } from "@/lib/branches";
+import { track } from "@/lib/track";
 import { bookingServiceAvailable, getBookingServices, type BookingServiceId } from "@/lib/content";
 
 type Place = "branch" | "home";
@@ -114,6 +115,7 @@ export function BookingForm() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            track("whatsapp_booking", { label: branch });
             window.open(
               waLink(locale, branch, bookingMessage(locale, branch, service.value, places.find((p) => p.id === place)!.label)),
               "_blank",
