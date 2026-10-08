@@ -606,3 +606,32 @@ model OdooSyncRun {
   @@index([startedAt])
   @@map("odoo_sync_runs")
 }
+
+/// One thing a visitor did on the public website: a page view or a press on a
+/// contact button. Anonymous by design: no cookie and no stored IP address;
+/// `visitor` is a hash that changes every day, so it only tells one day's
+/// visitors apart. Rows older than a year are deleted.
+model SiteEvent {
+  id           BigInt   @id @default(autoincrement())
+  occurredAt   DateTime @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  /// Qatar calendar day of occurredAt.
+  day          DateTime @db.Date
+  /// One of SITE_EVENT_TYPES.
+  type         String   @db.VarChar(24)
+  visitor      String   @db.Char(32)
+  /// Without the language prefix: "/", "/products".
+  path         String   @db.VarChar(200)
+  locale       String   @db.VarChar(2)
+  /// The first page of a visit; only these rows carry `source`.
+  entry        Boolean  @default(false)
+  source       String?  @db.VarChar(24)
+  referrerHost String?  @map("referrer_host") @db.VarChar(100)
+  device       String   @db.VarChar(8)
+  /// The branch for a contact press, the product for an add to cart, the car for a model view.
+  label        String?  @db.VarChar(160)
+  targetId     String?  @map("target_id") @db.VarChar(64)
+
+  @@index([day, type])
+  @@index([day, visitor])
+  @@map("site_events")
+}

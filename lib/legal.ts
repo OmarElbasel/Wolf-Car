@@ -2,11 +2,11 @@ import type { Locale } from "@/i18n/routing";
 
 /**
  * Privacy policy and terms of service. DRAFTS written from what the site
- * actually does (no customer accounts, booking goes through WhatsApp, no
- * analytics) — have them reviewed before relying on them, and bump UPDATED
+ * actually does (no customer accounts, booking goes through WhatsApp, our own
+ * anonymous visit counts and no third-party trackers) — have them reviewed before relying on them, and bump UPDATED
  * whenever the wording changes.
  */
-export const LEGAL_UPDATED = "2026-09-24";
+export const LEGAL_UPDATED = "2026-10-09";
 
 export interface LegalSection {
   heading: string;
@@ -43,7 +43,8 @@ const PRIVACY: Record<Locale, LegalDoc> = {
         heading: "Stored on your device",
         paragraphs: [
           "The website remembers your language and your light or dark display choice so the page looks the way you left it. These are kept in your browser and are not used to track you.",
-          "We do not use analytics or advertising trackers on this website.",
+          "We count visits to the website ourselves, to see which pages and buttons are used: the page opened, the kind of device, the site that led you here, and presses on the WhatsApp, call and basket buttons. These counts are anonymous. They use no cookies, we do not keep your IP address, they cannot be linked to you from one day to the next, and we delete them after about a year.",
+          "We do not use advertising trackers or any other company's analytics on this website.",
         ],
       },
       {
@@ -99,7 +100,8 @@ const PRIVACY: Record<Locale, LegalDoc> = {
         heading: "ما يُحفظ على جهازك",
         paragraphs: [
           "يتذكر الموقع لغتك واختيارك للوضع الفاتح أو الداكن ليظهر كما تركته. تُحفظ هذه الإعدادات في متصفحك ولا تُستخدم لتتبعك.",
-          "لا نستخدم أدوات تحليلات أو تتبع إعلاني في هذا الموقع.",
+          "نحصي زيارات الموقع بأنفسنا لنعرف الصفحات والأزرار المستخدمة: الصفحة التي فُتحت، ونوع الجهاز، والموقع الذي جئت منه، والضغط على أزرار واتساب والاتصال والسلة. هذه الأرقام مجهولة الهوية: لا تستخدم ملفات تعريف الارتباط، ولا نحتفظ بعنوان IP الخاص بك، ولا يمكن ربطها بك من يوم إلى آخر، ونحذفها بعد نحو سنة.",
+          "لا نستخدم أدوات تتبع إعلاني ولا أدوات تحليلات تابعة لشركات أخرى في هذا الموقع.",
         ],
       },
       {

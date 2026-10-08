@@ -37,7 +37,11 @@ describe('Audit coverage', () => {
     expect(receipt?.audit?.action).toBe('order.receipt.download');
   });
 
-  it('only token-rotation routes skip auditing', () => {
-    expect(appRoutes(t).filter((r) => r.skipAudit).map((r) => r.path)).toEqual(['/api/auth/refresh', '/api/auth/showroom/refresh']);
+  it('only token rotation and anonymous visitor statistics skip auditing', () => {
+    expect(appRoutes(t).filter((r) => r.skipAudit).map((r) => r.path)).toEqual([
+      '/api/auth/refresh',
+      '/api/auth/showroom/refresh',
+      '/api/public/events',
+    ]);
   });
 });

@@ -90,6 +90,9 @@ export function getBranchList(locale: Locale): Branch[] {
   return [b.binomran, b.gharrafa];
 }
 
+/** Each branch's numbers, the same in both languages (to tell which branch a link leads to). */
+export const BRANCH_CONTACTS: Pick<Branch, "id" | "tel" | "wa">[] = Object.values(BRANCHES.en).map(({ id, tel, wa }) => ({ id, tel, wa }));
+
 export function getHours(locale: Locale): string {
   return HOURS[locale];
 }
