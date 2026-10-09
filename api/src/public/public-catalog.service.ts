@@ -39,7 +39,7 @@ export interface PublicCategory {
 export class PublicCatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(categoryId?: string): Promise<PublicProduct[]> {
+  async list(categoryId?: string, quickService = false): Promise<PublicProduct[]> {
     // explicit select: the barcode is never read, so it cannot leak
     // a model also lists what is common to its brand (the parent category)
     const parentId = categoryId
@@ -50,6 +50,7 @@ export class PublicCatalogService {
         isActive: true,
         // services have their own endpoint (public/services)
         serviceId: null,
+        ...(quickService ? { isQuickService: true } : {}),
         ...(categoryId ? { categoryId: { in: parentId ? [categoryId, parentId] : [categoryId] }, category: { isActive: true } } : {}),
       },
       select: { id: true, name: true, description: true, categoryId: true, price: true, imageKey: true, ...VARIANT_SELECT },

@@ -11,13 +11,14 @@ import { SubpageHeader } from "@/components/SubpageHeader";
 import { CartSheet } from "@/features/catalog/cart-sheet";
 import { CatalogGrid } from "@/features/catalog/catalog-grid";
 import { categoryName } from "@/features/catalog/category-name";
-import { ModelSidebar, ModelTabs } from "@/features/catalog/model-tabs";
+import { ModelSidebar, ModelTabs, QUICK_SERVICE } from "@/features/catalog/model-tabs";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { formatMoney } from "@/lib/format";
 import { FLAG_BADGE } from "@/lib/packages";
-import { fetchPublicCatalog, fetchPublicCategories, fetchPublicServices } from "@/lib/public-catalog";
+import { fetchPublicCatalog, fetchPublicCategories, fetchPublicQuickService, fetchPublicServices } from "@/lib/public-catalog";
 import { lowestPrice } from "@/lib/services";
+import { groupVariants } from "@/lib/variants";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -49,7 +50,12 @@ export default async function ProductsPage({
   const categories = (await fetchPublicCategories()) ?? [];
   // an unknown or stale id falls back to every product instead of an empty page
   const selected = categories.find((c) => c.id === rawCategory);
-  const products = await fetchPublicCatalog(selected?.id);
+  // filters, oils and brake pads of every car, gathered under one tab
+  const quickProducts = (await fetchPublicQuickService()) ?? [];
+  const quickCount = groupVariants(quickProducts).length;
+  const quick = rawCategory === QUICK_SERVICE && quickCount > 0;
+  const products = quick ? quickProducts : await fetchPublicCatalog(selected?.id);
+  const tab = quick ? QUICK_SERVICE : selected?.id;
   const perks = [
     { icon: "wa", title: t("perkOrderTitle"), body: t("perkOrderBody") },
     { icon: "wrench", title: t("perkFitTitle"), body: t("perkFitBody") },
@@ -60,6 +66,7 @@ export default async function ProductsPage({
     <>
       <SubpageHeader />
       {selected && <TrackModelView id={selected.id} name={categoryName(selected, "en")} />}
+      {quick && <TrackModelView id={QUICK_SERVICE} name="Quick Service" />}
       <main id="main" className="bg-sand pt-6 pb-24 lg:pt-8">
         <Wrap>
           {/* banner for the selected car model (the Wolf Car van for "all") */}
@@ -67,10 +74,10 @@ export default async function ProductsPage({
             <div className="relative z-10 p-5 pb-2 md:p-9">
               <p className="text-sm font-bold text-[#FF9A62]">{t("label")}</p>
               <h1 dir="auto" className="mt-1.5 text-start text-[clamp(26px,5vw,40px)] leading-[1.2] font-extrabold">
-                {selected ? categoryName(selected, locale) : t("title")}
+                {quick ? t("quickService") : selected ? categoryName(selected, locale) : t("title")}
               </h1>
               <p className="mt-2 max-w-[440px] text-[15px] text-white/70">
-                {selected ? t("modelBody", { count: selected.count }) : t("body")}
+                {quick ? t("quickBody") : selected ? t("modelBody", { count: selected.count }) : t("body")}
               </p>
             </div>
             <div className="relative h-[120px] md:h-full">
@@ -119,15 +126,15 @@ export default async function ProductsPage({
           </ul>
 
           <div className="lg:grid lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-7">
-            <ModelSidebar categories={categories} selected={selected?.id} />
+            <ModelSidebar categories={categories} selected={tab} quickCount={quickCount} />
             <div>
-              <ModelTabs categories={categories} selected={selected?.id} />
+              <ModelTabs categories={categories} selected={tab} quickCount={quickCount} />
               {products === null ? (
                 <p role="alert" className="rounded-[var(--radius-brand-lg)] border border-line bg-surface px-6 py-12 text-center text-ink-2">
                   {t("unavailable")}
                 </p>
               ) : (
-                <CatalogGrid key={selected?.id ?? "all"} products={products} />
+                <CatalogGrid key={tab ?? "all"} products={products} />
               )}
             </div>
           </div>

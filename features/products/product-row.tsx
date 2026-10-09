@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, History, Pencil, ScanBarcode } from "lucide-react";
+import { Clock3, History, Pencil, ScanBarcode, Wrench } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, type ReactNode } from "react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Product } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export interface RowPermissions {
   canEdit: boolean;
@@ -20,6 +21,8 @@ export interface RowActions {
   onEdit: (product: Product) => void;
   onPrice: (product: Product) => void;
   onHistory: (product: Product) => void;
+  /** puts the product under the website's "Quick service" tab, or takes it out */
+  onQuickService: (product: Product) => void;
 }
 
 function IconAction({ label, tooltip, onClick, children }: { label: string; tooltip: string; onClick: () => void; children: ReactNode }) {
@@ -138,6 +141,23 @@ export const ProductRowContent = memo(function ProductRowContent({
               <Button variant="outline" size="sm" onClick={() => actions.onPrice(product)}>
                 {product.price === null ? t("price.set") : t("price.change")}
               </Button>
+            )}
+            {permissions.canEdit && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-pressed={Boolean(product.quickService)}
+                    aria-label={t("quick.toggleNamed", { name: product.name })}
+                    onClick={() => actions.onQuickService(product)}
+                    className={cn(product.quickService && "bg-accent text-white hover:bg-accent-dark hover:text-white")}
+                  >
+                    <Wrench className="size-5" strokeWidth={1.8} aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{product.quickService ? t("quick.remove") : t("quick.add")}</TooltipContent>
+              </Tooltip>
             )}
             {permissions.canHistory && (
               <IconAction label={t("historyNamed", { name: product.name })} tooltip={t("price.history")} onClick={() => actions.onHistory(product)}>

@@ -63,6 +63,7 @@
     "permission_user_update": "تعديل صلاحيات مستخدم",
     "product_create": "إنشاء منتج",
     "product_update": "تعديل منتج",
+    "product_quick_service": "إضافة أو إزالة من «خدمات سريعة»",
     "product_price_update": "تغيير سعر",
     "product_reorder": "ترتيب المعرض",
     "order_create": "تسجيل طلب",

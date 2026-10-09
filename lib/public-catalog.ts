@@ -26,6 +26,11 @@ export function fetchPublicCatalog(categoryId?: string): Promise<PublicProduct[]
   return fetchPublic<PublicProduct[]>(`products${query}`);
 }
 
+/** Filters, oils and brake pads of every car: the "Quick service" tab. */
+export function fetchPublicQuickService(): Promise<PublicProduct[] | null> {
+  return fetchPublic<PublicProduct[]>("products?quickService=true");
+}
+
 export function fetchPublicCategories(): Promise<PublicCategory[] | null> {
   return fetchPublic<PublicCategory[]>("categories");
 }

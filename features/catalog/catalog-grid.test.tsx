@@ -1,7 +1,7 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "@/messages/en.json";
 import type { PublicProduct } from "@/lib/api/types";
 import { cart } from "./cart";
@@ -80,6 +80,26 @@ describe("public catalog grid", () => {
     await userEvent.click(screen.getByRole("button", { name: "Show more (6 left)" }));
     expect(screen.getAllByRole("listitem")).toHaveLength(30);
     expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument();
+  });
+
+  it("loads the next page by itself when the visitor scrolls near the end", () => {
+    let seen: (entries: Partial<IntersectionObserverEntry>[]) => void = () => {};
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: typeof seen) {
+          seen = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    renderGrid(Array.from({ length: 30 }, (_, i) => product(`p${i}`, `Part ${String(i).padStart(2, "0")}`, "10.00")));
+    expect(screen.getAllByRole("listitem")).toHaveLength(24);
+    act(() => seen([{ isIntersecting: true }]));
+    expect(screen.getAllByRole("listitem")).toHaveLength(30);
+    expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 
   it("shows the colours of one product as one card and adds the picked colour", async () => {

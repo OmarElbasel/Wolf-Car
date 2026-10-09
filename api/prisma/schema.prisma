@@ -278,6 +278,9 @@ model Product {
   /// False hides the product from the showroom, the website and the dashboard
   /// list. Rows are never deleted: past orders still point at them.
   isActive       Boolean   @default(true) @map("is_active")
+  /// Listed under the website's "Quick service" tab (filters, oils, brake
+  /// pads) as well as under its own car. Set in the dashboard, never by Odoo.
+  isQuickService Boolean   @default(false) @map("is_quick_service")
   /// What Odoo's "last changed" dates were when this row was last synced. The
   /// sync skips a row whose stamp has not moved.
   odooStamp      String?   @map("odoo_stamp") @db.VarChar(80)

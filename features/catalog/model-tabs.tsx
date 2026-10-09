@@ -1,3 +1,4 @@
+import { Wrench } from "lucide-react";
 import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -13,19 +14,28 @@ import { categoryName } from "./category-name";
  */
 interface Props {
   categories: PublicCategory[];
-  /** the selected category id; undefined shows every product */
+  /** the selected category id or QUICK_SERVICE; undefined shows every product */
   selected: string | undefined;
+  /** how many products the "Quick service" tab holds; it is left out at 0 */
+  quickCount: number;
 }
+
+/** ?category= value of the "Quick service" tab, which gathers parts from every car. */
+export const QUICK_SERVICE = "quick-service";
 
 const href = (id: string | undefined) => (id ? { pathname: "/products" as const, query: { category: id } } : "/products");
 
-export async function ModelTabs({ categories, selected }: Props) {
+export async function ModelTabs({ categories, selected, quickCount }: Props) {
   const t = await getTranslations("ProductsPage");
   const locale = await getLocale();
   if (categories.length === 0) return null;
 
   const total = categories.reduce((sum, c) => sum + c.count, 0);
-  const tabs = [{ id: undefined, name: t("allModels"), count: total }, ...categories.map((c) => ({ ...c, name: categoryName(c, locale) }))];
+  const tabs = [
+    { id: undefined, name: t("allModels"), count: total },
+    ...(quickCount > 0 ? [{ id: QUICK_SERVICE, name: t("quickService"), count: quickCount }] : []),
+    ...categories.map((c) => ({ ...c, name: categoryName(c, locale) })),
+  ];
 
   return (
     <nav aria-label={t("models")} className="-mx-5 mb-5 flex snap-x gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:thin] lg:hidden">
@@ -59,7 +69,7 @@ export async function ModelTabs({ categories, selected }: Props) {
   );
 }
 
-export async function ModelSidebar({ categories, selected }: Props) {
+export async function ModelSidebar({ categories, selected, quickCount }: Props) {
   const t = await getTranslations("ProductsPage");
   const locale = await getLocale();
   if (categories.length === 0) return null;
@@ -87,6 +97,17 @@ export async function ModelSidebar({ categories, selected }: Props) {
             <Count n={total} />
           </Link>
         </li>
+        {quickCount > 0 && (
+          <li>
+            <Link href={href(QUICK_SERVICE)} aria-current={selected === QUICK_SERVICE ? "page" : undefined} className={row(selected === QUICK_SERVICE)}>
+              <span className="grid h-9 w-14 shrink-0 place-items-center rounded-md bg-charcoal text-white">
+                <Wrench className="size-[18px]" aria-hidden="true" strokeWidth={2} />
+              </span>
+              <span className="flex-1">{t("quickService")}</span>
+              <Count n={quickCount} />
+            </Link>
+          </li>
+        )}
         {categories.map((c) => (
           <li key={c.id}>
             <Link href={href(c.id)} aria-current={c.id === selected ? "page" : undefined} className={row(c.id === selected)}>
