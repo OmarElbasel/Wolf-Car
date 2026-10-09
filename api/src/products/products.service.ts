@@ -9,6 +9,7 @@ import type {
   CreateProductDto,
   ListProductsQueryDto,
   ReorderProductsDto,
+  SetQuickServiceDto,
   UpdatePriceDto,
   UpdateProductDetailsDto,
 } from './dto/products.dto';
@@ -32,6 +33,7 @@ export class ProductsService {
       // the hidden rows behind a service's prices are edited on the services page
       serviceId: null,
       ...(q.visibility === 'all' ? {} : { isActive: q.visibility !== 'hidden' }),
+      ...(q.quickService ? { isQuickService: true } : {}),
       ...(q.price === 'priced' ? { price: { not: null } } : q.price === 'unpriced' ? { price: null } : {}),
       ...(q.q
         ? { OR: [{ name: { contains: q.q, mode: 'insensitive' } }, { barcode: { contains: q.q, mode: 'insensitive' } }] }
@@ -140,6 +142,25 @@ export class ProductsService {
       return current;
     });
     this.trail.setEntity('Product', id).setChange({ price: money(oldPrice) }, { price: money(newPrice) });
+    return this.get(id);
+  }
+
+  /**
+   * Puts the product under the website's "Quick service" tab or takes it out.
+   * The colours of one product share a card there, so they change together.
+   */
+  async setQuickService(id: string, dto: SetQuickServiceDto, user: AuthUser): Promise<ProductView> {
+    const row = await this.prisma.product.findFirst({
+      where: { id, serviceId: null },
+      select: { isQuickService: true, odooTemplateId: true, variantLabel: true },
+    });
+    if (!row) throw new NotFoundException('Product not found.');
+    const grouped = row.odooTemplateId !== null && row.variantLabel !== null;
+    await this.prisma.product.updateMany({
+      where: grouped ? { odooTemplateId: row.odooTemplateId, variantLabel: { not: null } } : { id },
+      data: { isQuickService: dto.quickService, updatedById: user.id },
+    });
+    this.trail.setEntity('Product', id).setChange({ quickService: row.isQuickService }, { quickService: dto.quickService });
     return this.get(id);
   }
 

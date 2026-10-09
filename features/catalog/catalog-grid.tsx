@@ -3,7 +3,7 @@
 import { Minus, Plus, Search, ShoppingCart } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { ImageZoom } from "@/components/image-zoom";
 import { VariantPicker } from "@/components/variant-picker";
 import { cart, MAX_QTY, useCart } from "./cart";
 
-/** Cards rendered per "show more" step; a car model can hold 150+ products. */
+/** Cards added each time the visitor nears the end of the list; a car model can hold 150+ products. */
 const PAGE = 24;
 
 type Sort = "name" | "priceAsc" | "priceDesc";
@@ -40,6 +40,24 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
   }, [products, deferred, sort]);
   // the colours of one product share a card
   const groups = useMemo(() => groupVariants(visible), [visible]);
+
+  // the next cards load as the visitor scrolls near the end of the list; the
+  // button stays for keyboards and for browsers without IntersectionObserver
+  const more = useRef<HTMLDivElement>(null);
+  const hasMore = groups.length > shown;
+  useEffect(() => {
+    const el = more.current;
+    if (!hasMore || !el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setShown((n) => n + PAGE);
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+    // `shown` re-arms the observer when a step leaves the end still in view
+  }, [hasMore, shown]);
 
   return (
     <>
@@ -86,8 +104,8 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
               <ProductCard key={g.key} group={g} />
             ))}
           </ul>
-          {groups.length > shown && (
-            <div className="mt-6 flex justify-center">
+          {hasMore && (
+            <div ref={more} className="mt-6 flex justify-center">
               <button
                 type="button"
                 onClick={() => setShown((n) => n + PAGE)}

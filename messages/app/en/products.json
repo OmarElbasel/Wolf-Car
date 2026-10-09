@@ -77,5 +77,14 @@
     "notOver": "{name} is no longer over the list.",
     "dropped": "{name} dropped at position {position} of {total}.",
     "cancelled": "Reordering cancelled. {name} is back at position {position} of {total}."
+  },
+  "quick": {
+    "filter": "Quick service",
+    "add": "Add to the website's Quick Service tab",
+    "remove": "Remove from Quick Service",
+    "toggleNamed": "Quick service: {name}",
+    "added": "Added to Quick Service",
+    "removed": "Removed from Quick Service",
+    "failed": "Could not save the change."
   }
 }

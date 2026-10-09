@@ -59,6 +59,8 @@ export interface Product {
   priceUpdatedAt: string | null;
   /** name, barcode, photo and price come from Odoo and are not edited here */
   fromOdoo?: boolean;
+  /** also listed under the website's "Quick service" tab */
+  quickService?: boolean;
   imageUrl: string;
   thumbUrl: string;
   createdBy: { id: string; displayName: string };

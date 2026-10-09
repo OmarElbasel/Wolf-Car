@@ -63,6 +63,7 @@
     "permission_user_update": "User permissions changed",
     "product_create": "Product created",
     "product_update": "Product edited",
+    "product_quick_service": "Quick Service tab changed",
     "product_price_update": "Price changed",
     "product_reorder": "Showroom reordered",
     "order_create": "Order placed",

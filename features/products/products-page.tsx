@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Wrench } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -82,6 +82,7 @@ function ProductsManager() {
   const [search, setSearch] = useState("");
   const q = useDebouncedValue(search.trim(), 250);
   const [price, setPrice] = useState<PriceFilter>(() => parsePriceFilter(searchParams.get("price")));
+  const [quick, setQuick] = useState(false);
   const [pickedBranch, setPickedBranch] = useState<string | null>(null);
   const [form, setForm] = useState<Overlay>(closed);
   const [pricing, setPricing] = useState<Overlay>(closed);
@@ -93,9 +94,9 @@ function ProductsManager() {
   const canPickBranch = !ownBranch && canReorder;
   const branchId = ownBranch ? null : pickedBranch;
   const branchContext = ownBranch?.id ?? pickedBranch;
-  const filtered = q !== "" || price !== "all";
+  const filtered = q !== "" || price !== "all" || quick;
 
-  const params = { q, price, branchId };
+  const params = { q, price, quick, branchId };
   const listKey = productKeys.list(params);
   const products = useQuery({ queryKey: listKey, queryFn: () => fetchProducts(params), placeholderData: keepPreviousData });
   const branches = useQuery({
@@ -111,13 +112,25 @@ function ProductsManager() {
     () => ({ canEdit: can("product.update.details"), canPrice: can("product.update.price"), canHistory: can("product.read") }),
     [can],
   );
+  const quickService = useMutation({
+    mutationFn: (product: Product) =>
+      api<Product>(`/products/${product.id}/quick-service`, { method: "PUT", json: { quickService: !product.quickService } }),
+    onSuccess: (saved) => {
+      void queryClient.invalidateQueries({ queryKey: productKeys.all });
+      toast.success(saved.quickService ? t("quick.added") : t("quick.removed"));
+    },
+    onError: (error) => toast.error(t("quick.failed"), { description: message(error) }),
+  });
+  const toggleQuickService = quickService.mutate;
+
   const actions = useMemo<RowActions>(
     () => ({
       onEdit: (product) => setForm({ open: true, product }),
       onPrice: (product) => setPricing({ open: true, product }),
       onHistory: (product) => setHistory({ open: true, product }),
+      onQuickService: (product) => toggleQuickService(product),
     }),
-    [],
+    [toggleQuickService],
   );
 
   const reorder = useMutation({
@@ -159,6 +172,7 @@ function ProductsManager() {
   const clearFilters = () => {
     setSearch("");
     changePrice("all");
+    setQuick(false);
   };
 
   if (!user) return null;
@@ -228,6 +242,10 @@ function ProductsManager() {
             { value: "unpriced", label: t("filterUnpriced") },
           ]}
         />
+        <Button variant={quick ? "default" : "outline"} aria-pressed={quick} onClick={() => setQuick((on) => !on)}>
+          <Wrench aria-hidden="true" />
+          {t("quick.filter")}
+        </Button>
         {canPickBranch && (
           <Select value={pickedBranch ?? BY_NAME} onValueChange={(v) => setPickedBranch(v === BY_NAME ? null : v)}>
             <SelectTrigger aria-label={t("orderLabel")} className="max-w-full min-w-52">

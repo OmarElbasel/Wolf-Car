@@ -1,4 +1,4 @@
-import { ArrayMaxSize, ArrayUnique, IsArray, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import { ArrayMaxSize, ArrayUnique, IsArray, IsBoolean, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
 import { BARCODE_PATTERN, PRODUCT_DESCRIPTION_MAX, PRODUCT_NAME_MAX } from '../../../../shared/validation';
 import { EmptyToNull, EmptyToUndefined, IsPrice, ToPriceString, Trim } from '../../common/validators';
 
@@ -60,6 +60,12 @@ export class UpdatePriceDto {
   price: string;
 }
 
+/** Puts a product under the website's "Quick service" tab, or takes it out. */
+export class SetQuickServiceDto {
+  @IsBoolean()
+  quickService: boolean;
+}
+
 export class ReorderProductsDto {
   /** Every product of the branch, in the new showroom order. */
   @IsArray()
@@ -89,6 +95,11 @@ export class ListProductsQueryDto {
   @IsOptional()
   @IsIn(['active', 'hidden', 'all'])
   visibility: 'active' | 'hidden' | 'all' = 'active';
+
+  /** "true" lists only the products under the website's "Quick service" tab. */
+  @IsOptional()
+  @IsIn(['true'])
+  quickService?: 'true';
 
   /** For users without a branch: show this branch's display order. */
   @IsOptional()

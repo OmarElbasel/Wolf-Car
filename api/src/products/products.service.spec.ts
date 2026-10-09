@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { mock, mockDeep } from 'jest-mock-extended';
 import { authUser } from '../../test/unit/helpers';
 import type { AuditTrail } from '../activity/audit-trail.service';
@@ -14,6 +14,7 @@ const product = (o: Record<string, unknown> = {}) => ({
   barcode: null,
   imageKey: '11111111-1111-4111-8111-111111111111',
   price: null,
+  isQuickService: false,
   odooId: null,
   priceUpdatedAt: null,
   createdAt: new Date(),
@@ -94,6 +95,30 @@ describe('ProductsService', () => {
       prisma.$queryRaw.mockResolvedValue([{ price: new Prisma.Decimal('99.9') }] as never);
       await service.updatePrice('p-1', { price: '99.90' }, finance);
       expect(prisma.priceHistory.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setQuickService', () => {
+    it('marks the one product and audits the change', async () => {
+      prisma.product.findFirst.mockResolvedValue({ isQuickService: false, odooTemplateId: null, variantLabel: null } as never);
+      await service.setQuickService('p-1', { quickService: true }, manager);
+      expect(prisma.product.updateMany).toHaveBeenCalledWith({
+        where: { id: 'p-1' },
+        data: { isQuickService: true, updatedById: manager.id },
+      });
+      expect(trail.setChange).toHaveBeenCalledWith({ quickService: false }, { quickService: true });
+    });
+
+    it('marks every colour of the same product together', async () => {
+      prisma.product.findFirst.mockResolvedValue({ isQuickService: true, odooTemplateId: 77, variantLabel: 'أسود' } as never);
+      await service.setQuickService('p-1', { quickService: false }, manager);
+      expect(prisma.product.updateMany.mock.calls[0][0].where).toEqual({ odooTemplateId: 77, variantLabel: { not: null } });
+    });
+
+    it('refuses a product that does not exist (or is a service price row)', async () => {
+      prisma.product.findFirst.mockResolvedValue(null);
+      await expect(service.setQuickService('p-9', { quickService: true }, manager)).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.product.updateMany).not.toHaveBeenCalled();
     });
   });
 
