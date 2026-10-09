@@ -15,7 +15,7 @@ export class PublicCatalogController {
   @Header('Cache-Control', 'public, max-age=60')
   @Get('products')
   products(@Query() query: PublicProductsQueryDto): Promise<PublicProduct[]> {
-    return this.catalog.list(query.categoryId);
+    return this.catalog.list(query.categoryId, query.quickService === 'true');
   }
 
   /** Car-model categories with a product count, largest first. */

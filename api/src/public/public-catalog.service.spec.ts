@@ -71,6 +71,12 @@ describe('PublicCatalogService', () => {
     });
   });
 
+  it('lists only the quick-service products of every car when asked', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+    await service.list(undefined, true);
+    expect(prisma.product.findMany.mock.calls[0][0]?.where).toEqual({ isActive: true, serviceId: null, isQuickService: true });
+  });
+
   it('lists categories largest first with their product count', async () => {
     const plain = (n: number, prefix: string) =>
       Array.from({ length: n }, (_, i) => ({ id: `${prefix}${i}`, odooTemplateId: null, variantLabel: null, variantColor: null }));

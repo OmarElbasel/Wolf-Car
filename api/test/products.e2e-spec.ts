@@ -96,6 +96,31 @@ describe('Products & pricing (e2e)', () => {
       expect(await t.prisma.product.count({ where: { name: { in: ['Fake', 'Svg', 'Huge'] } } })).toBe(0);
     });
 
+    it('puts a product under the website\'s quick-service tab and takes it out again', async () => {
+      const id = world.products[2].id;
+      const quickIds = async () =>
+        (await t.http().get('/api/public/products?quickService=true')).body.map((p: { id: string }) => p.id);
+      expect(await quickIds()).toEqual([]);
+
+      const on = await t.http().put(`/api/products/${id}/quick-service`).set(bearer(tokens.gh)).send({ quickService: true });
+      expect(on.status).toBe(200);
+      expect(on.body.quickService).toBe(true);
+      expect(await quickIds()).toEqual([id]);
+      expect((await t.http().get('/api/products?quickService=true').set(bearer(tokens.gh))).body.map((p: { id: string }) => p.id)).toEqual([id]);
+      const log = await t.prisma.activityLog.findFirstOrThrow({ where: { action: 'product.quick_service', entityId: id } });
+      expect(log.after).toMatchObject({ quickService: true });
+
+      // Finance prices products but does not arrange the website
+      const finance = await t.http().put(`/api/products/${id}/quick-service`).set(bearer(tokens.finance)).send({ quickService: false });
+      expect(finance.status).toBe(403);
+      const bad = await t.http().put(`/api/products/${id}/quick-service`).set(bearer(tokens.gh)).send({ quickService: 'yes' });
+      expect(bad.status).toBe(400);
+
+      const off = await t.http().put(`/api/products/${id}/quick-service`).set(bearer(tokens.gh)).send({ quickService: false });
+      expect(off.body.quickService).toBe(false);
+      expect(await quickIds()).toEqual([]);
+    });
+
     it('edits name, image, barcode and description', async () => {
       const id = world.products[1].id;
       const res = await t

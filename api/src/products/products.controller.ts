@@ -24,6 +24,7 @@ import {
   CreateProductDto,
   ListProductsQueryDto,
   ReorderProductsDto,
+  SetQuickServiceDto,
   UpdatePriceDto,
   UpdateProductDetailsDto,
 } from './dto/products.dto';
@@ -103,6 +104,14 @@ export class ProductsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.products.updateDetails(id, dto, image, user);
+  }
+
+  /** Lists the product under the website's "Quick service" tab, or takes it out. */
+  @RequirePermissions('product.update.details')
+  @Audit('product.quick_service', { entity: 'Product', idParam: 'id' })
+  @Put(':id/quick-service')
+  setQuickService(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetQuickServiceDto, @CurrentUser() user: AuthUser) {
+    return this.products.setQuickService(id, dto, user);
   }
 
   /** Finance: accepts only { price }. */

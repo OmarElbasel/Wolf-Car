@@ -70,6 +70,7 @@ const MATRIX: Record<string, Caller[] | { public: number }> = {
   'GET /api/products/:id/price-history': ['admin', 'finance', 'manager'],
   'POST /api/products': ['admin', 'manager'],
   'PATCH /api/products/:id': ['admin', 'manager'],
+  'PUT /api/products/:id/quick-service': ['admin', 'manager'],
   'PATCH /api/products/:id/price': ['admin', 'finance'],
   'GET /api/odoo/sync': ['admin', 'finance', 'manager'],
   'POST /api/odoo/sync': ['admin', 'finance'],
