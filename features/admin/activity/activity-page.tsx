@@ -8,6 +8,7 @@ import { useId, useState } from "react";
 import { Pill, RoleBadge } from "@/components/app/badges";
 import { CopyButton } from "@/components/app/copy-button";
 import { PageHeader } from "@/components/app/page-header";
+import { PhoneFilters } from "@/components/app/phone-filters";
 import { Pagination } from "@/components/app/pagination";
 import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
@@ -97,80 +98,86 @@ function ActivityLog() {
     <>
       <PageHeader title={t("Activity.title")} subtitle={t("Activity.subtitle")} />
 
-      <div role="search" className="mb-4 grid gap-3 rounded-[var(--radius-brand-lg)] border border-line p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <FilterSelect
-          showLabel
-          label={t("Activity.action")}
-          value={filters.action}
-          onChange={(action) => set({ action })}
-          options={[{ value: "", label: t("Activity.anyAction") }]}
-          className="sm:col-span-2"
+      <div role="search" className="mb-4 rounded-[var(--radius-brand-lg)] border border-line p-4">
+        <PhoneFilters
+          label={t("Common.filters")}
+          active={[filters.action, filters.outcome, actor, filters.branch, filters.entity, filters.from, filters.to].filter(Boolean).length}
+          className="grid grid-cols-1 gap-3 max-md:mt-3 sm:grid-cols-2 lg:grid-cols-4"
         >
-          <SelectSeparator />
-          <SelectGroup>
-            <SelectLabel>{t("Activity.groupsLabel")}</SelectLabel>
-            {ACTION_GROUPS.map((g) => (
-              <SelectItem key={g} value={`${g}.`}>
-                {t(`Activity.actionGroups.${g}`)}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          {actions.data && actions.data.length > 0 && (
-            <>
-              <SelectSeparator />
-              <SelectGroup>
-                <SelectLabel>{t("Activity.actionsLabel")}</SelectLabel>
-                {actions.data.map((a) => (
-                  <SelectItem key={a} value={a}>
-                    {actionLabel(a)}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </>
-          )}
-        </FilterSelect>
-        <FilterSelect
-          showLabel
-          label={t("Activity.result")}
-          value={filters.outcome}
-          onChange={(outcome) => set({ outcome })}
-          options={[
-            { value: "", label: t("Activity.anyOutcome") },
-            { value: "SUCCESS", label: t("Activity.success") },
-            { value: "FAILURE", label: t("Activity.failure") },
-          ]}
-        />
-        <TextFilter
-          label={t("Activity.userFilter")}
-          value={actor}
-          placeholder={t("Activity.anyUser")}
-          onChange={(value) => {
-            setActor(value);
-            pushActor(value);
-          }}
-        />
-        <FilterSelect
-          showLabel
-          label={t("Common.branch")}
-          value={filters.branch}
-          onChange={(branch) => set({ branch })}
-          options={[{ value: "", label: t("Common.anyBranch") }, ...(branches.data ?? []).map((b) => ({ value: b.id, label: branchName(b) }))]}
-        />
-        <FilterSelect
-          showLabel
-          label={t("Activity.entityFilter")}
-          value={filters.entity}
-          onChange={(entity) => set({ entity })}
-          options={[{ value: "", label: t("Activity.anyEntity") }, ...ENTITY_TYPES.map((e) => ({ value: e, label: t(`Activity.entityTypes.${e}`) }))]}
-        />
-        <DateFilter label={t("Common.dateFrom")} value={filters.from} max={filters.to} onChange={(from) => set({ from })} />
-        <DateFilter label={t("Common.dateTo")} value={filters.to} min={filters.from} onChange={(to) => set({ to })} />
-        <div className="flex items-end sm:col-span-2 lg:col-span-4 lg:justify-end">
-          <Button variant="ghost" onClick={clear} disabled={!filtered}>
-            <X aria-hidden="true" />
-            {t("Common.clearFilters")}
-          </Button>
-        </div>
+          <FilterSelect
+            showLabel
+            label={t("Activity.action")}
+            value={filters.action}
+            onChange={(action) => set({ action })}
+            options={[{ value: "", label: t("Activity.anyAction") }]}
+            className="sm:col-span-2"
+          >
+            <SelectSeparator />
+            <SelectGroup>
+              <SelectLabel>{t("Activity.groupsLabel")}</SelectLabel>
+              {ACTION_GROUPS.map((g) => (
+                <SelectItem key={g} value={`${g}.`}>
+                  {t(`Activity.actionGroups.${g}`)}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+            {actions.data && actions.data.length > 0 && (
+              <>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel>{t("Activity.actionsLabel")}</SelectLabel>
+                  {actions.data.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {actionLabel(a)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </>
+            )}
+          </FilterSelect>
+          <FilterSelect
+            showLabel
+            label={t("Activity.result")}
+            value={filters.outcome}
+            onChange={(outcome) => set({ outcome })}
+            options={[
+              { value: "", label: t("Activity.anyOutcome") },
+              { value: "SUCCESS", label: t("Activity.success") },
+              { value: "FAILURE", label: t("Activity.failure") },
+            ]}
+          />
+          <TextFilter
+            label={t("Activity.userFilter")}
+            value={actor}
+            placeholder={t("Activity.anyUser")}
+            onChange={(value) => {
+              setActor(value);
+              pushActor(value);
+            }}
+          />
+          <FilterSelect
+            showLabel
+            label={t("Common.branch")}
+            value={filters.branch}
+            onChange={(branch) => set({ branch })}
+            options={[{ value: "", label: t("Common.anyBranch") }, ...(branches.data ?? []).map((b) => ({ value: b.id, label: branchName(b) }))]}
+          />
+          <FilterSelect
+            showLabel
+            label={t("Activity.entityFilter")}
+            value={filters.entity}
+            onChange={(entity) => set({ entity })}
+            options={[{ value: "", label: t("Activity.anyEntity") }, ...ENTITY_TYPES.map((e) => ({ value: e, label: t(`Activity.entityTypes.${e}`) }))]}
+          />
+          <DateFilter label={t("Common.dateFrom")} value={filters.from} max={filters.to} onChange={(from) => set({ from })} />
+          <DateFilter label={t("Common.dateTo")} value={filters.to} min={filters.from} onChange={(to) => set({ to })} />
+          <div className="flex items-end sm:col-span-2 lg:col-span-4 lg:justify-end">
+            <Button variant="ghost" onClick={clear} disabled={!filtered}>
+              <X aria-hidden="true" />
+              {t("Common.clearFilters")}
+            </Button>
+          </div>
+        </PhoneFilters>
       </div>
 
       <p className="mb-3 text-sm text-muted" aria-live="polite">

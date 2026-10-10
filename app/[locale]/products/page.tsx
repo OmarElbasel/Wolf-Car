@@ -19,6 +19,7 @@ import { FLAG_BADGE } from "@/lib/packages";
 import { fetchPublicCatalog, fetchPublicCategories, fetchPublicQuickService, fetchPublicServices } from "@/lib/public-catalog";
 import { lowestPrice } from "@/lib/services";
 import { groupVariants } from "@/lib/variants";
+import { cn } from "@/lib/utils";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -70,8 +71,8 @@ export default async function ProductsPage({
       <main id="main" className="bg-sand pt-6 pb-24 lg:pt-8">
         <Wrap>
           {/* banner for the selected car model (the Wolf Car van for "all") */}
-          <section className="relative mb-5 grid min-h-[190px] items-center overflow-hidden rounded-[var(--radius-brand-lg)] bg-charcoal text-white md:min-h-[230px] md:grid-cols-[1fr_46%]">
-            <div className="relative z-10 p-5 pb-2 md:p-9">
+          <section className="relative mb-5 grid items-center overflow-hidden rounded-[var(--radius-brand-lg)] bg-charcoal text-white md:min-h-[230px] md:grid-cols-[1fr_46%]">
+            <div className={cn("relative z-10 p-5 md:p-9", selected && "pb-2")}>
               <p className="text-sm font-bold text-[#FF9A62]">{t("label")}</p>
               <h1 dir="auto" className="mt-1.5 text-start text-[clamp(26px,5vw,40px)] leading-[1.2] font-extrabold">
                 {quick ? t("quickService") : selected ? categoryName(selected, locale) : t("title")}
@@ -80,7 +81,8 @@ export default async function ProductsPage({
                 {quick ? t("quickBody") : selected ? t("modelBody", { count: selected.count }) : t("body")}
               </p>
             </div>
-            <div className="relative h-[120px] md:h-full">
+            {/* on a phone the van is decoration that pushes the products off the first screen; a chosen car keeps its picture */}
+            <div className={cn("relative md:block md:h-full", selected ? "h-[104px]" : "hidden")}>
               <Image
                 src={selected?.imageUrl ?? "/assets/van-rtl-45.webp"}
                 alt=""

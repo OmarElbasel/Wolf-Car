@@ -73,7 +73,7 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
               setShown(PAGE);
             }}
             placeholder={t("search")}
-            className="h-11 w-full rounded-[var(--radius-brand)] border-[1.5px] border-line bg-surface ps-10 pe-3 text-[15px] outline-none placeholder:text-muted focus-visible:border-accent-ink"
+            className="h-11 w-full rounded-[var(--radius-brand)] border-[1.5px] border-line bg-surface ps-10 pe-3 text-base outline-none md:text-[15px] placeholder:text-muted focus-visible:border-accent-ink"
           />
         </label>
         <label className="flex items-center gap-2 text-sm font-semibold text-ink-2">
@@ -81,7 +81,7 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
-            className="h-11 rounded-[var(--radius-brand)] border-[1.5px] border-line bg-surface px-3 text-[15px] font-semibold text-ink outline-none focus-visible:border-accent-ink"
+            className="h-11 rounded-[var(--radius-brand)] border-[1.5px] border-line bg-surface px-3 text-base font-semibold text-ink outline-none md:text-[15px] focus-visible:border-accent-ink"
           >
             <option value="name">{t("sortName")}</option>
             <option value="priceAsc">{t("sortPriceAsc")}</option>
@@ -128,32 +128,46 @@ function ProductCard({ group }: { group: ProductGroup<PublicProduct> }) {
   // a search or sort can drop the picked colour from the group
   const p = group.variants.find((v) => v.id === picked) ?? group.variants[0];
   const qty = useCart().find((l) => l.id === p.id)?.qty ?? 0;
+  const [zoomed, setZoomed] = useState(false);
 
   return (
     <li className="group flex flex-col overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface transition-colors hover:border-[#cfcbc4] dark:hover:border-[#4a463f]">
       {/* Most legacy photos are ~200 px wide: shown contained on white at about
           their own size, so they stay sharp instead of being stretched. */}
-      <ImageZoom
-        src={p.imageUrl}
-        name={p.name}
-        viewLabel={t("viewImage", { name: p.name })}
-        closeLabel={t("closeImage")}
-        className="relative aspect-square w-full bg-white"
-      >
-        <Image
+      <div className="relative">
+        <ImageZoom
           src={p.imageUrl}
-          alt={group.title}
-          fill
-          sizes="(min-width:1280px) 220px, (min-width:768px) 30vw, 48vw"
-          className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.04] sm:p-5"
-          unoptimized
-        />
-      </ImageZoom>
+          name={p.name}
+          viewLabel={t("viewImage", { name: p.name })}
+          closeLabel={t("closeImage")}
+          className="relative aspect-square w-full bg-white"
+          showName
+          open={zoomed}
+          onOpenChange={setZoomed}
+        >
+          <Image
+            src={p.imageUrl}
+            alt={group.title}
+            fill
+            sizes="(min-width:1280px) 220px, (min-width:768px) 30vw, 48vw"
+            className="object-contain p-2 transition-transform duration-300 group-hover:scale-[1.04] sm:p-5"
+            unoptimized
+          />
+        </ImageZoom>
+        {/* over the photo, so a product with colours is as tall as its neighbours */}
+        {group.variants.length > 1 && (
+          <div className="absolute inset-x-1.5 bottom-1.5 flex justify-center">
+            <VariantPicker compact variants={group.variants} selected={p.id} onSelect={setPicked} label={t("variant")} />
+          </div>
+        )}
+      </div>
       <div className="flex flex-1 flex-col gap-2 border-t border-line p-3 sm:p-3.5">
-        <h2 dir="auto" title={group.title} className="line-clamp-2 min-h-[2.7em] text-start text-[15px] leading-[1.35] font-bold">
-          {group.title}
+        <h2 dir="auto" title={group.title} className="min-h-[2.7em] text-start text-[15px] leading-[1.35] font-bold">
+          {/* two lines at most on the card; pressing the name opens the photo with the name in full */}
+          <button type="button" onClick={() => setZoomed(true)} className="line-clamp-2 text-start hover:underline hover:underline-offset-4">
+            {group.title}
+          </button>
         </h2>
-        {group.variants.length > 1 && <VariantPicker variants={group.variants} selected={p.id} onSelect={setPicked} label={t("variant")} />}
         <p className="text-[17px] font-extrabold text-accent-ink tabular-nums">
           {p.price == null ? <span className="text-[15px] text-muted">{t("priceOnRequest")}</span> : formatMoney(p.price, locale)}
         </p>
@@ -162,10 +176,13 @@ function ProductCard({ group }: { group: ProductGroup<PublicProduct> }) {
             <button
               type="button"
               onClick={() => cart.add(p)}
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[var(--radius-brand)] bg-charcoal px-3 text-[15px] font-bold text-white transition-colors hover:bg-accent dark:bg-[#2a2723] dark:hover:bg-accent"
+              aria-label={t("addToCart")}
+              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[var(--radius-brand)] bg-charcoal px-3 text-[15px] font-bold whitespace-nowrap text-white transition-colors hover:bg-accent dark:bg-[#2a2723] dark:hover:bg-accent"
             >
               <ShoppingCart className="size-[18px]" aria-hidden="true" strokeWidth={2} />
-              {t("addToCart")}
+              {/* two cards share a phone's width: the full label would wrap to a second line */}
+              <span className="sm:hidden">{t("addShort")}</span>
+              <span className="hidden sm:inline">{t("addToCart")}</span>
             </button>
           ) : (
             <QtyStepper id={p.id} name={p.name} qty={qty} />
@@ -180,7 +197,7 @@ export function QtyStepper({ id, name, qty, compact = false }: { id: string; nam
   const t = useTranslations("ProductsPage");
   const step = cn(
     "grid place-items-center text-white transition-colors hover:bg-accent-dark disabled:opacity-40",
-    compact ? "size-9" : "h-11 w-11",
+    "size-11",
   );
   return (
     <div

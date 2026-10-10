@@ -28,6 +28,7 @@
   },
   "daily": "Visitors per day",
   "dailyTip": "{day}: {visitors, plural, one {# visitor} other {# visitors}}, {pageviews, plural, one {# page view} other {# page views}}, {contacts, plural, one {# contact press} other {# contact presses}}",
+  "weeklyTip": "{from} – {to}: about {visitors, plural, one {# visitor} other {# visitors}} a day, {pageviews, plural, one {# page view} other {# page views}}, {contacts, plural, one {# contact press} other {# contact presses}}",
   "table": {
     "day": "Day",
     "visitors": "Visitors",

@@ -27,7 +27,7 @@ export function Segmented<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              "min-h-9 rounded-[8px] border border-transparent px-3 text-sm font-bold whitespace-nowrap text-ink-2 transition-colors outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink",
+              "min-h-11 rounded-[8px] border border-transparent px-3 text-sm font-bold whitespace-nowrap text-ink-2 transition-colors outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink md:min-h-9",
               active && "border-line bg-surface text-ink",
             )}
           >

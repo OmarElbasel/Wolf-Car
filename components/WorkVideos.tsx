@@ -46,7 +46,7 @@ export function WorkVideos({
     <div>
       <ul
         ref={track}
-        className="-mx-5 flex list-none snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-2 [scrollbar-width:none] md:gap-4"
+        className="-mx-5 flex list-none snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-px-5 px-5 pb-2 [scrollbar-width:none] md:gap-4"
       >
         {videos.map((v) => (
           <li

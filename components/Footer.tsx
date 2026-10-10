@@ -26,7 +26,7 @@ export async function Footer() {
               <Image src={LOGO} alt="" width={40} height={40} className="size-10 object-contain" unoptimized />
               <span>
                 <b className="block text-lg leading-tight font-extrabold text-white">{brand("name")}</b>
-                <small className="block text-[11px] leading-tight font-semibold tracking-[0.06em] text-[#8F8F8F]">
+                <small className="block text-xs leading-tight font-semibold tracking-[0.06em] text-[#8F8F8F]">
                   WOLF CAR
                 </small>
               </span>
@@ -37,7 +37,7 @@ export async function Footer() {
           {branchList.map((b) => (
             <div key={b.id}>
               <h4 className="mb-1.5 text-[15px] font-bold text-white">{b.name}</h4>
-              <a href={`tel:${b.tel}`} dir="ltr" className="hover:text-white">
+              <a href={`tel:${b.tel}`} dir="ltr" className="inline-flex min-h-11 items-center hover:text-white">
                 {prettyTel(b.tel)}
               </a>
             </div>
@@ -74,13 +74,13 @@ export async function Footer() {
                 <Icon name="snap" />
               </a>
             </div>
-            <p className="mt-2.5">
-              <a href={SOCIAL.salehSnap} target="_blank" rel="noopener" className="hover:text-white">
+            <p className="mt-1">
+              <a href={SOCIAL.salehSnap} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center hover:text-white">
                 {t("salehSnap")}
               </a>
             </p>
-            <p className="mt-1">
-              <a href={`mailto:${SOCIAL.email}`} dir="ltr" className="hover:text-white">
+            <p>
+              <a href={`mailto:${SOCIAL.email}`} dir="ltr" className="inline-flex min-h-11 items-center hover:text-white">
                 {SOCIAL.email}
               </a>
             </p>

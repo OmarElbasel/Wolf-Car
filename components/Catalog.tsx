@@ -39,31 +39,31 @@ export async function Catalog() {
 
         {shown.length > 0 && (
           <>
-            <ul className="grid list-none grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+            <ul className="grid list-none grid-cols-2 gap-3 md:gap-5">
               {shown.map((c, i) => {
                 const tone = TONES[toneFor(i)];
                 return (
                   <li key={c.id}>
                     <Link
                       href={{ pathname: "/products", query: { category: c.id } }}
-                      className={`group relative flex h-[210px] flex-col justify-between overflow-hidden rounded-[22px] p-6 md:h-[240px] md:p-8 ${tone.card}`}
+                      className={`group relative flex h-[176px] flex-col justify-between overflow-hidden rounded-[18px] p-4 md:h-[240px] md:rounded-[22px] md:p-8 ${tone.card}`}
                     >
-                      <div className="relative z-10 max-w-[52%]">
-                        <h3 className="text-[24px] [unicode-bidi:plaintext] ltr:text-left rtl:text-right leading-[1.25] font-extrabold md:text-[30px]">
+                      <div className="relative z-10 md:max-w-[52%]">
+                        <h3 className="line-clamp-2 text-[17px] [unicode-bidi:plaintext] ltr:text-left rtl:text-right leading-[1.25] font-extrabold md:text-[30px]">
                           {categoryName(c, locale)}
                         </h3>
-                        <p className={`text-[20px] leading-[1.3] font-bold md:text-[26px] ${tone.sub}`}>
+                        <p className={`text-sm leading-[1.4] font-bold md:text-[26px] md:leading-[1.3] ${tone.sub}`}>
                           {t("itemCount", { count: c.count })}
                         </p>
                       </div>
                       <span className="relative z-10 inline-flex items-center gap-3 text-[15px] font-bold">
-                        <span className={`grid size-9 place-items-center rounded-full ${tone.dot}`}>
+                        <span className={`grid size-8 place-items-center rounded-full md:size-9 ${tone.dot}`}>
                           <ArrowUpRight className="size-[18px] rtl:-scale-x-100" strokeWidth={2.2} aria-hidden="true" />
                         </span>
-                        {t("showMore")}
+                        <span className="max-md:sr-only">{t("showMore")}</span>
                       </span>
                       {c.imageUrl && (
-                        <div className="pointer-events-none absolute -end-5 bottom-4 h-[72%] w-[56%] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-[1.03] md:-end-6">
+                        <div className="pointer-events-none absolute -end-3 bottom-3 h-[50%] w-[70%] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-[1.03] md:-end-6 md:bottom-4 md:h-[72%] md:w-[56%]">
                           <Image src={c.imageUrl} alt="" fill sizes="380px" unoptimized className="object-contain object-bottom" />
                         </div>
                       )}
@@ -102,7 +102,7 @@ export async function Catalog() {
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center md:flex-col md:items-stretch lg:flex-row lg:items-center">
               <div className="rounded-[var(--radius-brand)] bg-white/10 px-3.5 py-1.5 text-center">
                 <b className="block text-sm leading-snug">{t("paylaterInstant")}</b>
-                <small className="block text-[11px] text-white/65">{t("paylaterInstantNote")}</small>
+                <small className="block text-xs text-white/65">{t("paylaterInstantNote")}</small>
               </div>
               <WhatsAppButton size="sm" label={t("paylaterCta")} message={t("paylaterMessage")} />
             </div>

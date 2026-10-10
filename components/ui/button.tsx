@@ -24,13 +24,14 @@ const buttonVariants = cva(
       },
       size: {
         default: "min-h-11 px-[14px] text-[15px]",
-        sm: "min-h-9 rounded-[8px] px-3 text-sm",
+        /* 44px to the finger on phones, compact from md up */
+        sm: "min-h-11 rounded-[8px] px-3 text-sm md:min-h-9",
         xs: "min-h-7 gap-1 rounded-[6px] px-2 text-xs [&_svg:not([class*='size-'])]:size-3.5",
         lg: "min-h-[50px] px-[22px] text-[17px]",
         /** showroom kiosk: large tap targets */
         touch: "min-h-[60px] px-6 text-lg [&_svg:not([class*='size-'])]:size-6",
         icon: "size-11",
-        "icon-sm": "size-9 rounded-[8px]",
+        "icon-sm": "size-11 rounded-[8px] md:size-9",
         "icon-lg": "size-[50px]",
         "icon-touch": "size-[60px] [&_svg:not([class*='size-'])]:size-6",
       },

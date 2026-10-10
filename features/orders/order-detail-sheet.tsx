@@ -141,7 +141,7 @@ function OrderDetailBody({ id }: { id: string }) {
   return (
     <>
       {header}
-      <SheetBody className="grid content-start gap-5 pb-4">
+      <SheetBody className="grid grid-cols-1 content-start gap-5 pb-4">
         {locked && (
           <p className="flex items-center gap-2 rounded-[var(--radius-brand)] bg-sand px-3 py-2.5 text-sm font-semibold text-ink-2">
             <Lock className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
@@ -190,7 +190,7 @@ function OrderDetailBody({ id }: { id: string }) {
           </h3>
           <ul className="divide-y divide-line rounded-[var(--radius-brand-lg)] border border-line">
             {o.items.map((item) => (
-              <li key={item.id} className="flex items-center gap-3 p-3">
+              <li key={item.id} className="flex flex-wrap items-center gap-3 p-3">
                 <Image
                   src={item.thumbUrl}
                   alt=""
@@ -203,11 +203,6 @@ function OrderDetailBody({ id }: { id: string }) {
                   <p dir="auto" className="w-fit max-w-full truncate font-bold">
                     {item.productName}
                   </p>
-                  {item.barcode && (
-                    // scannable: the cashier reads this straight off the screen
-                    // into the till system, so the bars matter more than the digits
-                    <Barcode value={item.barcode} className="mt-1 mb-0.5" />
-                  )}
                   <p className="text-[13px] text-ink-2">
                     {t("quantity")}{" "}
                     <b dir="ltr" className="tabular-nums">
@@ -226,6 +221,12 @@ function OrderDetailBody({ id }: { id: string }) {
                     {formatMoney(item.lineTotal, locale)}
                   </span>
                 </span>
+                {item.barcode && (
+                  // scannable: the cashier reads this straight off the screen
+                  // into the till system, so the bars matter more than the digits.
+                  // A row of its own, so a phone shows every bar at full size.
+                  <Barcode value={item.barcode} className="basis-full [&>svg]:h-auto [&>svg]:max-w-full" />
+                )}
               </li>
             ))}
           </ul>

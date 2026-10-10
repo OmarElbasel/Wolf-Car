@@ -92,7 +92,7 @@ export function Header() {
           <Image src={LOGO} alt="" width={38} height={38} className="size-[38px] object-contain" unoptimized />
           <span className="whitespace-nowrap">
             <b className="block text-[17px] leading-tight font-extrabold">{brand("name")}</b>
-            <small className="block text-[10px] leading-tight font-bold tracking-[0.14em] opacity-60">WOLF CAR</small>
+            <small className="block text-xs leading-tight font-bold tracking-[0.1em] opacity-60">WOLF CAR</small>
           </span>
         </a>
 

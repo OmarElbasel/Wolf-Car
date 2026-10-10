@@ -88,7 +88,7 @@ function PackageCards({ service, catalog, body }: { service: Service; catalog: C
 
   return (
     // phones: a swipeable row with the next poster peeking in, so three tall posters don't stack
-    <ul className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:thin] md:mx-0 md:grid md:grid-cols-3 md:gap-3.5 md:overflow-visible md:px-0 md:pb-0">
+    <ul className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-5 pb-2 [scrollbar-width:thin] md:mx-0 md:grid md:grid-cols-3 md:gap-3.5 md:overflow-visible md:px-0 md:pb-0">
       {serviceRows(service, catalog.tiers, body).map((row) => {
         const qty = items.find((l) => l.id === row.productId)?.qty ?? 0;
         const name = row.tier ? localName(row.tier, locale) : localName(service, locale);

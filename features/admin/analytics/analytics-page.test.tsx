@@ -5,7 +5,7 @@ import type { AnalyticsSummary, AnalyticsTotals } from "@/lib/api/types";
 import { server } from "@/tests/msw";
 import { makeUser, renderWithApp } from "@/tests/render";
 import { resetAdminTestState } from "../shared/test-utils";
-import { AnalyticsPage, rangeDays } from "./analytics-page";
+import { AnalyticsPage, chartColumns, rangeDays } from "./analytics-page";
 
 const totals = (overrides: Partial<AnalyticsTotals> = {}): AnalyticsTotals => ({
   visitors: 0,
@@ -134,5 +134,25 @@ describe("website visitors page", () => {
     mockSummary({ ...SUMMARY, totals: totals(), previous: totals(), daily: [], pages: [], sources: [], devices: [], locales: [], products: [] });
     renderWithApp(<AnalyticsPage />, { user: admin });
     expect(await screen.findByText("No visits recorded in this period yet")).toBeInTheDocument();
+  });
+});
+
+describe("daily chart columns", () => {
+  const days = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({ day: new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10), visitors: i < 7 ? 10 : 0, pageviews: 2, contacts: 1 }));
+
+  it("keeps one column per day up to 90 days", () => {
+    const columns = chartColumns(days(90));
+    expect(columns).toHaveLength(90);
+    expect(columns[0]).toEqual({ from: "2026-01-01", to: "2026-01-01", visitors: 10, pageviews: 2, contacts: 1 });
+  });
+
+  it("draws a year as weeks: the average day's visitors, the week's page views and contacts", () => {
+    const columns = chartColumns(days(365));
+    expect(columns).toHaveLength(53);
+    expect(columns[0]).toEqual({ from: "2026-01-01", to: "2026-01-07", visitors: 10, pageviews: 14, contacts: 7 });
+    expect(columns[1].visitors).toBe(0);
+    // the last week of a year is a single day
+    expect(columns[52]).toMatchObject({ from: "2026-12-31", to: "2026-12-31" });
   });
 });

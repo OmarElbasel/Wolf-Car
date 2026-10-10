@@ -155,7 +155,7 @@ export function ProductForm({ product, onDone, onCancel }: { product: Product | 
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-1 flex-col gap-4">
-      <SheetBody className="grid content-start gap-4">
+      <SheetBody className="grid grid-cols-1 content-start gap-4">
         {creating && (
           <p className="flex items-start gap-2 rounded-[var(--radius-brand)] bg-sand px-3 py-2.5 text-sm text-ink-2">
             <Info className="mt-0.5 size-4 shrink-0 text-accent-ink" strokeWidth={1.8} aria-hidden="true" />

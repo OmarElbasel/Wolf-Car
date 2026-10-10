@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import type { PublicCategory } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { categoryName } from "./category-name";
+import { ModelPicker } from "./model-picker";
 
 /**
  * Car-model navigation for the public catalogue: horizontal chips on phones
@@ -38,7 +39,15 @@ export async function ModelTabs({ categories, selected, quickCount }: Props) {
   ];
 
   return (
-    <nav aria-label={t("models")} className="-mx-5 mb-5 flex snap-x gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:thin] lg:hidden">
+    <nav aria-label={t("models")} className="-mx-5 mb-5 flex snap-x gap-2 overflow-x-auto overscroll-x-contain px-5 pb-1 [scrollbar-width:thin] lg:hidden">
+      {/* past a handful of models the row is a long swipe: the whole list is one tap away */}
+      {categories.length > 6 && (
+        <ModelPicker
+          label={t("chooseCar")}
+          closeLabel={t("closeImage")}
+          choices={tabs.map((c) => ({ key: c.id ?? "all", href: href(c.id), name: c.name, count: c.count, active: c.id === selected }))}
+        />
+      )}
       {tabs.map((c) => {
         const active = c.id === selected;
         return (

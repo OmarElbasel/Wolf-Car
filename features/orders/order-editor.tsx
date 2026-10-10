@@ -96,7 +96,7 @@ export function OrderEditor({
 
   return (
     <form onSubmit={save} noValidate className="flex flex-1 flex-col gap-4">
-      <SheetBody className="grid content-start gap-5 pb-4">
+      <SheetBody className="grid grid-cols-1 content-start gap-5 pb-4">
         {order.status !== "PENDING" && (
           <p className="flex items-start gap-2 rounded-[var(--radius-brand)] bg-warning-soft p-3 text-sm font-semibold text-warning">
             <ShieldAlert className="mt-0.5 size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />

@@ -72,12 +72,12 @@ export function CartSheet() {
                           {l.price === null ? t("priceOnRequest") : formatMoney(Number(l.price) * l.qty, locale)}
                         </p>
                       </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <div className="flex shrink-0 flex-col items-end">
                         <QtyStepper id={l.id} name={l.name} qty={l.qty} compact />
                         <button
                           type="button"
                           onClick={() => cart.setQty(l.id, 0)}
-                          className="inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-muted hover:text-danger"
+                          className="inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-muted hover:text-danger"
                         >
                           <Trash2 className="size-3.5" aria-hidden="true" />
                           {t("remove")}
@@ -106,7 +106,7 @@ export function CartSheet() {
                   <Icon name="wa" className="size-5" />
                   {t("checkout", { branch: branch.short })}
                 </a>
-                <button type="button" onClick={() => cart.clear()} className="min-h-10 text-sm font-semibold text-muted hover:text-ink">
+                <button type="button" onClick={() => cart.clear()} className="min-h-11 text-sm font-semibold text-muted hover:text-ink">
                   {t("clear")}
                 </button>
               </SheetFooter>
