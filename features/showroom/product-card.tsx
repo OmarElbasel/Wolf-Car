@@ -61,6 +61,7 @@ export function ProductCard({
   const tc = useTranslations("Common");
   const locale = useLocale();
   const [flash, setFlash] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
 
   useEffect(() => {
     if (!flash) return;
@@ -87,9 +88,14 @@ export function ProductCard({
           viewLabel={t("viewImage", { name: product.name })}
           closeLabel={tc("close")}
           className="absolute inset-0 size-full"
+          showName
+          open={zoomed}
+          onOpenChange={setZoomed}
         >
           <ProductImage product={product} sizes={PRODUCT_IMAGE_SIZES} className="absolute inset-0 p-3" />
         </ImageZoom>
+        {/* over the photo, so a product with colours is as tall as its neighbours */}
+        {picker && <div className="absolute inset-x-2 bottom-2 flex justify-center">{picker}</div>}
         {quantity > 0 && (
           <motion.span
             key={quantity}
@@ -105,10 +111,12 @@ export function ProductCard({
         )}
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 dir="auto" className="line-clamp-2 text-start text-[17px] leading-snug font-bold">
-          {title}
+        <h3 dir="auto" className="min-h-[2.75em] text-start text-[17px] leading-snug font-bold">
+          {/* two lines at most on the card; pressing the name opens the photo with the name in full */}
+          <button type="button" onClick={() => setZoomed(true)} className="line-clamp-2 text-start">
+            {title}
+          </button>
         </h3>
-        {picker && <div className="mt-2.5">{picker}</div>}
         {product.description && (
           <p dir="auto" className="mt-1 line-clamp-3 text-start text-sm leading-relaxed text-ink-2">
             {product.description}
@@ -172,7 +180,7 @@ export function ProductGroupCard({
       barcode={scan && product.barcode ? <ScanBarcode key={product.id} product={product} /> : undefined}
       picker={
         group.variants.length > 1 ? (
-          <VariantPicker variants={group.variants} selected={product.id} onSelect={setPicked} label={t("variant")} touch />
+          <VariantPicker variants={group.variants} selected={product.id} onSelect={setPicked} label={t("variant")} touch compact />
         ) : undefined
       }
     />
