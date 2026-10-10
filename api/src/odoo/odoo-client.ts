@@ -47,13 +47,34 @@ export class OdooClient {
     return this.execute<T[]>(model, 'read', [ids], { fields: [...fields] });
   }
 
-  private async execute<T>(model: string, method: string, args: unknown[], kwargs: Record<string, unknown>): Promise<T> {
+  /**
+   * When the integration user's API key stops working, or null for a key that
+   * never expires. Odoo does not say which of the user's keys we hold, so with
+   * several the soonest date wins: a warning too early beats none.
+   */
+  async keyExpiresAt(): Promise<Date | null> {
+    const uid = await this.login();
+    const keys = await this.searchRead<{ expiration_date: string | false }>('res.users.apikeys', [['user_id', '=', uid]], ['expiration_date']);
+    const times = keys
+      .filter((key) => key.expiration_date)
+      // Odoo writes "2027-01-07 00:00:00", in UTC
+      .map((key) => Date.parse(`${(key.expiration_date as string).replace(' ', 'T')}Z`))
+      .filter((time) => !Number.isNaN(time));
+    return times.length ? new Date(Math.min(...times)) : null;
+  }
+
+  private async login(): Promise<number> {
     if (this.uid === undefined) {
       const uid = await this.rpc<number | false>('common', 'authenticate', [this.cfg.db, this.cfg.login, this.cfg.apiKey, {}]);
       if (!uid) throw new OdooError('Odoo rejected the login. Check ODOO_DB, ODOO_LOGIN and ODOO_API_KEY.');
       this.uid = uid;
     }
-    return this.rpc<T>('object', 'execute_kw', [this.cfg.db, this.uid, this.cfg.apiKey, model, method, args, kwargs]);
+    return this.uid;
+  }
+
+  private async execute<T>(model: string, method: string, args: unknown[], kwargs: Record<string, unknown>): Promise<T> {
+    const uid = await this.login();
+    return this.rpc<T>('object', 'execute_kw', [this.cfg.db, uid, this.cfg.apiKey, model, method, args, kwargs]);
   }
 
   private async rpc<T>(service: string, method: string, args: unknown[]): Promise<T> {

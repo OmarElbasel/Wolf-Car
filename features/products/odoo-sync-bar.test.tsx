@@ -56,6 +56,19 @@ describe("Odoo sync bar", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("The last sync with Odoo failed: Odoo rejected the login.");
   });
 
+  it("asks for a new Odoo key in the two weeks before it expires", async () => {
+    const inDays = (days: number) => new Date(Date.now() + days * 86_400_000 - 60_000).toISOString();
+    server.use(http.get("/api/odoo/sync", () => HttpResponse.json(status({ keyExpiresAt: inDays(9) }))));
+    const { unmount } = renderWithApp(<OdooSyncBar />, { user: finance });
+    expect(await screen.findByRole("alert")).toHaveTextContent(/The Odoo API key expires in 9 days \(.+\)\. Create a new key in Odoo/);
+    unmount();
+
+    server.use(http.get("/api/odoo/sync", () => HttpResponse.json(status({ keyExpiresAt: inDays(60) }))));
+    renderWithApp(<OdooSyncBar />, { user: finance });
+    expect(await screen.findByText(/Products come from Odoo/)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("offers the button only to those who manage prices", async () => {
     server.use(http.get("/api/odoo/sync", () => HttpResponse.json(status())));
     renderWithApp(<OdooSyncBar />, { user: manager });

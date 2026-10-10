@@ -10,9 +10,12 @@ import { syncOdooCatalogue, type OdooReader, type SyncSummary } from './odoo-syn
 const RUN_SELECT = { id: true, startedAt: true, finishedAt: true, trigger: true, ok: true, summary: true, error: true } as const;
 type RunRow = Prisma.OdooSyncRunGetPayload<{ select: typeof RUN_SELECT }>;
 
+/** What a finished run stores: the sync's numbers, and when the key that ran it expires. */
+type StoredSummary = SyncSummary & { keyExpiresAt?: string | null };
+
 /** A run as the dashboard shows it: the numbers, never the warnings' product names in bulk. */
 function runView(run: RunRow) {
-  const s = run.summary as unknown as SyncSummary | null;
+  const s = run.summary as unknown as StoredSummary | null;
   return {
     id: run.id,
     startedAt: run.startedAt,
@@ -91,10 +94,11 @@ export class OdooSyncService implements OnModuleInit, OnModuleDestroy {
       if (summary.created || summary.updated || summary.switchedOff) {
         this.logger.log(`Odoo sync: ${summary.created} created, ${summary.updated} updated, ${summary.switchedOff} switched off`);
       }
+      const stored: StoredSummary = { ...summary, keyExpiresAt: await this.keyExpiresAt(odoo) };
       return runView(
         await this.prisma.odooSyncRun.update({
           where: { id },
-          data: { finishedAt: new Date(), ok: true, summary: summary as unknown as Prisma.InputJsonValue },
+          data: { finishedAt: new Date(), ok: true, summary: stored as unknown as Prisma.InputJsonValue },
           select: RUN_SELECT,
         }),
       );
@@ -108,15 +112,28 @@ export class OdooSyncService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /** Asked after every good run so the dashboard can warn in time; never fails the run. */
+  private async keyExpiresAt(odoo: OdooReader): Promise<string | null | undefined> {
+    try {
+      return (await odoo.keyExpiresAt?.())?.toISOString() ?? null;
+    } catch (err) {
+      this.logger.warn(`Could not read when the Odoo API key expires: ${(err as Error).message}`);
+      return undefined;
+    }
+  }
+
   async status() {
     const [last, lastOk] = await Promise.all([
       this.prisma.odooSyncRun.findFirst({ where: { finishedAt: { not: null } }, orderBy: { startedAt: 'desc' }, select: RUN_SELECT }),
       this.prisma.odooSyncRun.findFirst({ where: { ok: true }, orderBy: { startedAt: 'desc' }, select: RUN_SELECT }),
     ]);
+    const keyExpiresAt = (lastOk?.summary as unknown as StoredSummary | null)?.keyExpiresAt ?? null;
     return {
       configured: this.reader() !== null,
       running: this.running,
       everyMinutes: this.config.get('ODOO_SYNC_MINUTES', { infer: true }),
+      /** when the API key stops working, as of the last good run; null when unknown or never */
+      keyExpiresAt,
       last: last ? runView(last) : null,
       lastOk: lastOk ? runView(lastOk) : null,
     };
