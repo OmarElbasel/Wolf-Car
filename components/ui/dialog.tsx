@@ -89,7 +89,7 @@ function DialogContent({
               {children}
               {showCloseButton && (
                 <DialogPrimitive.Close data-slot="dialog-close" asChild>
-                  <Button variant="ghost" className="absolute top-2.5 end-2.5" size="icon-sm">
+                  <Button variant="ghost" className="absolute top-1.5 end-1.5 md:top-2.5 md:end-2.5" size="icon-sm">
                     <XIcon />
                     <span className="sr-only">{closeLabel}</span>
                   </Button>

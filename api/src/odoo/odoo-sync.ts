@@ -38,6 +38,8 @@ export interface OdooReader {
     context?: Record<string, unknown>,
   ): Promise<T[]>;
   read<T>(model: string, ids: number[], fields: readonly string[]): Promise<T[]>;
+  /** when the API key stops working; null for one that never does */
+  keyExpiresAt?(): Promise<Date | null>;
 }
 
 export interface SyncOptions {

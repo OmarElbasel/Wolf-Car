@@ -85,12 +85,12 @@ export function Overview() {
         {can("branch.manage") && <Stat label={t("Dashboard.branches")} value={branches.data?.length} href="/dashboard/branches" />}
       </div>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
         {readsOrders && (
           <section aria-labelledby="recent-orders" className="rounded-[var(--radius-brand-lg)] border border-line">
             <div className="flex items-center justify-between border-b border-line px-5 py-3">
               <h2 id="recent-orders" className="font-extrabold">{t("Dashboard.recentOrders")}</h2>
-              <Link href="/dashboard/orders" className="inline-flex items-center gap-1 text-sm font-bold text-accent-ink hover:underline">
+              <Link href="/dashboard/orders" className="-my-2.5 inline-flex min-h-11 items-center gap-1 text-sm font-bold text-accent-ink hover:underline">
                 {t("Dashboard.viewAll")}
                 <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden="true" />
               </Link>
@@ -118,7 +118,7 @@ export function Overview() {
           <section aria-labelledby="recent-activity" className="rounded-[var(--radius-brand-lg)] border border-line">
             <div className="flex items-center justify-between border-b border-line px-5 py-3">
               <h2 id="recent-activity" className="font-extrabold">{t("Dashboard.recentActivity")}</h2>
-              <Link href="/dashboard/activity" className="inline-flex items-center gap-1 text-sm font-bold text-accent-ink hover:underline">
+              <Link href="/dashboard/activity" className="-my-2.5 inline-flex min-h-11 items-center gap-1 text-sm font-bold text-accent-ink hover:underline">
                 {t("Dashboard.viewAll")}
                 <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden="true" />
               </Link>

@@ -67,7 +67,7 @@ function BranchesManager() {
       ) : branches.data.length === 0 ? (
         <EmptyState title={t("Branches.empty")} />
       ) : (
-        <ul className="grid gap-4 xl:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {branches.data.map((b) => (
             <li key={b.id}>
               <BranchCard
@@ -170,7 +170,7 @@ function BranchCard({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <StaffBlock slot="manager" staff={branch.manager} onReplace={() => onReplace("manager")} />
         <StaffBlock slot="cashier" staff={branch.cashier} onReplace={() => onReplace("cashier")} />
       </div>

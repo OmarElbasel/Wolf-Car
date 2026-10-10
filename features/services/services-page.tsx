@@ -70,7 +70,7 @@ function ServicesManager() {
       ) : query.data.services.length === 0 ? (
         <EmptyState title={t("empty")} />
       ) : (
-        <div className="grid gap-8">
+        <div className="grid grid-cols-1 gap-8">
           {bySection(query.data.services).map((group) => (
             <section key={group.section} aria-labelledby={`section-${group.section}`}>
               <h2 id={`section-${group.section}`} className="mb-3 text-lg font-extrabold">
@@ -143,7 +143,7 @@ function PriceTable({
       <table className="w-full min-w-[640px] border-collapse text-[15px]">
         <thead>
           <tr className="border-b border-line bg-sand text-ink-2">
-            <th scope="col" rowSpan={split && tiers.length ? 2 : 1} className="px-4 py-2.5 text-start font-bold">
+            <th scope="col" rowSpan={split && tiers.length ? 2 : 1} className={cn(PINNED, "bg-sand px-4 py-2.5 text-start font-bold")}>
               {t("service")}
             </th>
             {columns.map((tier) => (
@@ -156,7 +156,7 @@ function PriceTable({
                         type="button"
                         onClick={() => onEditTier(tier)}
                         aria-label={t("renameNamed", { name: localName(tier, locale) })}
-                        className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink"
+                        className="grid size-11 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink md:size-7"
                       >
                         <Pencil className="size-3.5" aria-hidden="true" strokeWidth={2} />
                       </button>
@@ -190,7 +190,7 @@ function PriceTable({
         <tbody>
           {services.map((service) => (
             <tr key={service.id} className={cn("border-b border-line last:border-b-0", !service.isActive && "opacity-55")}>
-              <th scope="row" className="px-4 py-2 text-start font-bold">
+              <th scope="row" className={cn(PINNED, "bg-surface px-4 py-2 text-start font-bold")}>
                 <span className="flex items-center gap-2">
                   <span className="min-w-0">
                     <span dir="auto" className="block">
@@ -205,7 +205,7 @@ function PriceTable({
                       type="button"
                       onClick={() => onEditService(service)}
                       aria-label={t("editNamed", { name: localName(service, locale) })}
-                      className="grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-sand hover:text-ink"
+                      className="grid size-11 shrink-0 place-items-center rounded-md text-muted hover:bg-sand hover:text-ink md:size-8"
                     >
                       <Pencil className="size-4" aria-hidden="true" strokeWidth={2} />
                     </button>
@@ -251,6 +251,9 @@ function PriceTable({
 }
 
 /** One price: a button that turns into a field. Enter or leaving the field saves, Escape gives up. */
+/** The service name stays in view while its prices scroll sideways on a phone. */
+const PINNED = "sticky start-0 z-10 max-md:max-w-[176px] max-md:min-w-[176px] max-md:border-e max-md:border-line max-md:px-3";
+
 function PriceCell({ price, editable, label }: { price: ServicePrice; editable: boolean; label: string }) {
   const t = useTranslations("Services");
   const locale = useLocale();
@@ -288,7 +291,7 @@ function PriceCell({ price, editable, label }: { price: ServicePrice; editable: 
         type="button"
         onClick={() => setDraft(price.price === null ? "" : String(Number(price.price)))}
         aria-label={label}
-        className="w-full rounded-md px-2 py-1.5 font-bold tabular-nums hover:bg-sand focus-visible:bg-sand"
+        className="min-h-11 w-full rounded-md px-2 py-1.5 font-bold tabular-nums hover:bg-sand focus-visible:bg-sand md:min-h-0"
       >
         {shown}
       </button>
@@ -309,7 +312,7 @@ function PriceCell({ price, editable, label }: { price: ServicePrice; editable: 
         if (e.key === "Enter") e.currentTarget.blur();
         if (e.key === "Escape") setDraft(null);
       }}
-      className="w-full min-w-20 rounded-md border-[1.5px] border-accent bg-surface px-2 py-1 text-center font-mono font-bold tabular-nums outline-none"
+      className="w-full min-w-20 rounded-md border-[1.5px] border-accent bg-surface px-2 py-1 text-center font-mono text-base font-bold tabular-nums outline-none md:text-[15px]"
     />
   );
 }

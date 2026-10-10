@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { OrderStatusBadge } from "@/components/app/badges";
 import { Field } from "@/components/app/field";
 import { PageHeader } from "@/components/app/page-header";
+import { PhoneFilters } from "@/components/app/phone-filters";
 import { Pagination } from "@/components/app/pagination";
 import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ function OrdersTable({
             </th>
           </tr>
         </thead>
-        <tbody className="max-md:grid max-md:gap-2">
+        <tbody className="max-md:grid max-md:grid-cols-1 max-md:gap-2">
           <AnimatePresence initial={false}>
             {orders.map((o) => (
               <motion.tr
@@ -263,7 +264,7 @@ function OrdersManager() {
     <>
       <PageHeader title={t("title")} subtitle={subtitle} />
 
-      <section aria-label={tc("filters")} className="mb-4 grid gap-4 rounded-[var(--radius-brand-lg)] border border-line p-4">
+      <section aria-label={tc("filters")} className="mb-4 grid grid-cols-1 gap-4 rounded-[var(--radius-brand-lg)] border border-line p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Segmented
             label={tc("status")}
@@ -278,7 +279,11 @@ function OrdersManager() {
             </Button>
           )}
         </div>
-        <div className={cn("grid gap-3 sm:grid-cols-2", readsAll ? "xl:grid-cols-5" : "xl:grid-cols-4")}>
+        <PhoneFilters
+          label={tc("filters")}
+          active={[state.customerName, state.orderNumber, state.from, state.to, readsAll ? state.branchId : ""].filter(Boolean).length}
+          className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", readsAll ? "xl:grid-cols-5" : "xl:grid-cols-4")}
+        >
           <Field label={t("searchCustomer")}>
             <DebouncedInput type="search" dir="auto" autoComplete="off" value={state.customerName} onValueChange={(v) => setFilter({ customerName: v })} />
           </Field>
@@ -305,7 +310,7 @@ function OrdersManager() {
               <BranchSelect value={state.branchId} onChange={(branchId) => setFilter({ branchId })} branches={branches.data ?? []} />
             </Field>
           )}
-        </div>
+        </PhoneFilters>
       </section>
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">

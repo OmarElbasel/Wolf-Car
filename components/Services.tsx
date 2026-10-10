@@ -7,7 +7,8 @@ import { getServices } from "@/lib/content";
 
 /**
  * Bento layout for five cards: a narrow + wide pair on top, three equal cards
- * below. On tablets the third card spans the full row.
+ * below. On tablets the third card spans the full row. On phones each card is
+ * a row (picture beside the text), so five services take one screen, not three.
  */
 const SPANS = [
   "lg:col-span-5",
@@ -32,22 +33,22 @@ export async function Services() {
           {services.map((s, i) => (
             <article
               key={s.title}
-              className={`group flex flex-col rounded-[22px] border border-line bg-sand p-3.5 ${SPANS[i] ?? "lg:col-span-4"}`}
+              className={`group flex gap-3.5 rounded-[22px] border border-line bg-sand p-3 md:flex-col md:gap-0 md:p-3.5 ${SPANS[i] ?? "lg:col-span-4"}`}
             >
-              <div className="relative h-[190px] overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface lg:h-[220px]">
+              <div className="relative w-[112px] shrink-0 self-stretch overflow-hidden rounded-[var(--radius-brand-lg)] border border-line bg-surface md:h-[190px] md:w-auto md:self-auto lg:h-[220px]">
                 <Image
                   src={s.image}
                   alt={s.photoAlt}
                   fill
-                  sizes="(min-width: 1024px) 640px, (min-width: 768px) 50vw, 100vw"
+                  sizes="(min-width: 1024px) 640px, (min-width: 768px) 50vw, 112px"
                   className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                 />
               </div>
-              <div className="flex flex-1 flex-col px-1.5 pt-5">
-                <h3 className="text-[19px] leading-[1.4] font-bold">
+              <div className="flex min-w-0 flex-1 flex-col pt-1 md:px-1.5 md:pt-5">
+                <h3 className="text-[17px] leading-[1.4] font-bold md:text-[19px]">
                   {s.title}
                 </h3>
-                <p className="mt-1 mb-1.5 text-[15px] text-muted">{s.blurb}</p>
+                <p className="mt-1 mb-1.5 text-sm leading-relaxed text-muted md:text-[15px]">{s.blurb}</p>
                 <div className="mt-auto">
                   {s.topic ? (
                     <AskLink topic={s.topic}>{s.linkLabel}</AskLink>

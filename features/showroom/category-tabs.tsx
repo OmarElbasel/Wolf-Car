@@ -44,7 +44,7 @@ export function CategoryTabs({
     <div
       role="tablist"
       aria-label={t("categories")}
-      className="-mx-4 flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-1 lg:-mx-6 lg:scroll-px-6 lg:px-6 [scrollbar-width:none]"
+      className="-mx-4 flex snap-x scroll-px-4 gap-2.5 overflow-x-auto overscroll-x-contain px-4 pb-1 lg:-mx-6 lg:scroll-px-6 lg:px-6 [scrollbar-width:none]"
     >
       {tabs.map((c) => {
         const active = c.id === selected;

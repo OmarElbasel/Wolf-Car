@@ -171,6 +171,8 @@
     "showMore": "Show more ({count} left)",
     "priceOnRequest": "Price on request",
     "addToCart": "Add to cart",
+    "addShort": "Add",
+    "chooseCar": "Choose your car",
     "qtyFor": "Quantity of {name}",
     "variant": "Colour",
     "viewImage": "View {name} larger",

@@ -46,7 +46,13 @@ export function ContactProvider({ children }: { children: ReactNode }) {
       if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    // the page behind stays where it is while the picker is open
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+    };
   }, [intent, close]);
 
   const choose = (branch: BranchId) => {
@@ -69,7 +75,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="sheet-heading"
-          className="fixed inset-0 z-70 flex items-end justify-center bg-black/45"
+          className="fixed inset-0 z-70 flex items-end justify-center overscroll-contain bg-black/45"
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
           }}

@@ -171,6 +171,8 @@
     "showMore": "عرض المزيد (بقي {count})",
     "priceOnRequest": "السعر عند الطلب",
     "addToCart": "أضف إلى السلة",
+    "addShort": "أضف",
+    "chooseCar": "اختر سيارتك",
     "qtyFor": "كمية {name}",
     "variant": "اللون",
     "viewImage": "تكبير صورة {name}",

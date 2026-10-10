@@ -71,7 +71,7 @@ export function KioskFilters({ filters, onChange }: { filters: Filters; onChange
     <div
       role="group"
       aria-label={t("filters")}
-      className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 lg:-mx-6 lg:px-6 [scrollbar-width:none]"
+      className="-mx-4 flex items-center gap-2 overflow-x-auto overscroll-x-contain px-4 pb-1 lg:-mx-6 lg:px-6 [scrollbar-width:none]"
     >
       <Chip active={filters.sort === "priceAsc"} onClick={() => toggleSort("priceAsc")}>
         <ArrowUpNarrowWide className="size-5" aria-hidden="true" strokeWidth={2} />
