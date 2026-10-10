@@ -48,7 +48,7 @@ export const SHOWROOM_PRODUCTS_KEY = ["showroom", "products"] as const;
 const HEADER_H = "76px";
 /** Two cards across a small tablet, three across an upright kiosk, up to five on a wide wall screen. */
 const GRID = "grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 min-[2000px]:grid-cols-5";
-/** Cards rendered per "show more" step; a car model can hold 150+ products. */
+/** Cards added each time the list nears its end; a car model can hold 150+ products. */
 const PAGE = 24;
 
 function KioskSplash() {
@@ -128,6 +128,23 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
   const cars = new Map(categories.map((c) => [c.id, `${c.name} ${c.carModel ?? ""}`]));
   // the colours of one product share a card
   const groups = groupVariants(filterProducts(inCategory, applied, cars));
+
+  // the next cards load as the list is scrolled near its end; the button
+  // stays for keyboards and for browsers without IntersectionObserver
+  const more = useRef<HTMLDivElement>(null);
+  const hasMore = groups.length > shown;
+  useEffect(() => {
+    const el = more.current;
+    if (!hasMore || !el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setShown((n) => n + PAGE);
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, shown]);
   const filtering = isFiltering(applied);
   const showServices = category === SERVICES_TAB;
   // what the same search finds across every car, offered when this car has nothing
@@ -316,7 +333,7 @@ function Kiosk({ user, idleTimeoutMs }: { user: Profile; idleTimeoutMs: number }
                         ))}
                       </ul>
                       {groups.length > shown && (
-                        <div className="mt-6 flex justify-center">
+                        <div ref={more} className="mt-6 flex justify-center">
                           <Button size="touch" variant="outline" className="min-w-64" onClick={() => setShown((n) => n + PAGE)}>
                             {t("showMore", { count: groups.length - shown })}
                           </Button>
