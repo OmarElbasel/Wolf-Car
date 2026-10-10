@@ -46,7 +46,7 @@ export function VariantPicker<P extends VariantInfo & { id: string }>({
             onClick={() => onSelect(v.id)}
             className={cn(
               "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border-[1.5px] bg-surface font-semibold whitespace-nowrap transition-colors",
-              touch ? "min-h-11 px-3.5 text-[15px]" : dotOnly ? "size-8 text-[13px]" : "min-h-8 px-2.5 text-[13px]",
+              touch ? (dotOnly ? "size-11" : "min-h-11 px-3.5 text-[15px]") : dotOnly ? "size-8" : "min-h-8 px-2.5 text-[13px]",
               active ? "border-accent text-ink" : "border-line text-ink-2 hover:border-ink",
             )}
           >

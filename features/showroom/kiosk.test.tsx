@@ -177,6 +177,30 @@ describe("showroom kiosk", () => {
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(30);
   });
 
+  it("loads the next page by itself when the list is scrolled near its end", async () => {
+    let seen: (entries: Partial<IntersectionObserverEntry>[]) => void = () => {};
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: typeof seen) {
+          seen = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const many = Array.from({ length: 30 }, (_, i): ShowroomProduct => ({ ...CLIP, id: `p-${i}`, name: `Clip ${i}` }));
+    server.use(http.get("/api/showroom/products", () => HttpResponse.json(catalog(many))));
+    renderKiosk();
+
+    await screen.findByRole("heading", { name: "Clip 0" });
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(24);
+    act(() => seen([{ isIntersecting: true }]));
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(30);
+    expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
   it("offers packages and services in a tab of their own and orders them like a product", async () => {
     const services: ShowroomCatalog["services"] = {
       tiers: [{ id: "t1", set: "ppf", nameAr: "البكج الأول · Xpel", nameEn: "Package 1 · Xpel" }],
