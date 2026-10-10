@@ -110,7 +110,7 @@ function CreateBranchForm({ onCancel, onCreated }: { onCancel: () => void; onCre
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-1 flex-col">
-      <SheetBody className="grid content-start gap-5">
+      <SheetBody className="grid grid-cols-1 content-start gap-5">
         <Controller
           control={form.control}
           name="code"
@@ -213,7 +213,7 @@ function EditBranchForm({ branch, onDone }: { branch: BranchView; onDone: () => 
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-1 flex-col">
-      <SheetBody className="grid content-start gap-5">
+      <SheetBody className="grid grid-cols-1 content-start gap-5">
         <Field label={t("Branches.name")} error={fe(errors.name?.message, nameLimits)}>
           <Input autoComplete="off" dir="ltr" maxLength={BRANCH_NAME_MAX} {...form.register("name")} />
         </Field>

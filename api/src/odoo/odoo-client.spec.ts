@@ -68,6 +68,17 @@ describe('OdooClient', () => {
     expect((err as Error).message).not.toContain('secret-key');
   });
 
+  it('reads when the API key expires, taking the soonest of several', async () => {
+    const { fn, calls } = fakeFetch({ result: 7 }, { result: [{ id: 3, expiration_date: '2027-01-07 00:00:00' }, { id: 4, expiration_date: '2026-12-01 10:30:00' }, { id: 5, expiration_date: false }] });
+    expect(await new OdooClient(cfg, fn).keyExpiresAt()).toEqual(new Date('2026-12-01T10:30:00.000Z'));
+    expect(calls[1].body.params.args.slice(3)).toEqual(['res.users.apikeys', 'search_read', [[['user_id', '=', 7]]], { fields: ['expiration_date'] }]);
+  });
+
+  it('reports no expiry for a key that lasts for ever', async () => {
+    const { fn } = fakeFetch({ result: 7 }, { result: [{ id: 3, expiration_date: false }] });
+    expect(await new OdooClient(cfg, fn).keyExpiresAt()).toBeNull();
+  });
+
   it('explains a non-JSON answer such as a proxy error page', async () => {
     const { fn } = fakeFetch(new Response('<html><h1>502 Bad Gateway</h1></html>', { status: 502 }));
     await expect(new OdooClient(cfg, fn).searchRead('product.product', [], ['id'])).rejects.toThrow(

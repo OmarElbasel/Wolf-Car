@@ -28,6 +28,7 @@
   },
   "daily": "الزوار في كل يوم",
   "dailyTip": "{day}: {visitors} زائر، {pageviews} مشاهدة، {contacts} ضغطة تواصل",
+  "weeklyTip": "{from} – {to}: نحو {visitors} زائر في اليوم، {pageviews} مشاهدة، {contacts} ضغطة تواصل",
   "table": {
     "day": "اليوم",
     "visitors": "الزوار",

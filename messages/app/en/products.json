@@ -66,6 +66,7 @@
     "syncing": "Syncing…",
     "done": "Synced: {created} new, {updated} updated, {hidden} hidden.",
     "failed": "The last sync with Odoo failed: {error}",
+    "keyExpiring": "The Odoo API key expires {days, plural, one {tomorrow} other {in # days}} ({date}). Create a new key in Odoo before then, or syncing will stop.",
     "fromOdoo": "From Odoo"
   },
   "historyNamed": "Price history of {name}",

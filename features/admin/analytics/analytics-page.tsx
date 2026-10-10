@@ -17,6 +17,8 @@ export const RANGES = [1, 7, 30, 90, 365] as const;
 type Range = (typeof RANGES)[number];
 const DEFAULT_RANGE: Range = 30;
 const DAY_MS = 86_400_000;
+/** longer periods are drawn one column per week, so a column stays wide enough to read and to tap on a phone */
+const WEEKLY_ABOVE = 90;
 
 /** The last `days` Qatar days, today included. */
 export function rangeDays(days: number, now: Date = new Date()): { from: string; to: string } {
@@ -64,7 +66,7 @@ function Analytics() {
           aria-pressed={r === days}
           onClick={() => setFilters({ range: r === DEFAULT_RANGE ? "" : String(r) })}
           className={cn(
-            "min-h-10 rounded-[8px] px-3.5 text-sm font-bold transition-colors",
+            "min-h-11 rounded-[8px] px-3.5 text-sm font-bold transition-colors md:min-h-10",
             r === days ? "bg-accent text-white" : "text-ink-2 hover:bg-sand hover:text-ink",
           )}
         >
@@ -83,7 +85,7 @@ function Analytics() {
       ) : summary.isError ? (
         <ErrorState error={summary.error} onRetry={() => void summary.refetch()} />
       ) : data ? (
-        <div className={cn("grid gap-5 transition-opacity", summary.isPlaceholderData && "opacity-60")}>
+        <div className={cn("grid grid-cols-1 gap-5 transition-opacity", summary.isPlaceholderData && "opacity-60")}>
           <p className="text-sm font-semibold text-muted">{t("period", { from: dayLabel(data.from, locale), to: dayLabel(data.to, locale) })}</p>
           {data.totals.pageviews === 0 && data.totals.visitors === 0 ? (
             <EmptyState title={t("empty")} body={t("emptyBody")} />
@@ -117,7 +119,7 @@ function Report({ data, days }: { data: AnalyticsSummary; days: number }) {
 
       {data.daily.length > 1 && <DailyChart daily={data.daily} />}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card title={t("funnel")} hint={t("funnelHint")}>
           <BarList
             max={now.visitors}
@@ -220,22 +222,54 @@ function Tile({ label, value, before, days, hint }: { label: string; value: numb
  * names it and there is no legend). Hovering or focusing a column shows the
  * day's numbers; the same figures sit in a table for screen readers.
  */
+interface ChartColumn {
+  from: string;
+  to: string;
+  /** visitors of the day, or of the average day of the week */
+  visitors: number;
+  pageviews: number;
+  contacts: number;
+}
+
+/** One column per day; past WEEKLY_ABOVE days, one per week holding its average day (visitors of different days cannot be added up). */
+export function chartColumns(daily: AnalyticsSummary["daily"]): ChartColumn[] {
+  if (daily.length <= WEEKLY_ABOVE) return daily.map((d) => ({ from: d.day, to: d.day, visitors: d.visitors, pageviews: d.pageviews, contacts: d.contacts }));
+  const columns: ChartColumn[] = [];
+  for (let i = 0; i < daily.length; i += 7) {
+    const week = daily.slice(i, i + 7);
+    const sum = (key: "visitors" | "pageviews" | "contacts") => week.reduce((total, d) => total + d[key], 0);
+    const visitors = sum("visitors");
+    columns.push({
+      from: week[0].day,
+      to: week[week.length - 1].day,
+      visitors: visitors === 0 ? 0 : Math.max(1, Math.round(visitors / week.length)),
+      pageviews: sum("pageviews"),
+      contacts: sum("contacts"),
+    });
+  }
+  return columns;
+}
+
 function DailyChart({ daily }: { daily: AnalyticsSummary["daily"] }) {
   const t = useTranslations("Analytics");
   const locale = useLocale();
   const [active, setActive] = useState<number | null>(null);
-  const peak = Math.max(1, ...daily.map((d) => d.visitors));
+  const columns = chartColumns(daily);
+  const peak = Math.max(1, ...columns.map((d) => d.visitors));
   // a round number at or above the busiest day, for the axis
   const step = 10 ** Math.floor(Math.log10(peak));
   const top = Math.max(1, Math.ceil(peak / step) * step);
-  const shown = active === null ? null : daily[active];
+  const shown = active === null ? null : columns[active];
 
   return (
     <section className="rounded-[var(--radius-brand-lg)] border border-line bg-surface p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-[17px] font-extrabold">{t("daily")}</h2>
         <p className="min-h-5 text-sm text-ink-2" aria-live="polite">
-          {shown && t("dailyTip", { day: dayLabel(shown.day, locale), visitors: shown.visitors, pageviews: shown.pageviews, contacts: shown.contacts })}
+          {shown &&
+            (shown.from === shown.to
+              ? t("dailyTip", { day: dayLabel(shown.from, locale), visitors: shown.visitors, pageviews: shown.pageviews, contacts: shown.contacts })
+              : t("weeklyTip", { from: dayLabel(shown.from, locale), to: dayLabel(shown.to, locale), visitors: shown.visitors, pageviews: shown.pageviews, contacts: shown.contacts }))}
         </p>
       </div>
       <div className="mt-4 flex gap-2" aria-hidden="true">
@@ -250,17 +284,17 @@ function DailyChart({ daily }: { daily: AnalyticsSummary["daily"] }) {
             <span className="border-t border-line" />
             <span className="border-t border-line" />
           </div>
-          <div className="relative flex h-44 items-end" onMouseLeave={() => setActive(null)}>
-            {daily.map((d, i) => (
+          <div className="relative flex h-44 items-end gap-px" onMouseLeave={() => setActive(null)}>
+            {columns.map((d, i) => (
               <button
-                key={d.day}
+                key={d.from}
                 type="button"
                 tabIndex={-1}
                 onMouseEnter={() => setActive(i)}
                 onFocus={() => setActive(i)}
                 onBlur={() => setActive(null)}
                 onClick={() => setActive(i)}
-                className="group flex h-full min-w-0 flex-1 items-end justify-center px-px"
+                className="group flex h-full min-w-0 flex-1 items-end justify-center"
               >
                 <span
                   className={cn(
@@ -278,27 +312,30 @@ function DailyChart({ daily }: { daily: AnalyticsSummary["daily"] }) {
           </div>
         </div>
       </div>
-      <table className="sr-only">
-        <caption>{t("daily")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("table.day")}</th>
-            <th scope="col">{t("table.visitors")}</th>
-            <th scope="col">{t("table.pageviews")}</th>
-            <th scope="col">{t("table.contacts")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {daily.map((d) => (
-            <tr key={d.day}>
-              <th scope="row">{dayLabel(d.day, locale)}</th>
-              <td>{d.visitors}</td>
-              <td>{d.pageviews}</td>
-              <td>{d.contacts}</td>
+      {/* a table ignores the 1px width of sr-only and would widen the page, so the wrapper is what gets clipped */}
+      <div className="sr-only">
+        <table>
+          <caption>{t("daily")}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t("table.day")}</th>
+              <th scope="col">{t("table.visitors")}</th>
+              <th scope="col">{t("table.pageviews")}</th>
+              <th scope="col">{t("table.contacts")}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {daily.map((d) => (
+              <tr key={d.day}>
+                <th scope="row">{dayLabel(d.day, locale)}</th>
+                <td>{d.visitors}</td>
+                <td>{d.pageviews}</td>
+                <td>{d.contacts}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -318,7 +355,7 @@ function BarList({ rows, max }: { rows: BarRow[]; max?: number }) {
   const top = Math.max(1, max ?? 0, ...rows.map((r) => r.value));
   if (rows.length === 0) return <p className="text-sm text-muted">{t("none")}</p>;
   return (
-    <ul className="grid gap-3">
+    <ul className="grid grid-cols-1 gap-3">
       {rows.map((r) => (
         <li key={r.key}>
           <div className="flex items-baseline justify-between gap-3 text-[15px]">

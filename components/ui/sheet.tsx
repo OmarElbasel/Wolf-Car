@@ -99,7 +99,7 @@ function SheetContent({
               {children}
               {showCloseButton && (
                 <SheetPrimitive.Close data-slot="sheet-close" asChild>
-                  <Button variant="ghost" className="absolute top-3 end-3" size="icon-sm">
+                  <Button variant="ghost" className="absolute top-2 end-2 md:top-3 md:end-3" size="icon-sm">
                     <XIcon />
                     <span className="sr-only">{closeLabel}</span>
                   </Button>

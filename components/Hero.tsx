@@ -140,7 +140,7 @@ function TrackCard({ dir, label, title }: { dir: "rtl" | "ltr"; label: string; t
         </span>
       </span>
       <span className="leading-tight">
-        <small className="block text-[11px] font-bold tracking-wide text-muted uppercase dark:text-white/55">{label}</small>
+        <small className="block text-xs font-bold tracking-wide text-muted uppercase dark:text-white/55">{label}</small>
         <b className="block text-[14px] font-extrabold whitespace-nowrap">{title}</b>
       </span>
     </div>

@@ -8,7 +8,7 @@ export function BrandMark({ name, sub = "WOLF CAR" }: { name: string; sub?: stri
       <Image src={LOGO} alt="" width={40} height={40} className="size-10 shrink-0 object-contain" unoptimized />
       <span className="min-w-0">
         <b className="block text-lg leading-tight font-extrabold whitespace-nowrap">{name}</b>
-        <small className="block truncate text-[11px] leading-tight font-semibold tracking-[0.06em] text-muted">{sub}</small>
+        <small className="block truncate text-xs leading-tight font-semibold tracking-[0.06em] text-muted">{sub}</small>
       </span>
     </span>
   );

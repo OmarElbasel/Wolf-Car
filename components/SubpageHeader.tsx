@@ -19,7 +19,7 @@ export async function SubpageHeader() {
           <Image src={LOGO} alt="" width={40} height={40} className="size-10 object-contain" unoptimized />
           <span>
             <b className="block text-lg leading-tight font-extrabold">{brand("name")}</b>
-            <small className="block text-[11px] leading-tight font-semibold tracking-[0.06em] text-muted">WOLF CAR</small>
+            <small className="block text-xs leading-tight font-semibold tracking-[0.06em] text-muted">WOLF CAR</small>
           </span>
         </Link>
         <div className="flex items-center gap-1">

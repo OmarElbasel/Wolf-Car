@@ -25,6 +25,7 @@ import { CredentialsDialog } from "@/components/app/credentials-dialog";
 import { PasswordChecks } from "@/features/account/password-checks";
 import { isStrongPassword } from "@/shared/validation";
 import { PageHeader } from "@/components/app/page-header";
+import { PhoneFilters } from "@/components/app/phone-filters";
 import { Pagination } from "@/components/app/pagination";
 import { EmptyState, ErrorState, LoadingRows, NoAccess } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
@@ -208,8 +209,8 @@ function UsersManager() {
         }
       />
 
-      <div role="search" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_repeat(3,11rem)]">
-        <div className="relative sm:col-span-2 lg:col-span-1">
+      <div role="search" className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_repeat(3,11rem)]">
+        <div className="relative md:col-span-2 lg:col-span-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-[18px] -translate-y-1/2 text-muted" aria-hidden="true" />
           <Input
             type="search"
@@ -223,9 +224,12 @@ function UsersManager() {
             className="ps-10"
           />
         </div>
-        <FilterSelect label={t("Users.role")} value={filters.role} onChange={(role) => setFilters({ role, page: "" })} options={roleOptions} />
-        <FilterSelect label={t("Users.branch")} value={filters.branch} onChange={(branch) => setFilters({ branch, page: "" })} options={branchOptions} />
-        <FilterSelect label={t("Users.status")} value={filters.status} onChange={(status) => setFilters({ status, page: "" })} options={statusOptions} />
+        {/* md:contents: from md up the three selects are cells of the search grid again */}
+        <PhoneFilters label={t("Common.filters")} active={[filters.role, filters.branch, filters.status].filter(Boolean).length} className="grid grid-cols-1 gap-3 md:contents">
+          <FilterSelect label={t("Users.role")} value={filters.role} onChange={(role) => setFilters({ role, page: "" })} options={roleOptions} />
+          <FilterSelect label={t("Users.branch")} value={filters.branch} onChange={(branch) => setFilters({ branch, page: "" })} options={branchOptions} />
+          <FilterSelect label={t("Users.status")} value={filters.status} onChange={(status) => setFilters({ status, page: "" })} options={statusOptions} />
+        </PhoneFilters>
       </div>
 
       <p className="mb-3 text-sm text-muted" aria-live="polite">
@@ -286,7 +290,7 @@ function UsersManager() {
               </Table>
             </div>
           ) : (
-            <ul className="grid gap-3">
+            <ul className="grid grid-cols-1 gap-3">
               {data.items.map((u) => (
                 <li key={u.id} className="rounded-[var(--radius-brand-lg)] border border-line bg-surface p-4">
                   <div className="flex items-start justify-between gap-3">

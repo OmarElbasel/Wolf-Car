@@ -36,22 +36,24 @@ export async function Steps() {
     <section aria-labelledby="steps-h" className="py-14 lg:py-20">
       <Wrap>
         <SectionHead label={t("label")} title={t("title")} body={t("body")} id="steps-h" center />
-        <ol className="mt-10 grid list-none gap-9 md:grid-cols-3 md:gap-6">
+        <ol className="mt-8 grid list-none grid-cols-1 gap-5 md:mt-10 md:grid-cols-3 md:gap-6">
           {steps.map((s, i) => {
             const StepIcon = ICONS[i] ?? Wrench;
             return (
-              <li key={s.n} className="relative flex flex-col items-center text-center">
-                <div className="group relative grid size-[124px] place-items-center rounded-full border-[1.5px] md:size-[150px] border-dashed border-[#CFCBC4] bg-surface transition-colors hover:border-accent dark:border-[#3a3733]">
-                  <span className="absolute -top-1 -start-6 grid size-8 place-items-center rounded-full bg-sand text-sm font-bold text-ink">
+              <li key={s.n} className="relative flex items-center gap-4 text-start md:flex-col md:gap-0 md:text-center">
+                <div className="group relative grid size-[76px] shrink-0 place-items-center rounded-full border-[1.5px] md:size-[150px] border-dashed border-[#CFCBC4] bg-surface transition-colors hover:border-accent dark:border-[#3a3733]">
+                  <span className="absolute -top-1 -start-2 grid size-6 place-items-center rounded-full bg-sand text-xs font-bold text-ink md:-start-6 md:size-8 md:text-sm">
                     {i + 1}
                   </span>
-                  <span className="grid size-16 place-items-center rounded-full bg-accent/10 text-accent-ink transition-transform duration-300 group-hover:scale-110">
-                    <StepIcon className="size-7" strokeWidth={1.9} aria-hidden="true" />
+                  <span className="grid size-12 place-items-center rounded-full bg-accent/10 text-accent-ink transition-transform duration-300 group-hover:scale-110 md:size-16">
+                    <StepIcon className="size-6 md:size-7" strokeWidth={1.9} aria-hidden="true" />
                   </span>
                 </div>
                 {i < steps.length - 1 && <Connector up={i % 2 === 1} />}
-                <h3 className="mt-6 text-lg font-bold">{s.title}</h3>
-                <p className="mt-1.5 max-w-[300px] text-[15px] text-muted">{s.body}</p>
+                <div className="min-w-0 md:contents">
+                  <h3 className="text-lg font-bold md:mt-6">{s.title}</h3>
+                  <p className="mt-1 text-[15px] text-muted md:mt-1.5 md:max-w-[300px]">{s.body}</p>
+                </div>
               </li>
             );
           })}
